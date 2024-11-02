@@ -35,4 +35,6 @@ create day:
 #
 # get the input for a day's puzzle
 get-input day:
-    ./scripts/get-aoc-input.rs --day {{day}} --current-working-directory {{justfile_directory()}}
+    cargo run --manifest-path ./scripts/Cargo.toml --bin get-aoc-input -- --day {{day}} --current-working-directory {{justfile_directory()}}
+# get-input day:
+#     ./scripts/get-aoc-input.rs --day {{day}} --current-working-directory {{justfile_directory()}}

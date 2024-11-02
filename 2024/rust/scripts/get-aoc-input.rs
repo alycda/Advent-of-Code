@@ -1,7 +1,8 @@
-#!/usr/bin/env cargo +nightly -Zscript
-
+#!/usr/bin/env -S cargo +nightly -Zscript
 //! ```cargo
 //! [package]
+//! name = "get-aoc-input"
+//! version = "0.0.0"
 //! edition = "2021"
 //!
 //! [dependencies]
