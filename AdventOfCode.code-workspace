@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "2024/rust",
+			"name": "2024/rust"
+		}
+	],
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			"${workspaceFolder}/2024/rust/Cargo.toml"
+		]
+	}
+}
