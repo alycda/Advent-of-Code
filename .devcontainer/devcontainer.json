@@ -16,6 +16,7 @@
 	},
 	"customizations": {
 		"vscode": {
+                         "workspaceFolder": "/workspaces/AdventOfCode/2024/rust",
 			"extensions": [
 				"rust-lang.rust-analyzer",
 				"vadimcn.vscode-lldb",
