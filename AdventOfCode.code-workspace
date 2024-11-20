@@ -7,12 +7,12 @@
     {
       "path": "2024/everybody.codes",
       "name": "2024/everybody.codes"
+    },
+    {
+      "path": "."
     }
   ],
   "settings": {
-    "rust-analyzer.linkedProjects": [
-      "${workspaceFolder}/2024/rust/Cargo.toml",
-      "${workspaceFolder}/2024/everybody.codes/Cargo.toml"
-    ]
+    "rust-analyzer.linkedProjects": ["Cargo.toml"]
   }
 }
