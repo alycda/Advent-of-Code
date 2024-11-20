@@ -1,0 +1,49 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cargo",
+      "command": "build",
+      "args": ["--bin", "${fileBasenameNoExtension}"],
+      "label": "rust: build",
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "type": "cargo",
+      "command": "run",
+      "args": ["--bin", "${fileBasenameNoExtension}"],
+      "label": "rust: run",
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "type": "cargo",
+      "command": "build",
+      // builds both/all binaries
+      "args": ["--package", "quest-${input:quest}"],
+      "options": {
+        "cwd": "${workspaceFolder}/quest-${input:quest}"
+      },
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "rust: build quest"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "quest",
+      "type": "promptString",
+      "description": "Enter the quest number (e.g., 01, 02, etc.)"
+    }
+  ]
+}

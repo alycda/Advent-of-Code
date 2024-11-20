@@ -1,0 +1,20 @@
+bench-all:
+    cargo bench -q > benchmarks.txt
+
+# Use `just work quest-01 part1` to work on the specific binary for a specific quest's problems
+work quest part:
+    cargo watch -w {{quest}} -x "check -p {{quest}}" -s "just test {{quest}} {{part}}" -s "just lint {{quest}}" -s "just bench {{quest}} {{part}}" 
+
+lint quest:
+    cargo clippy -p {{quest}}
+test quest part:
+    cargo nextest run -p {{quest}} {{part}}
+bench quest part:
+    cargo bench --bench {{quest}}-bench {{part}} >> {{quest}}.bench.txt
+flamegraph quest part:
+    cargo flamegraph --profile flamegraph --root --package {{quest}} --bin {{part}} -o flamegraphs/{{quest}}--{{part}}.svg
+dhat quest part:
+    cargo run --profile dhat --features dhat-heap --package {{quest}} --bin {{part}}
+# create the directory for a new quest's puzzle and fetch the input
+create quest:
+    cargo generate --path ./daily-quest-template --name {{quest}}
