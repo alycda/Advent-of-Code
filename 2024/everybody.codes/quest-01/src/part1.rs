@@ -1,17 +1,10 @@
 use crate::custom_error::EcError;
 
+use super::hit_count;
+
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, EcError> {
-    Ok(input
-        .chars()
-        .map(|c| match c {
-            // 'A' => 1,
-            'B' => 1,
-            'C' => 3,
-            _ => 0,
-        })
-        .sum::<u32>()
-        .to_string())
+    Ok(input.chars().map(hit_count).sum::<u32>().to_string())
 }
 
 #[cfg(test)]
