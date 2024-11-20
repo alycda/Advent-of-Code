@@ -1,6 +1,6 @@
 use crate::custom_error::EcError;
 
-use super::{hit_count, hit_count_bonus};
+use super::hit_count_bonus;
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, EcError> {
