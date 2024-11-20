@@ -36,6 +36,17 @@ fn criterion_benchmark_part2(c: &mut Criterion) {
     group.finish();
 }
 
+fn criterion_benchmark_part3(c: &mut Criterion) {
+    let input = include_str!("../input3.txt");
+
+    let mut group = c.benchmark_group("{{crate_name}}::part3");
+    group.bench_with_input("part3", input, |b, input| {
+        b.iter(|| part3::process(input))
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     criterion_benchmark_part1,

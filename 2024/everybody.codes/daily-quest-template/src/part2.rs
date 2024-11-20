@@ -2,7 +2,7 @@ use crate::custom_error::EcError;
 
 #[tracing::instrument]
 pub fn process(_input: &str) -> miette::Result<String, EcError> {
-    todo!("day 00 - part 2");
+    todo!("quest 00 - part 2");
 }
 
 #[cfg(test)]
