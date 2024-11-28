@@ -11,26 +11,6 @@ pub fn process(input: &str) -> miette::Result<String, EcError> {
     let peek = input.chars().collect::<Vec<_>>();
     let mut peek = peek.windows(2).peekable();
 
-    // peek.clone()
-    //     .collect::<Vec<_>>()
-    //     .windows(2)
-    //     .map(|chars| {
-    //         let s = dbg!(chars.iter().collect::<String>());
-
-    //         match s.as_str() {
-    //             "LL" | "SI" | "OR" | "EN" | "ON" | "UM" => {
-    //                 *rune_count.entry(s).or_insert(0) += 1;
-    //             }
-    //             "LO" => {
-    //                 dbg!(peek.next());
-    //             }
-    //             _ => {}
-    //         }
-
-    //         0
-    //     })
-    //     .sum::<u32>();
-
     while let Some(c) = peek.next() {
         let s = dbg!(c.iter().collect::<String>());
 
@@ -50,22 +30,6 @@ pub fn process(input: &str) -> miette::Result<String, EcError> {
             }
             _ => {}
         }
-
-        // if let Some(p) = peek.peek() {
-        //     dbg!(p[1]);
-
-        // let s = dbg!(format!("{c}{p}"));
-
-        // match s.as_str() {
-        //     "LL" | "SI" | "OR" | "EN" | "ON" | "UM" => {
-        //         *rune_count.entry(s).or_insert(0) += 1;
-        //     }
-        //     "LO" => {
-        //         dbg!(peek.peek());
-        //     }
-        //     _ => {}
-        // }
-        // }
     }
 
     dbg!(&rune_count);
@@ -78,6 +42,8 @@ mod tests {
     use super::*;
 
     use rstest::rstest;
+
+    // WORDS:THE,OWE,MES,ROD,HER
 
     // #[test]
     // fn test_process() -> miette::Result<()> {
