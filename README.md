@@ -1,6 +1,37 @@
-# Advent of Code
+# Advent of Code Solutions Repository
 
-## with Pluto TV
+> Learning in Public! with PlutoTV / Paramount
+
+## Getting Started
+
+1. Create your personal branch using the format:
+
+> solutions/<YOUR_GITHUB_USERNAME>/YEAR
+
+This branch is your personal learning space - feel free to push your solutions but note that we keep solutions separate from the main branch, which is reserved for language setups and infrastructure.
+
+2. Choose your preferred programming language from our [supported templates](#batteries-included), or set up your own workspace.
+
+```
+AdventOfCode
+   └── 2024
+       └── rust
+           ├── day-01
+           │   ├── src
+           │   │   ├── bin
+           │   │   └── lib.rs
+           │   └── cargo.toml
+           ├── Cargo.toml
+           └── README
+```
+
+3. Visit [Advent of Code](https://adventofcode.com/) to begin your coding challenge journey!
+
+You can join the Pluto TV leaderboard with the code `4068626-924c4522` at https://adventofcode.com/2024/leaderboard/private
+
+## Batteries Included:
+
+We provide ready-to-use templates in various programming languages. Find them in the year/language folders (e.g., `2024/rust`).
 
 ### VSCode
 

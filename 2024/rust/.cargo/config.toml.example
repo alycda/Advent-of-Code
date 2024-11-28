@@ -1,0 +1,5 @@
+# DO NOT commit sensitive information, like API keys. 
+#   this file is for reference only.
+
+[env]
+SESSION="PASTE_COOKIE_VALUE_HERE"
