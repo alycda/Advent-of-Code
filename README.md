@@ -8,7 +8,7 @@
 
 > solutions/<YOUR_GITHUB_USERNAME>/YEAR
 
-This branch is your personal learning space - feel free to push your solutions but note that we keep solutions separate from the main branch, which is reserved for language setups and infrastructure.
+This branch is your personal learning space - feel free to push your solutions but note that we keep solutions separate from the main branch, which is reserved for language setups and infrastructure (no need to open a pull request for YOUR branch).
 
 2. Choose your preferred programming language from our [supported templates](#batteries-included), or set up your own workspace.
 
