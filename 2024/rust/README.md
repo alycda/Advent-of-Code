@@ -4,7 +4,7 @@ Inspired by [Chris Biscardi](https://github.com/ChristopherBiscardi/advent-of-co
 
 ## Setup
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Pluto-tv/AdventOfCode/)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Pluto-tv/AdventOfCode/). Then make sure you click on the green "Open Workspace" button within the [workspace](../../AdventOfCode.code-workspace) file. When you open a terminal, make sure you select "2024/rust" to set the CWD. Don't forget to add your ENV variable(s).
 
 - Install [Rust](https://www.rust-lang.org/tools/install) (Homebrew not recommended, but may work ok for this repo)
   - if running in Codespaces, rust is already installed for you.
