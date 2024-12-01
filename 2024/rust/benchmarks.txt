@@ -1,7 +1,7 @@
 
-running 3 tests
-iii
-test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 10 tests
+iiiiiiiiii
+test result: ok. 0 passed; 0 failed; 10 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 
 running 0 tests
@@ -14,15 +14,19 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 day_01_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
-├─ part1      16.55 ms      │ 110.2 ms      │ 27.34 ms      │ 34.11 ms      │ 100     │ 100
-╰─ part2      14.16 ms      │ 92.41 ms      │ 27.97 ms      │ 34.16 ms      │ 100     │ 100
+├─ part1      68.99 µs      │ 586.5 µs      │ 70.29 µs      │ 75.76 µs      │ 100     │ 100
+╰─ part2      14.48 ms      │ 100.6 ms      │ 27.23 ms      │ 34.95 ms      │ 100     │ 100
 
-day_01::part1/part1     time:   [29.486 ms 33.222 ms 37.990 ms]
+day_01::part1/part1     time:   [63.991 µs 64.642 µs 65.682 µs]
+                        change: [-99.831% -99.806% -99.781%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+day_01::part2/part2     time:   [31.282 ms 33.660 ms 36.150 ms]
+                        change: [-8.9221% +0.2191% +9.8927%] (p = 0.97 > 0.05)
+                        No change in performance detected.
 Found 3 outliers among 100 measurements (3.00%)
-  1 (1.00%) high mild
-  2 (2.00%) high severe
-
-day_01::part2/part2     time:   [31.589 ms 33.586 ms 35.661 ms]
-Found 1 outliers among 100 measurements (1.00%)
-  1 (1.00%) high mild
+  3 (3.00%) high mild
 
