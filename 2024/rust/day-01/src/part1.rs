@@ -1,17 +1,8 @@
-use crate::custom_error::AocError;
+use crate::{custom_error::AocError, unzip};
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (mut left, mut right): (Vec<i32>, Vec<i32>) = input
-        .lines()
-        .map(|line| {
-            let nums = line
-                .split_ascii_whitespace()
-                .map(|x| x.parse::<i32>().unwrap())
-                .collect::<Vec<i32>>();
-            (nums[0], nums[1])
-        })
-        .unzip();
+    let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     left.sort();
     right.sort();

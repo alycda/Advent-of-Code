@@ -1,61 +1,20 @@
-use crate::custom_error::AocError;
+use crate::{custom_error::AocError, unzip};
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    // u16
-    let mut left: Vec<i32> = vec![];
-    let mut right: Vec<i32> = vec![];
-    let mut sum = 0;
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
-    let _ = input
-        .lines()
-        .inspect(|line| {
-            // dbg!(line);
-            let nums = line
-                .split_ascii_whitespace()
-                .map(|x| x.parse::<i32>().unwrap())
-                .collect::<Vec<i32>>();
+    let output: i32 = left
+        .iter()
+        .map(|n| n * right.iter().filter(|&x| x == n).count() as i32)
+        .sum();
 
-            left.push(nums[0]);
-            right.push(nums[1]);
-        })
-        // .flat_map(|line| {
-        // })
-        .collect::<Vec<_>>();
-
-    // left.sort();
-    // right.sort();
-
-    // dbg!(&left, &right);
-
-    for n in 0..left.len() {
-    dbg!(left[n]);
-        //     // dbg!(right[n]);
-        let z = dbg!(right.iter().filter(|&x| x == &left[n]).count());
-
-        //     // dbg!(i32::abs(left[n] - right[n]));
-
-        //     sum += i32::abs(left[n] - right[n]);
-
-        //     // dbg!((left[n] - right[n]).abs());
-
-        sum += dbg!(left[n] * z as i32);
-    }
-
-    Ok(sum.to_string())
+    Ok(output.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // use rstest::rstest;
-
-    // #[rstest]
-    // #[case("", "")]
-    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
-    //     assert_eq!(process(input).unwrap(), expected);
-    // }
 
     #[test]
     fn test_process() -> miette::Result<()> {
