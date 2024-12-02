@@ -13,8 +13,12 @@ fn main() -> miette::Result<()> {
     #[cfg(not(feature = "dhat-heap"))]
     tracing_subscriber::fmt::init();
 
-    let file = include_str!("../../input2.txt");
+    let file = include_str!("../../input1.txt");
     let result = process(file).context("process part 2")?;
     println!("{}", result);
+
+    // assert!(result > "509"); // && <1000
+    // assert!(result > "513"); // && <1000
+    // assert!(result != "542"); // && <1000
     Ok(())
 }
