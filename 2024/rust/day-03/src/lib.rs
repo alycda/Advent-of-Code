@@ -10,6 +10,7 @@ pub mod custom_error;
 pub mod part1;
 pub mod part2;
 
+// TODO: parse numbers here
 fn parse_mul(input: &str) -> IResult<&str, (&str, &str)> {
     let (input, _) = take_until("mul(")(input)?;
     preceded(
