@@ -14,22 +14,21 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 day_01_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
-├─ part1      78.87 µs      │ 122.2 µs      │ 79.04 µs      │ 80.3 µs       │ 100     │ 100
-╰─ part2      102.6 µs      │ 134.2 µs      │ 104.7 µs      │ 105.8 µs      │ 100     │ 100
+├─ part1      74.08 µs      │ 115.9 µs      │ 74.29 µs      │ 75.64 µs      │ 100     │ 100
+╰─ part2      102.7 µs      │ 129.2 µs      │ 102.8 µs      │ 104.2 µs      │ 100     │ 100
 
-day_01::part1/part1     time:   [74.614 µs 74.807 µs 75.076 µs]
-                        change: [-1.6804% -0.4028% +0.4831%] (p = 0.58 > 0.05)
-                        No change in performance detected.
-Found 8 outliers among 100 measurements (8.00%)
-  5 (5.00%) high mild
-  3 (3.00%) high severe
+day_01::part1/part1     time:   [75.343 µs 75.914 µs 76.786 µs]
+                        change: [+0.7452% +1.7373% +3.2976%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
 
-day_01::part2/part2     time:   [103.98 µs 105.68 µs 107.94 µs]
-                        change: [-3.2374% -0.7136% +1.7838%] (p = 0.61 > 0.05)
+day_01::part2/part2     time:   [104.76 µs 106.06 µs 108.32 µs]
+                        change: [-1.9125% +0.3524% +2.2308%] (p = 0.77 > 0.05)
                         No change in performance detected.
-Found 12 outliers among 100 measurements (12.00%)
-  4 (4.00%) high mild
-  8 (8.00%) high severe
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
 
 
 running 53 tests
@@ -47,15 +46,17 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 day_02_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
-├─ part1      176.8 µs      │ 280.8 µs      │ 183.4 µs      │ 193.7 µs      │ 100     │ 100
-╰─ part2      545.5 µs      │ 617.4 µs      │ 561.4 µs      │ 566.3 µs      │ 100     │ 100
+├─ part1      174.6 µs      │ 1.377 ms      │ 177.1 µs      │ 194.1 µs      │ 100     │ 100
+╰─ part2      621.2 µs      │ 1.602 ms      │ 671.9 µs      │ 681.9 µs      │ 100     │ 100
 
-day_02::part1/part1     time:   [198.82 µs 204.76 µs 211.69 µs]
-Found 10 outliers among 100 measurements (10.00%)
+day_02::part1/part1     time:   [184.25 µs 186.64 µs 189.76 µs]
+                        change: [-8.3344% -5.9302% -3.6139%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 100 measurements (2.00%)
   1 (1.00%) high mild
-  9 (9.00%) high severe
-
-day_02::part2/part2     time:   [575.50 µs 581.09 µs 589.77 µs]
-Found 1 outliers among 100 measurements (1.00%)
   1 (1.00%) high severe
+
+day_02::part2/part2     time:   [709.93 µs 719.49 µs 728.17 µs]
+                        change: [+23.099% +24.662% +26.125%] (p = 0.00 < 0.05)
+                        Performance has regressed.
 
