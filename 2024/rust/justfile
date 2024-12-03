@@ -1,5 +1,12 @@
+default:
+    cheat -l
+
 bench-all:
     cargo bench -q > benchmarks.txt
+
+cheat key:
+    @cheat {{key}} | pbcopy
+    @echo "Copied {{key}} to clipboard"
 
 # Use `just work day-01 part1` to work on the specific binary for a specific day's problems
 work day part:
@@ -18,7 +25,7 @@ dhat day part:
 # create the directory for a new day's puzzle and fetch the input
 create day:
     cargo generate --path ./daily-template --name {{day}}
-    just get-input {{day}}
+    # just get-input {{day}}
 
 # You can find SESSION by using Chrome tools:
 # 1) Go to https://adventofcode.com/2022/day/1/input
