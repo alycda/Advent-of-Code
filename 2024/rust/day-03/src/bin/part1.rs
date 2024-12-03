@@ -1,5 +1,4 @@
 #![feature(iter_advance_by)]
-
 use day_03::part1::process;
 use miette::Context;
 
