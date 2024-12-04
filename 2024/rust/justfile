@@ -18,7 +18,7 @@ workbench day part:
 lint day:
     cargo clippy -p {{day}}
 test day part:
-    cargo nextest run -p {{day}} {{part}}
+    cargo nextest run -p {{day}} {{part}} #--no-capture
 bench day part:
     cargo bench --bench {{day}}-bench {{part}} >> {{day}}.bench.txt
 flamegraph day part:
