@@ -17,4 +17,7 @@ fn main() -> miette::Result<()> {
     let result = process(file).context("process part 1")?;
     println!("{}", result);
     Ok(())
+
+    // > 854
+    // > 1708
 }
