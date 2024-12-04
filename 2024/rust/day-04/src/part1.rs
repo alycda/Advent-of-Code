@@ -2,66 +2,34 @@ use std::cmp::Ordering;
 
 use crate::custom_error::AocError;
 
-// fn get_windows(lines: Lines<'_>) -> Vec<Vec<char>> {
-//     let height = lines.clone().count();
-//     let mut peekable = lines.clone().peekable();
-//     peekable.peek();
-//     let width = peekable.peek().unwrap().chars().count();
-
-//     let _ = lines
-//         .map(|line| line.chars().collect::<Vec<char>>())
-//         .inspect(|x| {
-//             dbg!(x);
-//         })
-//         .collect::<Vec<_>>();
-
-//     vec![vec![' ']]
-// }
-// fn get_grid_windows(grid: &str) -> Vec<Vec<char>> {
-//     let height = grid.lines().count();
-//     let mut width: usize = 0;
-//     let chars: Vec<char> = grid.lines().flat_map(|line| {
-//         width = line.chars().count();
-//         line.chars() 
-//     }).collect();
-//     let mut windows = Vec::new();
-
-//     // Horizontal rows
-//     for row in 0..width {
-//         windows.push(chars[row * width..(row + 1) * width].to_vec());
-//     }
-
-//     // Vertical columns
-//     for col in 0..height {
-//         windows.push((0..height).map(|row| chars[row * height + col]).collect());
-//     }
-
-//     // Only the two main diagonals
-//     windows.push((0..width).map(|i| chars[i * width + i]).collect());  // Top-left to bottom-right
-//     windows.push((0..width).map(|i| chars[i * width + (width - 1 - i)]).collect());  // Top-right to bottom-left
-
-//     windows
-// }
-
 #[tracing::instrument]
 pub fn process(input: &'static str) -> miette::Result<String, AocError> {
     let output = make_strings(input).iter().map(|v| v.iter().collect::<String>()).inspect(|s| {
         dbg!(s);
     })
     .filter_map(|s| {
-        let a = s.matches("XMAS").count();
-        let b = s.matches("SAMX").count();
+        // let a = s.matches("XMAS").count();
+        // let b = s.matches("SAMX").count();
 
-        dbg!((a, b));
+        // dbg!((a, b));
 
-        match (a + b).cmp(&0) {
-            Ordering::Greater => Some((a + b) as usize),
+        let found = find_xmas(&s);
+
+        match found.cmp(&0) {
+            Ordering::Greater => Some(found),
             _ => None
         }
     })
     .sum::<usize>();
 
-    Ok((output*2).to_string())    
+    Ok((output).to_string())    
+}
+
+fn find_xmas(input: &str) -> usize {
+    let sam = input.matches("XMAS").count();
+    let max = input.matches("SAMX").count();
+
+    (sam + max) as usize
 }
 
 fn make_strings(input: &str) -> Vec<Vec<char>> {
@@ -73,10 +41,10 @@ fn make_strings(input: &str) -> Vec<Vec<char>> {
     let size = grid.len();
     let mut new_strings = Vec::new();
 
-    // existing lines
+    // add current lines
     new_strings.extend(grid.clone());
 
-    // Add columns
+    // add columns
     for col in 0..size {
         let column: Vec<char> = (0..size)
             .map(|row| grid[row][col])
@@ -110,7 +78,7 @@ mod tests {
 .SAMX.
 .A..A.
 XMAS.S
-.X....", "3")]
+.X....", "4")]
 #[case("MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -136,7 +104,7 @@ S.S.S.S.SS
     }
 
     #[test]
-    fn make_patterns() {
+    fn make_4_4() {
         let input = "1234
 5678
 90AB
@@ -155,5 +123,41 @@ CDEF";
         ];
 
         assert_eq!(make_strings(input), expected);
+    }
+
+    #[test]
+    fn make_10_10() {
+        let input = "1234567890
+ABCDEFGHIJ
+KLMNOPQRST
+UVWXYZ!@#$
+%^&*()_+-=
+[]|{};:',<
+.>?/`~abcd
+fghijklmno
+pqrstuvwxy
+zABCDEFGHI";
+        let expected = vec![
+            vec!['1', '2', '3', '4'], 
+            vec!['5', '6', '7', '8'], 
+            vec!['9', '0', 'A', 'B'], 
+            vec!['C', 'D', 'E', 'F'],
+            vec!['1', '5', '9', 'C'],
+            vec!['2', '6', '0', 'D'],
+            vec!['3', '7', 'A', 'E'],
+            vec!['4', '8', 'B', 'F'],
+            vec!['1', '6', 'A', 'F'],
+            vec!['4', '7', '0', 'C'],
+        ];
+
+        assert_eq!(make_strings(input), expected);
+    }
+
+    #[rstest]
+    #[case("XMAS", 1)]
+    #[case("....XXMAS.", 1)]
+    #[case("MMMSXXMASM", 1)]
+    fn test_find_xmas(#[case] input: &'static str, #[case] expected: usize) {
+        assert_eq!(find_xmas(input), expected);
     }
 }
