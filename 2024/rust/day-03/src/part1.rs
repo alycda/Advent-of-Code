@@ -1,24 +1,22 @@
 use nom::error::{Error, ErrorKind};
+// use tracing::{debug, instrument};
 
-use crate::{custom_error::AocError, parse_mul};
+use crate::{custom_error::AocError, parse_mul, Product};
 
-#[tracing::instrument]
-pub fn process(mut input2: &str) -> miette::Result<String, AocError> {
+#[tracing::instrument(skip(input))]
+pub fn process(mut input: &str) -> miette::Result<String, AocError> {
     let mut sum = Vec::new();
 
-    while !input2.is_empty() {
-        match parse_mul(input2) {
+    while !input.is_empty() {
+        match parse_mul(input) {
             Ok((remainder, (a, b))) => {
-                let a = a.parse::<usize>().unwrap();
-                let b = b.parse::<usize>().unwrap();
+                sum.push(Product::new(a, b));
 
-                sum.push(a * b);
-
-                // input2 = dbg!(remainder);
-                input2 = remainder;
+                input = remainder;
+                // debug!("remainder");
             }
             Err(e) => {
-                // panic!("{e:?}");
+                dbg!(&e);
 
                 if let nom::Err::Error(err) = &e {
                     match err {
@@ -27,8 +25,8 @@ pub fn process(mut input2: &str) -> miette::Result<String, AocError> {
                             input: _,
                             code: ErrorKind::Char,
                         } => {
-                            if input2.len() > 1 {
-                                input2 = &input2[1..];
+                            if input.len() > 1 {
+                                input = &input[1..];
                             } else {
                                 panic!("{e:?}");
                             }
@@ -37,7 +35,7 @@ pub fn process(mut input2: &str) -> miette::Result<String, AocError> {
                             input: _,
                             code: ErrorKind::TakeUntil,
                         } => {
-                            input2 = "";
+                            input = "";
                         }
                         _ => panic!("{e:?}"),
                     }
@@ -48,7 +46,9 @@ pub fn process(mut input2: &str) -> miette::Result<String, AocError> {
         }
     }
 
-    Ok(sum.iter().sum::<usize>().to_string())
+    dbg!(&sum);
+    // dbg!(&sum.len());
+    Ok(sum.iter().map(|p| p.value()).sum::<usize>().to_string())
 }
 
 #[cfg(test)]

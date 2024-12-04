@@ -16,9 +16,13 @@ fn main() -> miette::Result<()> {
     let file = include_str!("../../input2.txt");
     let result = process(file).context("process part 2")?;
     println!("{}", result);
+
+    assert_eq!(result, "72948684");
     Ok(())
 
     // > 8171213
+    // ! 69171159
     // > 70580977
     // < 1017971541
+    // 14428142 + 1003543399
 }
