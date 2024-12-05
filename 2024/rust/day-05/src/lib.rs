@@ -10,8 +10,5 @@ pub fn process_update(input: &str) -> usize {
 
             nums[nums.len()/2].parse::<usize>().unwrap() 
         })
-        // .inspect(|middle_number| {
-        //     dbg!(middle_number);
-        // })
         .sum::<usize>()
 }
