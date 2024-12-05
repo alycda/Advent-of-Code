@@ -3,8 +3,8 @@ use std::{collections::HashMap, fmt};
 use tracing::instrument;
 
 use crate::custom_error::AocError;
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Grid(usize, usize, &'static str);
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Grid(usize, usize, String);
 // {
 //     rows: usize,
 //     cols: usize,
@@ -15,6 +15,7 @@ impl Grid {
     #[instrument]
     fn to_position(&self, idx: usize) -> Position {
         let cols = self.0;
+        // let chars_per_row = cols + 1;
         let row = idx / cols;
         let col = idx % cols;
         Position(row, col)
@@ -86,7 +87,7 @@ impl Direction {
 
 /// Gets all valid diagonal neighbors
 #[instrument]
-fn get_diagonal_neighbors(pos: Position, grid: Grid) -> Vec<Direction> {
+fn get_diagonal_neighbors(pos: Position, grid: &Grid) -> Vec<Direction> {
     let mut neighbors = Vec::new();
     let rows = grid.0;
     let cols = grid.1;
@@ -122,18 +123,20 @@ pub fn process(input: &'static str) -> miette::Result<String, AocError> {
     let cols = peekable.peek().unwrap().chars().count();
     let rows = peekable.count();
 
-    let grid = Grid(cols, rows, input);
+    let input_without_pesky_newlines = input.replace('\n', "");
+    // let static_borrow : &'static str = &input_without_pesky_newlines;
 
-    let output = input
-        // .replace('\n', "")
+    let grid = dbg!(Grid(cols, rows, input_without_pesky_newlines));
+
+    let output = input.replace('\n', "")
         .match_indices('A')
-    .inspect(|(idx, _)| {
+    .filter(|(idx, _)| {
         // dbg!(idx);
 
         let start_position = grid.to_position(*idx);
-        dbg!('A', idx, start_position);
+        // dbg!('A', idx, start_position);
 
-        let diagonals = get_diagonal_neighbors(start_position, grid);
+        let diagonals = get_diagonal_neighbors(start_position, &grid);
         // dbg!(&diagonals);
 
         let d = diagonals.iter()
@@ -163,9 +166,9 @@ pub fn process(input: &'static str) -> miette::Result<String, AocError> {
         //     neighbors
         // });
 
-        dbg!(&d);
+        // dbg!(&d);
         // // dbg!(diagonals.get(Direction::TopLeft));
-        dbg!(&d.get("TopLeft"), &d.get("TopRight"), &d.get("BottomLeft"), &d.get("BottomRight"));
+        // dbg!(&d.get("TopLeft"), &d.get("TopRight"), &d.get("BottomLeft"), &d.get("BottomRight"));
 
         if let (
             Some(top_left), 
@@ -180,14 +183,23 @@ pub fn process(input: &'static str) -> miette::Result<String, AocError> {
         ) {
             // All four directions exist
             
-            dbg!(top_left, top_right, bottom_left, bottom_right);
+
+            match (top_left, top_right, bottom_left, bottom_right) {
+                ('M', 'S', 'M', 'S') | 
+                ('S', 'M', 'S', 'M') | 
+                ('M', 'M', 'S', 'S') |
+                ('S', 'S', 'M', 'M') => true,        
+                _ => {
+                    dbg!(top_left, top_right, bottom_left, bottom_right);
+                    false 
+                }
+            }
+        } else {
+            false
         }
-        
 
         // let top_left = std::mem::discriminant(&Direction::TopLeft((), ()));
         // dbg!(diagonals.get(&top_left));
-
-
 
     }).count();
 
