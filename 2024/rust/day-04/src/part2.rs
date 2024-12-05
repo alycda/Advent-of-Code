@@ -1,223 +1,195 @@
-// #![feature(iter_advance_by)]
+use std::{collections::HashMap, fmt};
+
+use tracing::instrument;
 
 use crate::custom_error::AocError;
-
-fn count_horizontal(line: &str) -> usize {
-    line.matches("MAS")
-        // .inspect(|l| {dbg!(l);})
-        .count() 
-}
-
-fn count_vertical(input: &str) -> usize {
-    let matrix = input.lines().map(|line| {
-        line.chars().collect::<Vec<_>>()
-    }).collect::<Vec<Vec<_>>>();
-
-    let transposed = transpose(&matrix);
-    transposed.iter().enumerate().map(|(_i, line)| {
-        // dbg!((i, line));
-
-        let line = line.iter().collect::<String>();
-
-        // dbg!(i, line.iter().collect::<String>());
-        // dbg!("col:", i, &line);
-
-        count_horizontal(&line)
-    }).sum::<usize>()
-}
-
-fn count_diagonal_ltr(input: &str) -> usize {
-    let mut peekable = input.lines().peekable();
-
-    // // let cols = peekable.peek().unwrap().chars().count();
-    let rows = peekable.count();
-
-    input.lines().enumerate()
-    .flat_map(|(i, original_line)| {
-        // For each character in the original line, we'll create a diagonal
-        original_line.char_indices().map(move |(char_pos, _)| {
-            input.lines()
-                .skip(i)  // Skip to current line
-                .take(4)
-                .enumerate()
-                .filter_map(move |(idx, diagonal_line)| {
-                    // Get character at the diagonal position
-                    diagonal_line.chars().nth(char_pos + idx)
-                })
-                .collect::<String>()
-        })
-    })
-    // .map(|(i, original_line)| {
-    //     dbg!(i, original_line);
-
-    //     input.lines()
-    //         .skip(i)
-    //         // .take(rows)
-    //         .enumerate()
-    //         // .map(|(idx, line)| {
-    //         //     line.chars().nth(i + idx).unwrap()
-    //         // })
-    //         .filter_map(|(idx, diagonal_line)| {
-    //             diagonal_line.chars().nth(i + idx)
-    //         })
-    //     // .collect::<Vec<_>>()
-    //     .collect::<String>()
-
-    // })
-    // .filter(|line| line.len() == 4)
-    // .filter_map(|line| {
-    //     if line.len() == 4 {
-    //         Some(line.iter().collect::<String>())
-    //     } else {
-    //         None
-    //     }
-    // })
-    .map(|line| {
-        // dbg!(&line);
-        // dbg!(count_horizontal(line));
-        // let line = line.iter().collect::<String>();
-
-        count_horizontal(&line)
-    })
-    // .count()
-    // // .inspect(|idx, line|) {}
-    // .map(|(row_num, line)| {
-    //     // Start position shifts right by row number
-    //     line.chars()
-    //         .skip(row_num)     // Skip 'row_num' characters
-    //         .take(4)   
-    //         .inspect(|c| {
-
-    //         })        // Take 4 characters after the skip
-    //         .collect::<Vec<_>>()
-    // })
-    // .enumerate()
-    // .map(|(diagonal_idx, line)| {
-    // //     // peekable.next();
-
-    // let line = line.iter().collect::<String>();
-    //     // dbg!(diagonal_idx, &line);
-
-    //     // dbg!(diagonal_idx, line.iter().collect::<String>());
-
-    //     // dbg!(count_horizontal(&line.iter().collect::<String>()));
-
-    // //     // dbg!(peekable.peek());
-
-    //     count_vertical(&line)
-    // })
-    .sum::<usize>()
-}
-
-// fn extract_sliding_window(input: &[&str]) -> Vec<String> {
-//     input.iter()
-//         .enumerate()  // Gives us (index, line) pairs
-//         .map(|(row_num, line)| {
-//             // Start position shifts right by row number
-//             line.chars()
-//                 .skip(row_num)     // Skip 'row_num' characters
-//                 .take(4)           // Take 4 characters after the skip
-//                 .collect()
-//         })
-//         .collect()
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Grid(usize, usize, &'static str);
+// {
+//     rows: usize,
+//     cols: usize,
+//     cells: &str,
 // }
 
-fn count_diagonal_rtl(input: &str) -> usize {
-    let output = input.lines()
-    // .inspect(|line| {
-    //     dbg!(line);
-    //     // dbg!(line.chars().collect::<String>());
-    //     // dbg!(line.chars().rev().collect::<String>());
-    // })
-    .map(|line| {
-        line.chars().rev().collect::<String>()
-    })
-    // .inspect(|line_reversed| {
-    //     dbg!(line_reversed);
-    // })
-    .collect::<Vec<_>>().join("\n");
-
-    count_diagonal_ltr(&output)
-}
-
-// fn process_window(input: &[Vec<char>]) -> Vec<Vec<char>> {
-//     input.iter()
-//         .enumerate()
-//         .map(|(i, row)| {
-//             let valid_chars: Vec<char> = row.iter()
-//                 .skip(i)  // Skip i characters from the start
-//                 .take(row.len() - i)  // Take remaining valid characters
-//                 .cloned()
-//                 .collect();
-            
-//             // Pad with dots to maintain row length
-//             let mut processed = valid_chars;
-//             processed.extend(vec!['.'; i]);
-//             processed
-//         })
-//         .collect()
-// }
-
-// fn process_text(input: &[Vec<char>], window_size: usize) -> Vec<Vec<char>> {
-//     let mut result = Vec::new();
-//     let mut start = 0;
-    
-//     while start + window_size <= input.len() {
-//         let window = &input[start..start + window_size];
-//         let processed = process_window(window);
-//         result.extend(processed);
-//         start += 1;
-//     }
-    
-//     result
-// }
-
-fn transpose<T: Clone>(matrix: &Vec<Vec<T>>) -> Vec<Vec<T>> {
-    if matrix.is_empty() || matrix[0].is_empty() {
-        return vec![];
+impl Grid {
+    #[instrument]
+    fn to_position(&self, idx: usize) -> Position {
+        let cols = self.0;
+        let row = idx / cols;
+        let col = idx % cols;
+        Position(row, col)
     }
 
-    let rows = matrix.len();
-    let cols = matrix[0].len();
-    
-    // Pre-allocate the transposed matrix
-    let mut transposed = vec![vec![matrix[0][0].clone(); rows]; cols];
-    
-    // Fill the transposed matrix
-    for i in 0..rows {
-        for j in 0..cols {
-            transposed[j][i] = matrix[i][j].clone();
+    #[instrument]
+    fn to_idx(&self, pos: Position) -> usize {
+        let cols = self.0;
+        cols * pos.0 + pos.1
+    }
+    #[instrument]
+    fn get_char(&self, pos: Position) -> char {
+        self.2.as_bytes()[self.to_idx(pos)] as char
+    }
+}
+
+// Represents an ABSOLUTE position in the grid
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Position(usize, usize);
+// {
+//     row: usize,
+//     col: usize,
+// }
+
+#[derive(Debug, PartialEq, Eq)]
+enum Direction {
+    // Up(Position, Option<char>), // A
+    // Down(Position, Option<char>), // X
+    // Left(Position, Option<char>), // #
+    // Right(Position, Option<char>), // O
+    TopLeft(Position, Option<char>), // A#
+    TopRight(Position, Option<char>), // AO
+    BottomLeft(Position, Option<char>), // X#
+    BottomRight(Position, Option<char>), // XO
+}
+
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // Direction::Up(pos, c) => write!(f, "Up({},{},{:?})", pos.x, pos.y, c),
+            // Direction::Down(pos, c) => write!(f, "Down({},{},{:?})", pos.x, pos.y, c),
+            // Direction::Left(pos, c) => write!(f, "Left({},{},{:?})", pos.x, pos.y, c),
+            // Direction::Right(pos, c) => write!(f, "Right({},{},{:?})", pos.x, pos.y, c),
+            Direction::TopLeft(pos, c) => write!(f, "TopLeft({},{},{:?})", pos.0, pos.1, c),
+            Direction::TopRight(pos, c) => write!(f, "TopRight({},{},{:?})", pos.0, pos.1, c),
+            Direction::BottomLeft(pos, c) => write!(f, "BottomLeft({},{},{:?})", pos.0, pos.1, c),
+            Direction::BottomRight(pos, c) => write!(f, "BottomRight({},{},{:?})", pos.0, pos.1, c),
         }
     }
-
-    transposed
 }
 
-#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let horizontal_count = input
-        .lines()
-            .map(|line| {
-            count_horizontal(line)
-        })
-        .sum::<usize>();
+impl Direction {
+    #[instrument]
+    fn get_char(&self) -> Option<char> {
+        match self {
+            // Direction::Up(_, c) |
+            // Direction::Down(_, c) |
+            // Direction::Left(_, c) |
+            // Direction::Right(_, c) |
+            Direction::TopLeft(_, c) |
+            Direction::TopRight(_, c) |
+            Direction::BottomLeft(_, c) |
+            Direction::BottomRight(_, c) => *c
+            // _ => None
+        }
+    }
+}
 
-    // for (i, line) in input.lines().enumerate() {
-    //     dbg!((i, line));
+/// Gets all valid diagonal neighbors
+#[instrument]
+fn get_diagonal_neighbors(pos: Position, grid: Grid) -> Vec<Direction> {
+    let mut neighbors = Vec::new();
+    let rows = grid.0;
+    let cols = grid.1;
+    let row = pos.0;
+    let col = pos.1;
+    // let char = grid.get_char(pos);
+    // Up-left
+    if row > 0 && col > 0 {
+        let neighbor = Position(row - 1, col - 1);
+        neighbors.push(Direction::TopLeft(neighbor, Some(grid.get_char(neighbor))));
+    }
+    // Up-right
+    if row > 0 && col + 1 < cols {
+        let neighbor = Position(row - 1, col + 1);
+        neighbors.push(Direction::TopRight(neighbor, Some(grid.get_char(neighbor))));
+    }
+    // Down-left
+    if row + 1 < rows && col > 0 {
+        let neighbor = Position(row + 1, col - 1);
+        neighbors.push(Direction::BottomLeft(neighbor, Some(grid.get_char(neighbor))));
+    }
+    // Down-right
+    if row + 1 < rows && col + 1 < cols {
+        let neighbor = Position(row + 1, col + 1);
+        neighbors.push(Direction::BottomRight(neighbor, Some(grid.get_char(neighbor))));
+    }
+    neighbors
+}
 
-    //     for (j, c) in line.chars().enumerate() {
-    //         dbg!((j, c));
-    //     }
-    // }
-    
-    let vertical_count = count_vertical(input);
+#[instrument]
+pub fn process(input: &'static str) -> miette::Result<String, AocError> {
+    let mut peekable = input.lines().peekable();
+    let cols = peekable.peek().unwrap().chars().count();
+    let rows = peekable.count();
 
-    let diagonal_ltr_count = count_diagonal_ltr(input);
-    let diagonal_rtl_count = count_diagonal_rtl(input);
+    let grid = Grid(cols, rows, input);
 
-    // dbg!(horizontal_count, vertical_count, diagonal_ltr_count, diagonal_rtl_count);
+    let output = input
+        // .replace('\n', "")
+        .match_indices('A')
+    .inspect(|(idx, _)| {
+        // dbg!(idx);
 
-    let output = horizontal_count + vertical_count + diagonal_ltr_count + diagonal_rtl_count;
+        let start_position = grid.to_position(*idx);
+        dbg!('A', idx, start_position);
+
+        let diagonals = get_diagonal_neighbors(start_position, grid);
+        // dbg!(&diagonals);
+
+        let d = diagonals.iter()
+        // .inspect(|neighbor| {
+        //     dbg!(neighbor);
+        // })
+        // .collect::<Vec<_>>();
+        // .fold((HashMap::new() |mut neighbors, direction| {
+        //     *neighbors.entry(direction.to_string()).or_insert()
+        // }));
+        .fold(HashMap::new(), |mut map, dir| {
+            match dir {
+                // d @ Direction::Up(..) => { map.insert("Up", d); }
+                // d @ Direction::Down(..) => { map.insert("Down", d); }
+                // d @ Direction::Left(..) => { map.insert("Left", d); }
+                // d @ Direction::Right(..) => { map.insert("Right", d); }
+                d @ Direction::TopLeft(_, char) => { map.insert("TopLeft", char.unwrap_or('.')); }
+                d @ Direction::TopRight(_, char) => { map.insert("TopRight", char.unwrap_or('.')); }
+                d @ Direction::BottomLeft(_, char) => { map.insert("BottomLeft", char.unwrap_or('.')); }
+                d @ Direction::BottomRight(_, char) => { map.insert("BottomRight", char.unwrap_or('.')); }
+            }
+            map
+        });
+
+        // .fold(HashMap::new(), |mut neighbors, direction| {
+        //     *neighbors.entry(std::mem::discriminant(direction)).or_insert(0) += 1;
+        //     neighbors
+        // });
+
+        dbg!(&d);
+        // // dbg!(diagonals.get(Direction::TopLeft));
+        dbg!(&d.get("TopLeft"), &d.get("TopRight"), &d.get("BottomLeft"), &d.get("BottomRight"));
+
+        if let (
+            Some(top_left), 
+            Some(top_right), 
+            Some(bottom_left), 
+            Some(bottom_right)
+        ) = (
+            d.get("TopLeft"),
+            d.get("TopRight"),
+            d.get("BottomLeft"),
+            d.get("BottomRight")
+        ) {
+            // All four directions exist
+            
+            dbg!(top_left, top_right, bottom_left, bottom_right);
+        }
+        
+
+        // let top_left = std::mem::discriminant(&Direction::TopLeft((), ()));
+        // dbg!(diagonals.get(&top_left));
+
+
+
+    }).count();
 
     Ok(output.to_string())
 }
@@ -242,6 +214,16 @@ S.S.S.S.S.
 .A.A.A.A..
 M.M.M.M.M.
 ..........", "9")]
+#[case(".M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M...
+..........", "8")]
 // #[case("MMMSXXMASM
 // MSAMXMSMSA
 // AMXSXMAAMM
