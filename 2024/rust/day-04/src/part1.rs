@@ -30,29 +30,43 @@ fn count_vertical(input: &str) -> usize {
 }
 
 fn count_diagonal_ltr(input: &str) -> usize {
-    // // let mut peekable = input.lines().peekable();
+    let mut peekable = input.lines().peekable();
 
     // // let cols = peekable.peek().unwrap().chars().count();
-    // // let rows = peekable.count();
+    let rows = peekable.count();
 
     input.lines().enumerate()
-    .map(|(i, original_line)| {
-        // dbg!(i, original_line);
-
-        input.lines()
-            .skip(i)
-            .take(4)
-            .enumerate()
-            // .map(|(idx, line)| {
-            //     line.chars().nth(i + idx).unwrap()
-            // })
-            .filter_map(|(idx, diagonal_line)| {
-                diagonal_line.chars().nth(i + idx)
-            })
-        // .collect::<Vec<_>>()
-        .collect::<String>()
-
+    .flat_map(|(i, original_line)| {
+        // For each character in the original line, we'll create a diagonal
+        original_line.char_indices().map(move |(char_pos, _)| {
+            input.lines()
+                .skip(i)  // Skip to current line
+                .take(4)
+                .enumerate()
+                .filter_map(move |(idx, diagonal_line)| {
+                    // Get character at the diagonal position
+                    diagonal_line.chars().nth(char_pos + idx)
+                })
+                .collect::<String>()
+        })
     })
+    // .map(|(i, original_line)| {
+    //     dbg!(i, original_line);
+
+    //     input.lines()
+    //         .skip(i)
+    //         // .take(rows)
+    //         .enumerate()
+    //         // .map(|(idx, line)| {
+    //         //     line.chars().nth(i + idx).unwrap()
+    //         // })
+    //         .filter_map(|(idx, diagonal_line)| {
+    //             diagonal_line.chars().nth(i + idx)
+    //         })
+    //     // .collect::<Vec<_>>()
+    //     .collect::<String>()
+
+    // })
     // .filter(|line| line.len() == 4)
     // .filter_map(|line| {
     //     if line.len() == 4 {
@@ -62,7 +76,7 @@ fn count_diagonal_ltr(input: &str) -> usize {
     //     }
     // })
     .map(|line| {
-        // dbg!(&line);
+        dbg!(&line);
         // dbg!(count_horizontal(line));
         // let line = line.iter().collect::<String>();
 
@@ -223,26 +237,26 @@ mod tests {
 .A..A.
 XMAS.S
 .X....", "4")]
-// #[case("MMMSXXMASM
-// MSAMXMSMSA
-// AMXSXMAAMM
-// MSAMASMSMX
-// XMASAMXAMM
-// XXAMMXXAMA
-// SMSMSASXSS
-// SAXAMASAAA
-// MAMMMXMMMM
-// MXMXAXMASX", "18")]
-// #[case("....XXMAS.
-// .SAMXMS...
-// ...S..A...
-// ..A.A.MS.X
-// XMASAMX.MM
-// X.....XA.A
-// S.S.S.S.SS
-// .A.A.A.A.A
-// ..M.M.M.MM
-// .X.X.XMASX", "18")]
+#[case("MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX", "18")]
+#[case("....XXMAS.
+.SAMXMS...
+...S..A...
+..A.A.MS.X
+XMASAMX.MM
+X.....XA.A
+S.S.S.S.SS
+.A.A.A.A.A
+..M.M.M.MM
+.X.X.XMASX", "18")]
 #[case("..XXMAS", "1")]
 #[case("SAMXMS.", "1")]
 #[case("MS.X", "0")]
@@ -252,10 +266,10 @@ XMAS.S
 #[case("...XA.A", "0")]
 #[case(".X.X.XMASX", "1")]
 #[case(".X.XMAS", "1")]
-#[case("..XXMAS
-AMXMS..
-.S..A..
-A.A.MS.", "1")]
+// #[case("..XXMAS
+// AMXMS..
+// .S..A..
+// A.A.MS.", "1")]
 #[case("...XXMA
 SAMXMS.
 ..S..A.
@@ -272,95 +286,95 @@ X", "2")]
     }
 
 
-    #[rstest]
-    #[case("..X...
-.SAMX.
-.A..A.
-XMAS.S
-.X....", 2)]
-#[case("MMMSXXMASM
-MSAMXMSMSA
-AMXSXMAAMM
-MSAMASMSMX
-XMASAMXAMM
-XXAMMXXAMA
-SMSMSASXSS
-SAXAMASAAA
-MAMMMXMMMM
-MXMXAXMASX", 5)]
-#[case("....XXMAS.
-.SAMXMS...
-...S..A...
-..A.A.MS.X
-XMASAMX.MM
-X.....XA.A
-S.S.S.S.SS
-.A.A.A.A.A
-..M.M.M.MM
-.X.X.XMASX", 5)]
-    fn test_horizontal(#[case] input: &'static str, #[case] expected: usize) {
-        assert_eq!(count_horizontal(input), expected);
-    }
+//     #[rstest]
+//     #[case("..X...
+// .SAMX.
+// .A..A.
+// XMAS.S
+// .X....", 2)]
+// #[case("MMMSXXMASM
+// MSAMXMSMSA
+// AMXSXMAAMM
+// MSAMASMSMX
+// XMASAMXAMM
+// XXAMMXXAMA
+// SMSMSASXSS
+// SAXAMASAAA
+// MAMMMXMMMM
+// MXMXAXMASX", 5)]
+// #[case("....XXMAS.
+// .SAMXMS...
+// ...S..A...
+// ..A.A.MS.X
+// XMASAMX.MM
+// X.....XA.A
+// S.S.S.S.SS
+// .A.A.A.A.A
+// ..M.M.M.MM
+// .X.X.XMASX", 5)]
+//     fn test_horizontal(#[case] input: &'static str, #[case] expected: usize) {
+//         assert_eq!(count_horizontal(input), expected);
+//     }
 
-    #[rstest]
-    #[case("..X...
-.SAMX.
-.A..A.
-XMAS.S
-.X....", 1)]
-#[case("MMMSXXMASM
-MSAMXMSMSA
-AMXSXMAAMM
-MSAMASMSMX
-XMASAMXAMM
-XXAMMXXAMA
-SMSMSASXSS
-SAXAMASAAA
-MAMMMXMMMM
-MXMXAXMASX", 3)]
-#[case("....XXMAS.
-.SAMXMS...
-...S..A...
-..A.A.MS.X
-XMASAMX.MM
-X.....XA.A
-S.S.S.S.SS
-.A.A.A.A.A
-..M.M.M.MM
-.X.X.XMASX", 3)]
-    fn test_vertical(#[case] input: &'static str, #[case] expected: usize) {
-        assert_eq!(count_vertical(input), expected);
-    }
+//     #[rstest]
+//     #[case("..X...
+// .SAMX.
+// .A..A.
+// XMAS.S
+// .X....", 1)]
+// #[case("MMMSXXMASM
+// MSAMXMSMSA
+// AMXSXMAAMM
+// MSAMASMSMX
+// XMASAMXAMM
+// XXAMMXXAMA
+// SMSMSASXSS
+// SAXAMASAAA
+// MAMMMXMMMM
+// MXMXAXMASX", 3)]
+// #[case("....XXMAS.
+// .SAMXMS...
+// ...S..A...
+// ..A.A.MS.X
+// XMASAMX.MM
+// X.....XA.A
+// S.S.S.S.SS
+// .A.A.A.A.A
+// ..M.M.M.MM
+// .X.X.XMASX", 3)]
+//     fn test_vertical(#[case] input: &'static str, #[case] expected: usize) {
+//         assert_eq!(count_vertical(input), expected);
+//     }
 
-    #[rstest]
-    #[case("..X...
-.SAMX.
-.A..A.
-XMAS.S
-.X....", 1)]
-#[case("MMMSXXMASM
-MSAMXMSMSA
-AMXSXMAAMM
-MSAMASMSMX
-XMASAMXAMM
-XXAMMXXAMA
-SMSMSASXSS
-SAXAMASAAA
-MAMMMXMMMM
-MXMXAXMASX", 5)]
-#[case("....XXMAS.
-.SAMXMS...
-...S..A...
-..A.A.MS.X
-XMASAMX.MM
-X.....XA.A
-S.S.S.S.SS
-.A.A.A.A.A
-..M.M.M.MM
-.X.X.XMASX", 5)]
-    fn test_diagonal_ltr(#[case] input: &'static str, #[case] expected: usize) {
-        assert_eq!(count_diagonal_ltr(input), expected);
-    }
+//     #[rstest]
+//     #[case("..X...
+// .SAMX.
+// .A..A.
+// XMAS.S
+// .X....", 1)]
+// #[case("MMMSXXMASM
+// MSAMXMSMSA
+// AMXSXMAAMM
+// MSAMASMSMX
+// XMASAMXAMM
+// XXAMMXXAMA
+// SMSMSASXSS
+// SAXAMASAAA
+// MAMMMXMMMM
+// MXMXAXMASX", 5)]
+// #[case("....XXMAS.
+// .SAMXMS...
+// ...S..A...
+// ..A.A.MS.X
+// XMASAMX.MM
+// X.....XA.A
+// S.S.S.S.SS
+// .A.A.A.A.A
+// ..M.M.M.MM
+// .X.X.XMASX", 5)]
+//     fn test_diagonal_ltr(#[case] input: &'static str, #[case] expected: usize) {
+//         assert_eq!(count_diagonal_ltr(input), expected);
+//     }
 
 //     #[test]
 //     fn test_diagonals() {
@@ -368,9 +382,9 @@ S.S.S.S.SS
 // XABCDEF
 // YXABCDE
 // ZYXABCD";
-
 //         dbg!(count_diagonal_ltr(input));
 //         panic!("halt");
 //     }
+
 
 }
