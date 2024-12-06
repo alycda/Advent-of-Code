@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt};
 use tracing::instrument;
 
 use crate::custom_error::AocError;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Grid(usize, usize, String);
 // {
