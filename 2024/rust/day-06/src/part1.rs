@@ -37,78 +37,85 @@ enum Direction {
     // BottomRight(Position, Option<char>), // XO
 }
 
-// COL, ROW
+/// COL, ROW
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Grid(usize, usize, String);
 
 impl Grid {
+    fn new(cols: usize, rows: usize, grid: String) -> Self {
+        Self(cols, rows, grid)
+    }
+
     #[instrument]
     fn to_position(&self, idx: usize) -> Position {
         // panic!("{idx}");
 
         let cols = self.get_cols();
-        let chars_per_row = cols + 1;
-        let row = idx % chars_per_row;
-        let col = idx / chars_per_row;
+        // let chars_per_row = cols + 1;
+        let col = idx % cols;
+        let row = idx / cols;
         dbg!(Position::new(col, row))
     }
 
+    // chars per row is cols + 1
     fn get_cols(&self) -> usize {
-        self.0
+        self.0 + 1
     }
 
     fn get_rows(&self) -> usize {
         self.1
     }
 
+    /// accounts for newline characters
     #[instrument]
     fn to_idx(&self, pos: Position) -> usize {
-        dbg!(self.get_cols() * pos.get_col() + pos.get_row())
+        // let chars_per_row = self.get_cols() + 1;
+
+        self.get_cols() * pos.get_row() + pos.get_col()
     }
+
     #[instrument]
     fn get_char(&self, pos: Position) -> char {
-        self.2.as_bytes()[self.to_idx(pos)] as char
+        self.2.as_bytes()[dbg!(self.to_idx(pos))] as char
     }
 
     fn insert(&mut self, c: char, pos: Position) {
+        self.2.remove(self.to_idx(pos));
         self.2.insert(self.to_idx(pos), c);
     }
 
-    fn _get_all_neighbors() {
-        todo!()
-    }
+//     fn _get_all_neighbors() {
+//         todo!()
+//     }
 
     fn get_neighbors(&self, pos: Position) -> HashMap<&str, (Position, char)> {
         let mut neighbors = Vec::new();
         let cols = self.get_cols();
-        let chars_per_row = cols + 1;
+        // let chars_per_row = cols + 1;
         let rows = self.get_rows();
-        let row = dbg!(pos.get_col());
-        let col = dbg!(pos.get_row());
-        // let char = grid.get_char(pos);
-        // Check up
+        let col = pos.get_col();
+        let row = pos.get_row();
+        // let char = dbg!(self.get_char(pos));
+
+        // Check up (decrease Y)
         if row > 0 {
-            dbg!("up");
-            let neighbor = Position::new(row - 1, col);
-            neighbors.push(Direction::Up(neighbor, Some(dbg!(self.get_char(neighbor)))));
+            let neighbor = Position::new(col, row - 1);
+            neighbors.push(Direction::Up(neighbor, Some(self.get_char(neighbor))));
         }
-        // Check down
+        // Check down (increase Y)
         if row + 1 < rows {
-            dbg!("down");
-            let neighbor = Position::new(row + 1, col);
-            neighbors.push(Direction::Down(neighbor, Some(dbg!(self.get_char(neighbor)))));
+            let neighbor = Position::new(col, row + 1);
+            neighbors.push(Direction::Down(neighbor, Some(self.get_char(neighbor))));
         }
-        // Check left
+        // Check left (decrease X)
         if col > 0 {
-            dbg!("left");
-            let neighbor = Position::new(row, col - 1);
-            neighbors.push(Direction::Left(neighbor, Some(dbg!(self.get_char(neighbor)))));
+            let neighbor = Position::new(col - 1, row);
+            neighbors.push(Direction::Left(neighbor, Some(self.get_char(neighbor))));
         }
-        // Check right
-        if col + 1 < chars_per_row {
-            dbg!("right");
-            let neighbor = Position::new(row, col + 1);
-            neighbors.push(Direction::Right(neighbor, Some(dbg!(self.get_char(neighbor)))));
+        // Check right (increase X)
+        if col + 1 < cols {
+            let neighbor = Position::new(col + 1, row);
+            neighbors.push(Direction::Right(neighbor, Some(self.get_char(neighbor))));
         }
         neighbors.iter().fold(HashMap::new(), |mut map, dir| {
             match dir {
@@ -130,30 +137,30 @@ impl Grid {
     
 }
 
-// fn move_forward() {
-    // let current_pos = start_position;
-    // let next_pos = *pos;
-    // let should_mark_x = *cell != 'X';
+// // fn move_forward() {
+//     // let current_pos = start_position;
+//     // let next_pos = *pos;
+//     // let should_mark_x = *cell != 'X';
     
-    // // Drop the borrow by setting neighbors to None
-    // // neighbors = None;
+//     // // Drop the borrow by setting neighbors to None
+//     // // neighbors = None;
     
-    // // Now we can modify grid
-    // if should_mark_x {
-    //     grid.insert('X', current_pos);
-    // }
-    // grid.insert('^', next_pos);
+//     // // Now we can modify grid
+//     // if should_mark_x {
+//     //     grid.insert('X', current_pos);
+//     // }
+//     // grid.insert('^', next_pos);
     
-    // start_position = next_pos;
-    // // Get new neighbors after modification
-    // neighbors = Some(grid.get_neighbors(next_pos));
-// }
+//     // start_position = next_pos;
+//     // // Get new neighbors after modification
+//     // neighbors = Some(grid.get_neighbors(next_pos));
+// // }
 
-// fn turn_right() {
+// // fn turn_right() {
 
-// }
+// // }
 
-#[tracing::instrument]
+#[instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut peekable = input.lines().peekable();
     let cols = peekable.peek().unwrap().chars().count();
@@ -168,13 +175,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         // })
         .count();
 
-    let input_without_pesky_newlines = input.replace('\n', "");
+    // dbg!(cols, rows); // (3, 4)
 
-    // let start = dbg!(input.find("^"));
-    let start = input_without_pesky_newlines.find("^"); // -> 64
+    let start = input.find("^");
 
-    let mut grid = Grid(cols, rows, input.to_owned());
-    // let mut grid = Grid(cols, rows, input_without_pesky_newlines);
+    let mut grid = Grid::new(cols, rows, input.to_owned());
     let mut start_position = grid.to_position(start.unwrap());
 
     // dbg!(&start_position);
@@ -184,9 +189,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     while let Some(ref n) = neighbors {
         grid.print();
 
-        dbg!(start_position, &n);
-        // dbg!(start_position);
-        panic!("halt");
+//         dbg!(start_position, &n);
+//         // dbg!(start_position);
+//         panic!("halt");
 
         match grid.get_char(start_position) {
             // we start facing up
@@ -319,16 +324,16 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         }
     }
 
-    // for n in 1..rows {
-    //     grid.2.insert(n * cols, '\n');
-    // }
+//     // for n in 1..rows {
+//     //     grid.2.insert(n * cols, '\n');
+//     // }
 
-    // dbg!(&grid.2);
-    // let _ = &grid.2.lines().inspect(|l| {dbg!(l);}).count();
+//     // dbg!(&grid.2);
+//     // let _ = &grid.2.lines().inspect(|l| {dbg!(l);}).count();
 
-    let output = grid.2.chars().filter(|c| *c == 'X').count();
+//     let output = grid.2.chars().filter(|c| *c == 'X').count();
 
-    Ok(output.to_string())
+    Ok("output".to_string())
 }
 
 
@@ -338,28 +343,28 @@ mod tests {
 
     use rstest::rstest;
 
-    #[rstest]
-    #[case("ABC
-^..
-DEF
-GHI", "100")]
-    fn test_cases(#[case] input: &str, #[case] expected: &str) {
-        assert_eq!(process(input).unwrap(), expected);
-    }
-
-//     #[test]
-//     fn test_process() -> miette::Result<()> {
-//         let input = "....#.....
-// .........#
-// ..........
-// ..#.......
-// .......#..
-// ZZZZZZZZZZ
-// A#BC^DEFGH
-// YYYYYYYY#.
-// #.........
-// ......#...";
-//         assert_eq!("41", process(input)?);
-//         Ok(())
+//     #[rstest]
+//     #[case("ABC
+// ^..
+// DEF
+// GHI", "100")]
+//     fn test_cases(#[case] input: &str, #[case] expected: &str) {
+//         assert_eq!(process(input).unwrap(), expected);
 //     }
+
+    #[test]
+    fn test_process() -> miette::Result<()> {
+        let input = "....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...";
+        assert_eq!("41", process(input)?);
+        Ok(())
+    }
 }
