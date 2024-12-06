@@ -137,24 +137,24 @@ impl Grid {
     
 }
 
-// // fn move_forward() {
-//     // let current_pos = start_position;
-//     // let next_pos = *pos;
-//     // let should_mark_x = *cell != 'X';
+// fn _move_forward(mut start_position: &Position, pos: Position, cell: char, neighbors: &mut Option<HashMap<&str, (Position, char)>>, grid: &mut Grid) -> Option<HashMap<&str, (Position, char)>> {
+//     let current_pos = start_position;
+//     let next_pos = pos;
+//     let should_mark_x = cell != 'X';
     
-//     // // Drop the borrow by setting neighbors to None
-//     // // neighbors = None;
+//     // Drop the borrow by setting neighbors to None
+//     // neighbors = None;
     
-//     // // Now we can modify grid
-//     // if should_mark_x {
-//     //     grid.insert('X', current_pos);
-//     // }
-//     // grid.insert('^', next_pos);
+//     // Now we can modify grid
+//     if should_mark_x {
+//         grid.insert('X', *current_pos);
+//     }
+//     grid.insert('^', next_pos);
     
-//     // start_position = next_pos;
-//     // // Get new neighbors after modification
-//     // neighbors = Some(grid.get_neighbors(next_pos));
-// // }
+//     start_position = &next_pos;
+//     // Get new neighbors after modification
+//     Some(grid.get_neighbors(next_pos))
+// }
 
 // // fn turn_right() {
 
@@ -228,6 +228,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         },
+                        // we hit a wall, turn right (relative)
                         '#' => {
                             if let Some((pos, cell)) = n.get("Right") {
                                 match cell {
@@ -314,9 +315,176 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     break;
                 }
             },
-            '>' => todo!(),
-            'v' => todo!(),
-            '<' => todo!(),
+            '>' => {
+                // forward
+                if let Some((pos, cell)) = n.get("Right") {
+                    match cell {
+                        '.' | 'X' => {
+                            // Store the values we need before modifying grid
+                            let current_pos = start_position;
+                            let next_pos = *pos;
+                            let should_mark_x = *cell != 'X';
+                            
+                            // Drop the borrow by setting neighbors to None
+                            // neighbors = None;
+                            
+                            // Now we can modify grid
+                            if should_mark_x {
+                                grid.insert('X', current_pos);
+                            }
+                            dbg!(grid.insert('>', next_pos));
+
+                            
+                            start_position = next_pos;
+                            // Get new neighbors after modification
+                            neighbors = Some(grid.get_neighbors(next_pos));
+                        }
+                        // we hit a wall, turn right (relative)
+                        '#' => {
+                            if let Some((pos, cell)) = n.get("Down") {
+                                match cell {
+                                    '.' | 'X' => {
+                                        // Store the values we need before modifying grid
+                                        let current_pos = start_position;
+                                        let next_pos = *pos;
+                                        let should_mark_x = *cell != 'X';
+                                        
+                                        // Drop the borrow by setting neighbors to None
+                                        // neighbors = None;
+                                        
+                                        // Now we can modify grid
+                                        if should_mark_x {
+                                            grid.insert('X', current_pos);
+                                        }
+                                        grid.insert('v', next_pos);
+                                        
+                                        start_position = next_pos;
+                                        // Get new neighbors after modification
+                                        neighbors = Some(grid.get_neighbors(next_pos));
+                                    },
+                                    _ => todo!()
+                                }
+                            }
+                        }
+                        _ => todo!()
+                    }
+                } else {
+                    todo!("break?");
+                }
+            },
+            'v' => {
+                if let Some((pos, cell)) = n.get("Down") {
+                    match cell {
+                        '.' | 'X' => {
+                            // Store the values we need before modifying grid
+                            let current_pos = start_position;
+                            let next_pos = *pos;
+                            let should_mark_x = *cell != 'X';
+                            
+                            // Drop the borrow by setting neighbors to None
+                            // neighbors = None;
+                            
+                            // Now we can modify grid
+                            if should_mark_x {
+                                grid.insert('X', current_pos);
+                            }
+                            dbg!(grid.insert('v', next_pos));
+
+                            
+                            start_position = next_pos;
+                            // Get new neighbors after modification
+                            neighbors = Some(grid.get_neighbors(next_pos));
+                        }
+                        // we hit a wall, turn right (relative)
+                        '#' => {
+                            if let Some((pos, cell)) = n.get("Left") {
+                                match cell {
+                                    '.' | 'X' => {
+                                        // Store the values we need before modifying grid
+                                        let current_pos = start_position;
+                                        let next_pos = *pos;
+                                        let should_mark_x = *cell != 'X';
+                                        
+                                        // Drop the borrow by setting neighbors to None
+                                        // neighbors = None;
+                                        
+                                        // Now we can modify grid
+                                        if should_mark_x {
+                                            grid.insert('X', current_pos);
+                                        }
+                                        grid.insert('<', next_pos);
+                                        
+                                        start_position = next_pos;
+                                        // Get new neighbors after modification
+                                        neighbors = Some(grid.get_neighbors(next_pos));
+                                    },
+                                    _ => todo!()
+                                }
+                            }
+                        }
+                        _ => todo!()
+                    }
+                } else {
+                    todo!("break?");
+                }
+            },
+            '<' => {
+                // forward
+                if let Some((pos, cell)) = n.get("Left") {
+                    match cell {
+                        '.' | 'X' => {
+                            // Store the values we need before modifying grid
+                            let current_pos = start_position;
+                            let next_pos = *pos;
+                            let should_mark_x = *cell != 'X';
+                            
+                            // Drop the borrow by setting neighbors to None
+                            // neighbors = None;
+                            
+                            // Now we can modify grid
+                            if should_mark_x {
+                                grid.insert('X', current_pos);
+                            }
+                            dbg!(grid.insert('<', next_pos));
+
+                            
+                            start_position = next_pos;
+                            // Get new neighbors after modification
+                            neighbors = Some(grid.get_neighbors(next_pos));
+                        }
+                        // we hit a wall, turn right (relative)
+                        '#' => {
+                            if let Some((pos, cell)) = n.get("Up") {
+                                match cell {
+                                    '.' | 'X' => {
+                                        // Store the values we need before modifying grid
+                                        let current_pos = start_position;
+                                        let next_pos = *pos;
+                                        let should_mark_x = *cell != 'X';
+                                        
+                                        // Drop the borrow by setting neighbors to None
+                                        // neighbors = None;
+                                        
+                                        // Now we can modify grid
+                                        if should_mark_x {
+                                            grid.insert('X', current_pos);
+                                        }
+                                        grid.insert('^', next_pos);
+                                        
+                                        start_position = next_pos;
+                                        // Get new neighbors after modification
+                                        neighbors = Some(grid.get_neighbors(next_pos));
+                                    },
+                                    _ => todo!()
+                                }
+                            }
+                        }
+                        _ => todo!()
+                    }
+                } else {
+                    todo!("break?");
+                }
+            },
             unknown => {
                 dbg!(unknown);
                 panic!("invalid character")
@@ -331,9 +499,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 //     // dbg!(&grid.2);
 //     // let _ = &grid.2.lines().inspect(|l| {dbg!(l);}).count();
 
-//     let output = grid.2.chars().filter(|c| *c == 'X').count();
+    let output = grid.2.chars().filter(|c| *c == 'X').count();
 
-    Ok("output".to_string())
+    Ok(output.to_string())
 }
 
 
@@ -341,7 +509,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 mod tests {
     use super::*;
 
-    use rstest::rstest;
+    // use rstest::rstest;
 
 //     #[rstest]
 //     #[case("ABC
