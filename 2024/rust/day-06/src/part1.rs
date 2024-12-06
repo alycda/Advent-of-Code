@@ -83,7 +83,8 @@ impl Grid {
         self.2.remove(self.to_idx(&pos));
         self.2.insert(self.to_idx(&pos), 'X');
 
-        dbg!(self.3.insert(dbg!(pos)));
+        // dbg!(self.3.insert(dbg!(pos)));
+        self.3.insert(pos);
     }
 
 //     fn _get_all_neighbors() {
@@ -174,12 +175,14 @@ impl Grid {
             clone.insert(self.to_idx(pos), 'X');
         });
 
-        self.2 = clone;
+        // #[cfg(debug_assertions)]
+        // self.2 = clone;
 
-        self.2.lines().for_each(|l| {
-            dbg!(l);
-        }); 
-        dbg!(());       
+        // #[cfg(debug_assertions)]
+        // self.2.lines().for_each(|l| {
+        //     dbg!(l);
+        // }); 
+        // dbg!(());       
     }
     
 }
@@ -234,22 +237,22 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut neighbors: Option<HashMap<&str, (Position, char)>> = Some(grid.get_neighbors(start_position));
     let mut direction = '^';
 
-    let mut pass = 0;
+    // let mut pass = 0;
 
     while let Some(ref n) = neighbors {
-        pass += 1;
-        dbg!(pass);
-        // grid.print();
-        grid.2.split("\n").for_each(|c| {
-            dbg!(c);
-        });
+        // pass += 1;
+        // dbg!(pass);
+        // // grid.print();
+        // grid.2.split("\n").for_each(|c| {
+        //     dbg!(c);
+        // });
 
 //         dbg!(start_position, &n);
 //         // dbg!(start_position);
 //         panic!("halt");
 
         if (grid.exit(start_position, direction)) {
-            dbg!("we are leaving (TOP)");
+            dbg!("we are leaving ()", start_position, direction);
             break;
         }
 
@@ -481,7 +484,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                         
                                         start_position = next_pos;
                                         // Get new neighbors after modification
-                                        neighbors = Some(dbg!(grid.get_neighbors(next_pos)));
+                                        neighbors = Some(grid.get_neighbors(next_pos));
                                     },
                                     '#' => {
                                         if let Some((pos, cell)) = n.get("Left") {
@@ -572,7 +575,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             // }
                             // grid.insert('v', next_pos);
                             // dbg!(grid.insert('v', next_pos));
-                            direction = dbg!('v');
+                            direction = 'v';
 
                             
                             start_position = next_pos;
@@ -914,7 +917,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 //     // dbg!(&grid.2);
 //     // let _ = &grid.2.lines().inspect(|l| {dbg!(l);}).count();
 
-    grid.print();
+    // grid.print();
     // let output = grid.2.chars().filter(|c| *c == 'X').count();
 
     let output = grid.3.len();

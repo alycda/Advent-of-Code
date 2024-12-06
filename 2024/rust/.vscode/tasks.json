@@ -25,6 +25,16 @@
         },
         {
           "type": "cargo",
+          "command": "run",
+          "args": ["--release", "--bin", "${fileBasenameNoExtension}"],
+          "label": "rust: run-release",
+          "options": {
+            "cwd": "${fileDirname}"
+          },
+          "problemMatcher": []
+        },
+        {
+          "type": "cargo",
           "command": "build",
           // builds both/all binaries
           "args": ["--package", "day-${input:day}"],
