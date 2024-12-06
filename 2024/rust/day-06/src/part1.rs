@@ -54,7 +54,7 @@ impl Grid {
         // let chars_per_row = cols + 1;
         let col = idx % cols;
         let row = idx / cols;
-        dbg!(Position::new(col, row))
+        Position::new(col, row)
     }
 
     // chars per row is cols + 1
@@ -76,7 +76,7 @@ impl Grid {
 
     #[instrument]
     fn get_char(&self, pos: Position) -> char {
-        self.2.as_bytes()[dbg!(self.to_idx(pos))] as char
+        self.2.as_bytes()[self.to_idx(pos)] as char
     }
 
     fn insert(&mut self, c: char, pos: Position) {
@@ -132,7 +132,8 @@ impl Grid {
     fn print(&self) {
         self.2.lines().for_each(|l| {
             dbg!(l);
-        });        
+        }); 
+        dbg!(());       
     }
     
 }
@@ -187,7 +188,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut neighbors: Option<HashMap<&str, (Position, char)>> = Some(grid.get_neighbors(start_position));
 
     while let Some(ref n) = neighbors {
-        grid.print();
+        // grid.print();
 
 //         dbg!(start_position, &n);
 //         // dbg!(start_position);
@@ -212,16 +213,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             // Store the values we need before modifying grid
                             let current_pos = start_position;
                             let next_pos = *pos;
-                            let should_mark_x = *cell != 'X';
+                            // let should_mark_x = *cell != 'X';
                             
                             // Drop the borrow by setting neighbors to None
                             // neighbors = None;
                             
                             // Now we can modify grid
-                            if should_mark_x {
+                            // if should_mark_x {
                                 grid.insert('X', current_pos);
-                            }
-                            dbg!(grid.insert('^', next_pos));
+                            // }
+                            // dbg!(grid.insert('^', next_pos));
+                            grid.insert('^', next_pos);
 
                             
                             start_position = next_pos;
@@ -242,15 +244,15 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                         // Store the values we need before modifying grid
                                         let current_pos = start_position;
                                         let next_pos = *pos;
-                                        let should_mark_x = *cell != 'X';
+                                        // let should_mark_x = *cell != 'X';
                                         
                                         // Drop the borrow by setting neighbors to None
                                         // neighbors = None;
                                         
                                         // Now we can modify grid
-                                        if should_mark_x {
+                                        // if should_mark_x {
                                             grid.insert('X', current_pos);
-                                        }
+                                        // }
                                         grid.insert('>', next_pos);
                                         
                                         start_position = next_pos;
@@ -301,7 +303,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             }
                         },
                         '\n' => {
-                            dbg!(pos, cell);
+                            // dbg!(pos, cell);
                             panic!("newline");
                         }
                         unknown => {
@@ -323,16 +325,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             // Store the values we need before modifying grid
                             let current_pos = start_position;
                             let next_pos = *pos;
-                            let should_mark_x = *cell != 'X';
+                            // let should_mark_x = *cell != 'X';
                             
                             // Drop the borrow by setting neighbors to None
                             // neighbors = None;
                             
                             // Now we can modify grid
-                            if should_mark_x {
+                            // if should_mark_x {
                                 grid.insert('X', current_pos);
-                            }
-                            dbg!(grid.insert('>', next_pos));
+                            // }
+                            // dbg!(grid.insert('>', next_pos));
+                            grid.insert('>', next_pos);
 
                             
                             start_position = next_pos;
@@ -347,15 +350,15 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                         // Store the values we need before modifying grid
                                         let current_pos = start_position;
                                         let next_pos = *pos;
-                                        let should_mark_x = *cell != 'X';
+                                        // let should_mark_x = *cell != 'X';
                                         
                                         // Drop the borrow by setting neighbors to None
                                         // neighbors = None;
                                         
                                         // Now we can modify grid
-                                        if should_mark_x {
+                                        // if should_mark_x {
                                             grid.insert('X', current_pos);
-                                        }
+                                        // }
                                         grid.insert('v', next_pos);
                                         
                                         start_position = next_pos;
@@ -366,7 +369,14 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 }
                             }
                         }
-                        _ => todo!()
+                        '\n' => {
+                            dbg!("we are leaving");
+                            break;
+                        }
+                        unknown => {
+                            dbg!(unknown);
+                            panic!("invalid character")
+                        }
                     }
                 } else {
                     todo!("break?");
@@ -379,16 +389,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             // Store the values we need before modifying grid
                             let current_pos = start_position;
                             let next_pos = *pos;
-                            let should_mark_x = *cell != 'X';
+                            // let should_mark_x = *cell != 'X';
                             
                             // Drop the borrow by setting neighbors to None
                             // neighbors = None;
                             
                             // Now we can modify grid
-                            if should_mark_x {
+                            // if should_mark_x {
                                 grid.insert('X', current_pos);
-                            }
-                            dbg!(grid.insert('v', next_pos));
+                            // }
+                            grid.insert('v', next_pos);
+                            // dbg!(grid.insert('v', next_pos));
 
                             
                             start_position = next_pos;
@@ -403,15 +414,15 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                         // Store the values we need before modifying grid
                                         let current_pos = start_position;
                                         let next_pos = *pos;
-                                        let should_mark_x = *cell != 'X';
+                                        // let should_mark_x = *cell != 'X';
                                         
                                         // Drop the borrow by setting neighbors to None
                                         // neighbors = None;
                                         
                                         // Now we can modify grid
-                                        if should_mark_x {
+                                        // if should_mark_x {
                                             grid.insert('X', current_pos);
-                                        }
+                                        // }
                                         grid.insert('<', next_pos);
                                         
                                         start_position = next_pos;
@@ -424,28 +435,22 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                         }
                         _ => todo!()
                     }
-                } else {
-                    todo!("break?");
-                }
-            },
-            '<' => {
-                // forward
-                if let Some((pos, cell)) = n.get("Left") {
+                } else if let Some((pos, cell)) = n.get("Left") {
                     match cell {
                         '.' | 'X' => {
                             // Store the values we need before modifying grid
                             let current_pos = start_position;
                             let next_pos = *pos;
-                            let should_mark_x = *cell != 'X';
+                            // let should_mark_x = *cell != 'X';
                             
                             // Drop the borrow by setting neighbors to None
                             // neighbors = None;
                             
                             // Now we can modify grid
-                            if should_mark_x {
+                            // if should_mark_x {
                                 grid.insert('X', current_pos);
-                            }
-                            dbg!(grid.insert('<', next_pos));
+                            // }
+                            grid.insert('<', next_pos);
 
                             
                             start_position = next_pos;
@@ -460,15 +465,15 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                         // Store the values we need before modifying grid
                                         let current_pos = start_position;
                                         let next_pos = *pos;
-                                        let should_mark_x = *cell != 'X';
+                                        // let should_mark_x = *cell != 'X';
                                         
                                         // Drop the borrow by setting neighbors to None
                                         // neighbors = None;
                                         
                                         // Now we can modify grid
-                                        if should_mark_x {
+                                        // if should_mark_x {
                                             grid.insert('X', current_pos);
-                                        }
+                                        // }
                                         grid.insert('^', next_pos);
                                         
                                         start_position = next_pos;
@@ -479,7 +484,79 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 }
                             }
                         }
-                        _ => todo!()
+                        '\n' => {
+                            dbg!("we are leaving");
+                            break;
+                        }
+                        unknown => {
+                            dbg!(unknown);
+                            panic!("invalid character")
+                        }
+                    }
+                } else {
+                    todo!("break?");
+                }
+            },
+            '<' => {
+                // forward
+                if let Some((pos, cell)) = n.get("Left") {
+                    match cell {
+                        '.' | 'X' => {
+                            // Store the values we need before modifying grid
+                            let current_pos = start_position;
+                            let next_pos = *pos;
+                            // let should_mark_x = *cell != 'X';
+                            
+                            // Drop the borrow by setting neighbors to None
+                            // neighbors = None;
+                            
+                            // Now we can modify grid
+                            // if should_mark_x {
+                                grid.insert('X', current_pos);
+                            // }
+                            grid.insert('<', next_pos);
+                            // dbg!(grid.insert('<', next_pos));
+
+                            
+                            start_position = next_pos;
+                            // Get new neighbors after modification
+                            neighbors = Some(grid.get_neighbors(next_pos));
+                        }
+                        // we hit a wall, turn right (relative)
+                        '#' => {
+                            if let Some((pos, cell)) = n.get("Up") {
+                                match cell {
+                                    '.' | 'X' => {
+                                        // Store the values we need before modifying grid
+                                        let current_pos = start_position;
+                                        let next_pos = *pos;
+                                        // let should_mark_x = *cell != 'X';
+                                        
+                                        // Drop the borrow by setting neighbors to None
+                                        // neighbors = None;
+                                        
+                                        // Now we can modify grid
+                                        // if should_mark_x {
+                                            grid.insert('X', current_pos);
+                                        // }
+                                        grid.insert('^', next_pos);
+                                        
+                                        start_position = next_pos;
+                                        // Get new neighbors after modification
+                                        neighbors = Some(grid.get_neighbors(next_pos));
+                                    },
+                                    _ => todo!()
+                                }
+                            }
+                        }
+                        '\n' => {
+                            dbg!("we are leaving");
+                            break;
+                        }
+                        unknown => {
+                            dbg!(unknown);
+                            panic!("invalid character")
+                        }
                     }
                 } else {
                     todo!("break?");
@@ -499,6 +576,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 //     // dbg!(&grid.2);
 //     // let _ = &grid.2.lines().inspect(|l| {dbg!(l);}).count();
 
+    grid.print();
     let output = grid.2.chars().filter(|c| *c == 'X').count();
 
     Ok(output.to_string())
