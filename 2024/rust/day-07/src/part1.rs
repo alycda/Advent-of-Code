@@ -1,5 +1,3 @@
-use core::panic;
-
 use crate::custom_error::AocError;
 
 enum Operator {
@@ -12,33 +10,6 @@ fn try_evaluate(numbers: &[usize], expected: usize) -> Option<usize> {
 
     evaluate(numbers[0], &numbers[1..], expected, &mut ops)
 }
-
-// fn evaluate(current: usize, next: &[usize], expected: usize, operators: &[Operator]) -> Option<usize> {
-//     if current > expected {
-//         return None;
-//     }
-//     if next.is_empty() { 
-//         return if current == expected { Some(current) } else { None }
-//     }
-
-//     //  // Now try operations:
-//     let n = next[0];
-//     let rest = &next[1..];
-
-//     // Try multiplication path
-//     if let Some(mut ops) = evaluate(rest, expected, current * n) {
-//         operators.push(Op::Mult);
-//         return Some(operators);
-//     }
-
-//     // Try addition path
-//     if let Some(mut operators) = evaluate(rest, expected, current + n) {
-//         operators.push(Op::Add);
-//         return Some(operators);
-//     }
-
-//     None
-// }
 
 fn evaluate(current: usize, nums: &[usize], target: usize, ops: &mut Vec<Operator>) -> Option<usize> {
     // dbg!(current, target);
@@ -73,22 +44,22 @@ fn evaluate(current: usize, nums: &[usize], target: usize, ops: &mut Vec<Operato
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let output = input.lines()
-    // filter or filter_map or flat_map??
-    .filter_map(|line| {
-        let(expected, operation) = line.split_once(": ").unwrap();
+    let output = input
+        .lines()
+        .filter_map(|line| {
+            let(expected, operation) = line.split_once(": ").unwrap();
 
-        // dbg!(expected, operation);
+            // dbg!(expected, operation);
 
-        let nums = operation.split_whitespace()
-            .map(|num| num.parse::<usize>().unwrap())
-            .collect::<Vec<_>>();
+            let nums = operation.split_whitespace()
+                .map(|num| num.parse::<usize>().unwrap())
+                .collect::<Vec<_>>();
 
-        // dbg!(expected, &nums); 
+            // dbg!(expected, &nums); 
 
-        try_evaluate(&nums, expected.parse::<usize>().unwrap())
-    })
-    .sum::<usize>();
+            try_evaluate(&nums, expected.parse::<usize>().unwrap())
+        })
+        .sum::<usize>();
 
     Ok(output.to_string())
 }
