@@ -18,5 +18,5 @@ fn main() -> miette::Result<()> {
     println!("{}", result);
     Ok(())
 
-    // > 668 && < 6083
+    // > 668 && > 1906 < 6083
 }
