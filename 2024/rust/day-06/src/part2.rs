@@ -25,6 +25,7 @@ impl Position {
     }
 }
 
+/// TODO replace with [glam::IVec2]. Rename this to NEIGHBOR
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum Direction {
     Up(Position, Option<char>), // A
@@ -106,10 +107,6 @@ impl Grid {
         self.3.push((pos, cardinal));
     }
 
-//     fn _get_all_neighbors() {
-//         todo!()
-//     }
-
     fn get_neighbors(&self, pos: Position) -> HashMap<&str, (Position, char)> {
         let mut neighbors = Vec::new();
         let cols = self.get_cols();
@@ -151,7 +148,506 @@ impl Grid {
         })
     }
 
-    fn find(&mut self) -> usize {
+    fn find_cycles(&self, ) -> usize {
+        // exit_path: &[(Position, Direction)]
+        let exit_path = &self.3;
+
+        let mut valid_obstacles = HashSet::new();
+
+        for (idx, (pos, dir)) in exit_path.iter().enumerate() {
+            // Try placing obstacle here (excluding start position)
+            if idx == 0 { continue; }
+            
+            // Simulate path with this obstacle
+            if self.would_create_cycle(pos, exit_path, idx) {
+                valid_obstacles.insert(*pos);
+            }
+        }
+
+        valid_obstacles.len()
+    }
+
+    fn get_forced_direction(&self, obstacle: &Position, incoming_dir: Direction) -> Direction {
+        // When we hit obstacle, we must turn right relative to our incoming direction
+        // Get neighbors of the obstacle position
+        let neighbors = self.get_neighbors(*obstacle);
+        
+        match incoming_dir {
+            Direction::Up(_, _) => {
+                // If we were going Up and hit obstacle, we must go Right
+                if let Some((right_pos, _)) = neighbors.get("Right") {
+                    Direction::Right(*right_pos, None)
+                } else {
+                    // Handle case where right isn't available
+                    // Could return None or handle differently depending on your needs
+                    Direction::Right(*obstacle, None)  // Fallback
+                }
+            },
+            Direction::Right(_, _) => {
+                // If we were going Right and hit obstacle, we must go Down
+                if let Some((down_pos, _)) = neighbors.get("Down") {
+                    Direction::Down(*down_pos, None)
+                } else {
+                    Direction::Down(*obstacle, None)
+                }
+            },
+            Direction::Down(_, _) => {
+                // If we were going Down and hit obstacle, we must go Left
+                if let Some((left_pos, _)) = neighbors.get("Left") {
+                    Direction::Left(*left_pos, None)
+                } else {
+                    Direction::Left(*obstacle, None)
+                }
+            },
+            Direction::Left(_, _) => {
+                // If we were going Left and hit obstacle, we must go Up
+                if let Some((up_pos, _)) = neighbors.get("Up") {
+                    Direction::Up(*up_pos, None)
+                } else {
+                    Direction::Up(*obstacle, None)
+                }
+            }
+        }
+    }
+
+    // fn get_forced_direction(&self, obstacle: &Position, incoming_dir: Direction) -> Direction {
+    //     // When we hit obstacle, we must turn right relative to our incoming direction
+    //     match incoming_dir {
+    //         Direction::Up(_, _) => {
+    //             // If we were going Up and hit obstacle, we must go Right
+    //             Direction::Right(
+    //                 Position::new(obstacle.x + 1, obstacle.y), 
+    //                 None
+    //             )
+    //         },
+    //         Direction::Right(_, _) => {
+    //             // If we were going Right and hit obstacle, we must go Down
+    //             Direction::Down(
+    //                 Position::new(obstacle.x, obstacle.y + 1),
+    //                 None
+    //             )
+    //         },
+    //         Direction::Down(_, _) => {
+    //             // If we were going Down and hit obstacle, we must go Left
+    //             Direction::Left(
+    //                 Position::new(obstacle.x - 1, obstacle.y),
+    //                 None
+    //             )
+    //         },
+    //         Direction::Left(_, _) => {
+    //             // If we were going Left and hit obstacle, we must go Up
+    //             Direction::Up(
+    //                 Position::new(obstacle.x, obstacle.y - 1),
+    //                 None
+    //             )
+    //         }
+    //     }
+    // }
+
+    fn would_create_cycle(&self, obstacle: &Position, path: &[(Position, Direction)], step: usize) -> bool {
+        let mut tortoise = *obstacle;  // Start at obstacle position
+        let mut hare = *obstacle;
+        
+        // Get initial forced direction when hitting obstacle
+        let mut tortoise_dir = self.get_forced_direction(obstacle, path[step].1);
+        let mut hare_dir = tortoise_dir;
+
+        // Floyd's algorithm
+        loop {
+            // Move tortoise one step
+            if let Some((next_pos, next_dir)) = self.next_move(tortoise, tortoise_dir) {
+                tortoise = next_pos;
+                tortoise_dir = next_dir;
+            } else {
+                return false;  // Hit dead end or exit
+            }
+
+            // Move hare two steps
+            for _ in 0..2 {
+                if let Some((next_pos, next_dir)) = self.next_move(hare, hare_dir) {
+                    hare = next_pos;
+                    hare_dir = next_dir;
+                } else {
+                    return false;  // Hit dead end or exit
+                }
+            }
+
+            if tortoise == hare {
+                return true;  // Found cycle!
+            }
+        }
+    }
+
+    fn next_move(&self, current_pos: Position, current_dir: Direction) -> Option<(Position, Direction)> {
+        let neighbors = self.get_neighbors(current_pos);
+        
+        match current_dir {
+            Direction::Up(_, _) => {
+                if let Some((pos, cell)) = neighbors.get("Up") {
+                    match cell {
+                        '.' | 'X' | '^' => {
+                            // Just pass the position we're moving to
+                            Some((*pos, Direction::Up(*pos, None)))
+                        },
+                        '#' => {
+                            if let Some((right_pos, right_cell)) = neighbors.get("Right") {
+                                match right_cell {
+                                    '.' | 'X' | '^' => {
+                                        Some((*right_pos, Direction::Right(*right_pos, None)))
+                                    },
+                                    _ => None
+                                }
+                            } else {
+                                None
+                            }
+                        },
+                        _ => None
+                    }
+                } else {
+                    None
+                }
+            },
+            Direction::Right(_, _) => {
+                if let Some((pos, cell)) = neighbors.get("Right") {
+                    match cell {
+                        '.' | 'X' | '^' => {
+                            Some((*pos, Direction::Right(*pos, None)))
+                        },
+                        '#' => {
+                            if let Some((down_pos, down_cell)) = neighbors.get("Down") {
+                                match down_cell {
+                                    '.' | 'X' | '^' => {
+                                        Some((*down_pos, Direction::Down(*down_pos, None)))
+                                    },
+                                    _ => None
+                                }
+                            } else {
+                                None
+                            }
+                        },
+                        _ => None
+                    }
+                } else {
+                    None
+                }
+            },
+            Direction::Down(_, _) => {
+                if let Some((pos, cell)) = neighbors.get("Down") {
+                    match cell {
+                        '.' | 'X' | '^' => {
+                            Some((*pos, Direction::Down(*pos, None)))
+                        },
+                        '#' => {
+                            if let Some((left_pos, left_cell)) = neighbors.get("Left") {
+                                match left_cell {
+                                    '.' | 'X' | '^' => {
+                                        Some((*left_pos, Direction::Left(*left_pos, None)))
+                                    },
+                                    _ => None
+                                }
+                            } else {
+                                None
+                            }
+                        },
+                        _ => None
+                    }
+                } else {
+                    None
+                }
+            },
+            Direction::Left(_, _) => {
+                if let Some((pos, cell)) = neighbors.get("Left") {
+                    match cell {
+                        '.' | 'X' | '^' => {
+                            Some((*pos, Direction::Left(*pos, None)))
+                        },
+                        '#' => {
+                            if let Some((up_pos, up_cell)) = neighbors.get("Up") {
+                                match up_cell {
+                                    '.' | 'X' | '^' => {
+                                        Some((*up_pos, Direction::Up(*up_pos, None)))
+                                    },
+                                    _ => None
+                                }
+                            } else {
+                                None
+                            }
+                        },
+                        _ => None
+                    }
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    // fn next_move(&self, current_pos: Position, current_dir: Direction) -> Option<(Position, Direction)> {
+    //     // First get all valid neighbors
+    //     let neighbors = self.get_neighbors(current_pos);
+        
+    //     // Try to continue in current direction first (following relative right-turn rules)
+    //     match current_dir {
+    //         Direction::Up(_, _) => {
+    //             if let Some((pos, cell)) = neighbors.get("Up") {
+    //                 match cell {
+    //                     '.' | 'X' | '^' => {
+    //                         // Can continue up
+    //                         Some((*pos, Direction::Up(
+    //                             Position::new(pos.x, pos.y - 1),
+    //                             None
+    //                         )))
+    //                     },
+    //                     '#' => {
+    //                         // Hit wall, must turn right
+    //                         if let Some((right_pos, right_cell)) = neighbors.get("Right") {
+    //                             match right_cell {
+    //                                 '.' | 'X' | '^' => {
+    //                                     Some((*right_pos, Direction::Right(
+    //                                         Position::new(right_pos.x + 1, right_pos.y),
+    //                                         None
+    //                                     )))
+    //                                 },
+    //                                 _ => None // Can't go right either
+    //                             }
+    //                         } else {
+    //                             None
+    //                         }
+    //                     },
+    //                     _ => None
+    //                 }
+    //             } else {
+    //                 None
+    //             }
+    //         },
+    //         Direction::Right(_, _) => {
+    //             if let Some((pos, cell)) = neighbors.get("Right") {
+    //                 match cell {
+    //                     '.' | 'X' | '^' => {
+    //                         Some((*pos, Direction::Right(
+    //                             Position::new(pos.x + 1, pos.y),
+    //                             None
+    //                         )))
+    //                     },
+    //                     '#' => {
+    //                         // Hit wall, must turn right (down)
+    //                         if let Some((down_pos, down_cell)) = neighbors.get("Down") {
+    //                             match down_cell {
+    //                                 '.' | 'X' | '^' => {
+    //                                     Some((*down_pos, Direction::Down(
+    //                                         Position::new(down_pos.x, down_pos.y + 1),
+    //                                         None
+    //                                     )))
+    //                                 },
+    //                                 _ => None
+    //                             }
+    //                         } else {
+    //                             None
+    //                         }
+    //                     },
+    //                     _ => None
+    //                 }
+    //             } else {
+    //                 None
+    //             }
+    //         },
+    //         Direction::Down(_, _) => {
+    //             if let Some((pos, cell)) = neighbors.get("Down") {
+    //                 match cell {
+    //                     '.' | 'X' | '^' => {
+    //                         Some((*pos, Direction::Down(
+    //                             Position::new(pos.x, pos.y + 1),
+    //                             None
+    //                         )))
+    //                     },
+    //                     '#' => {
+    //                         // Hit wall, must turn right (left)
+    //                         if let Some((left_pos, left_cell)) = neighbors.get("Left") {
+    //                             match left_cell {
+    //                                 '.' | 'X' | '^' => {
+    //                                     Some((*left_pos, Direction::Left(
+    //                                         Position::new(left_pos.x - 1, left_pos.y),
+    //                                         None
+    //                                     )))
+    //                                 },
+    //                                 _ => None
+    //                             }
+    //                         } else {
+    //                             None
+    //                         }
+    //                     },
+    //                     _ => None
+    //                 }
+    //             } else {
+    //                 None
+    //             }
+    //         },
+    //         Direction::Left(_, _) => {
+    //             if let Some((pos, cell)) = neighbors.get("Left") {
+    //                 match cell {
+    //                     '.' | 'X' | '^' => {
+    //                         Some((*pos, Direction::Left(
+    //                             Position::new(pos.x - 1, pos.y),
+    //                             None
+    //                         )))
+    //                     },
+    //                     '#' => {
+    //                         // Hit wall, must turn right (up)
+    //                         if let Some((up_pos, up_cell)) = neighbors.get("Up") {
+    //                             match up_cell {
+    //                                 '.' | 'X' | '^' => {
+    //                                     Some((*up_pos, Direction::Up(
+    //                                         Position::new(up_pos.x, up_pos.y - 1),
+    //                                         None
+    //                                     )))
+    //                                 },
+    //                                 _ => None
+    //                             }
+    //                         } else {
+    //                             None
+    //                         }
+    //                     },
+    //                     _ => None
+    //                 }
+    //             } else {
+    //                 None
+    //             }
+    //         }
+    //     }
+    // }
+
+    fn analyze_potential_cycles(&self) -> (HashSet<Position>, HashSet<Position>) {
+        // First get crossings (your current method)
+        let mut direction_map: HashMap<Position, HashSet<Direction>> = HashMap::new();
+        for (pos, dir) in &self.3 {
+            direction_map.entry(*pos)
+                .or_insert_with(HashSet::new)
+                .insert(*dir);
+        }
+    
+        // Get crossing points
+        let crossing_points: HashSet<Position> = direction_map.iter()
+            .filter(|(_, dirs)| {
+                dirs.iter().any(|d| d.is_up()) && dirs.iter().any(|d| d.is_right()) ||
+                dirs.iter().any(|d| d.is_right()) && dirs.iter().any(|d| d.is_down()) ||
+                dirs.iter().any(|d| d.is_down()) && dirs.iter().any(|d| d.is_left()) ||
+                dirs.iter().any(|d| d.is_left()) && dirs.iter().any(|d| d.is_up())
+            })
+            .map(|(pos, _)| *pos)
+            .collect();
+    
+        // Get neighbor-check points (ordered by path sequence)
+        let neighbor_points: HashSet<Position> = self.3.iter()
+            .enumerate()  // Add sequence info
+            .filter_map(|(idx, (pos, dir))| {
+                match dir {
+                    Direction::Up(_, _) => {
+                        // When going Up, check right neighbor's history
+                        let right_pos = Position::new(pos.x + 1, pos.y);
+                        // Look back in path before this point
+                        if self.3[..idx].iter().any(|(_, prev_dir)| 
+                            matches!(prev_dir, Direction::Right(_, _))
+                        ) {
+                            Some(*pos)
+                        } else {
+                            None
+                        }
+                    },
+                    // Similar for other directions...
+                    _ => None  // Add other cases back
+                }
+            })
+            .collect();
+    
+        (crossing_points, neighbor_points)
+    }
+
+    fn find_stuff(&self) -> usize {
+        let (crossing_points, neighbor_points) = self.analyze_potential_cycles();
+        
+        dbg!("Crossing points:", crossing_points.len());
+        dbg!("Neighbor check points:", neighbor_points.len());
+        dbg!("Points in both:", crossing_points.intersection(&neighbor_points).count());
+        dbg!("Points in either:", crossing_points.union(&neighbor_points).count());
+        
+        // Return whichever count proves to be correct
+        crossing_points.union(&neighbor_points).count()
+    }
+
+    // fn find_stuff(&self) -> usize {
+    //     // Group by position
+    //     let mut visited: HashMap<Position, HashSet<Direction>> = HashMap::new();
+                
+    //     for (pos, dir) in &self.3 {
+    //         visited.entry(*pos)
+    //             .or_insert_with(HashSet::new)
+    //             .insert(*dir);
+    //     }
+
+
+    //     self.3.iter()
+    //         // .take(3)
+    //         // .inspect(|(pos, dir)| {
+    //         //     dbg!(pos, dir);
+
+    //         //     match dir {
+    //         //         Direction::Up => { if let Some(_) = visited. }
+    //         //     }
+
+    //         //     dbg!(visited.get(pos));
+    //         // })
+    //         .filter(|(pos, dir)| {
+    //             match dir {
+    //                 Direction::Up(next_pos, _) => {
+    //                     // When going Up, check right neighbor for Right movement
+    //                     let right_pos = Position::new(pos.x + 1, pos.y);
+    //                     if let Some(previous_dirs) = visited.get(&right_pos) {
+    //                         previous_dirs.iter().any(|prev_dir| 
+    //                             matches!(prev_dir, Direction::Right(_, _))
+    //                         )
+    //                     } else {
+    //                         false
+    //                     }
+    //                 },
+    //                 Direction::Right(next_pos, _) => {
+    //                     // When going Right, check bottom neighbor for Down movement
+    //                     let down_pos = Position::new(pos.x, pos.y + 1);
+    //                     if let Some(previous_dirs) = visited.get(&down_pos) {
+    //                         previous_dirs.iter().any(|prev_dir| 
+    //                             matches!(prev_dir, Direction::Down(_, _))
+    //                         )
+    //                     } else {
+    //                         false
+    //                     }
+    //                 },
+    //                 Direction::Down(next_pos, _) => {
+    //                     // When going Down, check left neighbor for Left movement
+    //                     let left_pos = Position::new(pos.x - 1, pos.y);
+    //                     if let Some(previous_dirs) = visited.get(&left_pos) {
+    //                         previous_dirs.iter().any(|prev_dir| 
+    //                             matches!(prev_dir, Direction::Left(_, _))
+    //                         )
+    //                     } else {
+    //                         false
+    //                     }
+    //                 },
+    //                 Direction::Left(next_pos, _) => {
+    //                     // When going Left, check top neighbor for Up movement
+    //                     let up_pos = Position::new(pos.x, pos.y - 1);
+    //                     if let Some(previous_dirs) = visited.get(&up_pos) {
+    //                         previous_dirs.iter().any(|prev_dir| 
+    //                             matches!(prev_dir, Direction::Up(_, _))
+    //                         )
+    //                     } else {
+    //                         false
+    //                     }
+    //                 }
+    //             }
+    //         })
+    //         .count()
+    // }
+
+    fn find_crossings(&mut self) -> usize {
         // Group by position
         let mut direction_map: HashMap<Position, HashSet<Direction>> = HashMap::new();
                 
@@ -161,9 +657,14 @@ impl Grid {
                 .insert(*dir);
         }
 
-        #[cfg(debug_assertions)]
-        dbg!(&direction_map);
+        // #[cfg(debug_assertions)]
+        // dbg!(&direction_map);
         // dbg!(&direction_map.keys().count());
+
+        // direction_map.iter()
+        //     .inspect(|(pos, dirs)| {
+        //         dbg!(pos, dirs);
+        //     }).count();
         // panic!("halt");
 
 
@@ -185,6 +686,10 @@ impl Grid {
         //     })
         //     .map(|(pos, _)| pos).count()
 
+    }
+
+    fn distinct_positions(&self) -> usize {
+        self.3.iter().map(|(pos, _)| pos).collect::<HashSet<_>>().len()
     }
 
     fn exit(&self, pos: Position, dir: char) -> bool {
@@ -242,8 +747,8 @@ impl Grid {
     
 }
 
-// fn _move_forward(mut start_position: &Position, pos: Position, cell: char, neighbors: &mut Option<HashMap<&str, (Position, char)>>, grid: &mut Grid) -> Option<HashMap<&str, (Position, char)>> {
-//     let current_pos = start_position;
+// fn _move_forward(mut last_position: &Position, pos: Position, cell: char, neighbors: &mut Option<HashMap<&str, (Position, char)>>, grid: &mut Grid) -> Option<HashMap<&str, (Position, char)>> {
+//     let current_pos = last_position;
 //     let next_pos = pos;
 //     let should_mark_x = cell != 'X';
     
@@ -256,7 +761,7 @@ impl Grid {
 //     }
 //     grid.insert('^', next_pos);
     
-//     start_position = &next_pos;
+//     last_position = &next_pos;
 //     // Get new neighbors after modification
 //     Some(grid.get_neighbors(next_pos))
 // }
@@ -265,7 +770,7 @@ impl Grid {
 
 // // }
 
-#[instrument]
+// #[instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut peekable = input.lines().peekable();
     let cols = peekable.peek().unwrap().chars().count();
@@ -285,11 +790,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let start = input.find("^");
 
     let mut grid = Grid::new(cols, rows, input.to_owned());
-    let mut start_position = grid.to_position(start.unwrap());
+    let mut last_position = grid.to_position(start.unwrap());
 
-    // dbg!(&start_position);
+    // dbg!(&last_position);
 
-    let mut neighbors: Option<HashMap<&str, (Position, char)>> = Some(grid.get_neighbors(start_position));
+    let mut neighbors: Option<HashMap<&str, (Position, char)>> = Some(grid.get_neighbors(last_position));
     let mut direction = '^';
 
     // let mut pass = 0;
@@ -302,12 +807,12 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         //     dbg!(c);
         // });
 
-//         dbg!(start_position, &n);
-//         // dbg!(start_position);
+//         dbg!(last_position, &n);
+//         // dbg!(last_position);
 //         panic!("halt");
 
-        if (grid.exit(start_position, direction)) {
-            dbg!("we are leaving ()", start_position, direction);
+        if (grid.exit(last_position, direction)) {
+            // dbg!("we are leaving:", last_position, direction);
             break;
         }
 
@@ -320,7 +825,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     match cell {
                         '.' | 'X' | '^' => {
                             // Store the values we need before modifying grid
-                            let current_pos = start_position;
+                            let current_pos = last_position;
                             let next_pos = *pos;
 
                             // Now we can modify grid
@@ -328,7 +833,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                             direction = '^';
                             
-                            start_position = next_pos;
+                            last_position = next_pos;
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         },
@@ -339,7 +844,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                     '.' | 'X' | '^' => {
 
                                         // Store the values we need before modifying grid
-                                        let current_pos = start_position;
+                                        let current_pos = last_position;
                                         let next_pos = *pos;
 
                                         // Now we can modify grid
@@ -347,7 +852,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                         direction = '>';
                                         
-                                        start_position = next_pos;
+                                        last_position = next_pos;
                                         // Get new neighbors after modification
                                         neighbors = Some(grid.get_neighbors(next_pos));
                                     },
@@ -357,7 +862,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                             match cell {
                                                 '.' | 'X' | '^' => {
                                                     // Store the values we need before modifying grid
-                                                    let current_pos = start_position;
+                                                    let current_pos = last_position;
                                                     let next_pos = *pos;
 
                                                     // Now we can modify grid
@@ -365,7 +870,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                     direction = 'v';
                                                     
-                                                    start_position = next_pos;
+                                                    last_position = next_pos;
                                                     // Get new neighbors after modification
                                                     neighbors = Some(grid.get_neighbors(next_pos));
                                                 },
@@ -374,7 +879,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                                         match cell {
                                                             '.' | 'X' | '^' => {
                                                                 // Store the values we need before modifying grid
-                                                                let current_pos = start_position;
+                                                                let current_pos = last_position;
                                                                 let next_pos = *pos;
 
                                                                 // Now we can modify grid
@@ -382,7 +887,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                                 direction = '<';
                                                                 
-                                                                start_position = next_pos;
+                                                                last_position = next_pos;
                                                                 // Get new neighbors after modification
                                                                 neighbors = Some(grid.get_neighbors(next_pos));
                                                             },
@@ -417,7 +922,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     match cell {
                         '.' | 'X' | '^' => {
                             // Store the values we need before modifying grid
-                            let current_pos = start_position;
+                            let current_pos = last_position;
                             let next_pos = *pos;
 
                             // Now we can modify grid
@@ -425,7 +930,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                             direction = '>';
                             
-                            start_position = next_pos;
+                            last_position = next_pos;
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         }
@@ -435,7 +940,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 match cell {
                                     '.' | 'X' | '^' => {
                                         // Store the values we need before modifying grid
-                                        let current_pos = start_position;
+                                        let current_pos = last_position;
                                         let next_pos = *pos;
 
                                         // Now we can modify grid
@@ -443,7 +948,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                         direction = 'v';
                                         
-                                        start_position = next_pos;
+                                        last_position = next_pos;
                                         // Get new neighbors after modification
                                         neighbors = Some(grid.get_neighbors(next_pos));
                                     },
@@ -452,7 +957,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                             match cell {
                                                 '.' | 'X' | '^' => {
                                                     // Store the values we need before modifying grid
-                                                    let current_pos = start_position;
+                                                    let current_pos = last_position;
                                                     let next_pos = *pos;
 
                                                     // Now we can modify grid
@@ -460,7 +965,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                     direction = '<';
                                                     
-                                                    start_position = next_pos;
+                                                    last_position = next_pos;
                                                     // Get new neighbors after modification
                                                     neighbors = Some(grid.get_neighbors(next_pos));
                                                 },
@@ -469,7 +974,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                                         match cell {
                                                             '.' | 'X' | '^' => {
                                                                 // Store the values we need before modifying grid
-                                                                let current_pos = start_position;
+                                                                let current_pos = last_position;
                                                                 let next_pos = *pos;
 
                                                                 // Now we can modify grid
@@ -477,7 +982,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                                 direction = '^';
                                                                 
-                                                                start_position = next_pos;
+                                                                last_position = next_pos;
                                                                 // Get new neighbors after modification
                                                                 neighbors = Some(grid.get_neighbors(next_pos));
                                                             },
@@ -511,7 +1016,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     match cell {
                         '.' | 'X' | '^' => {
                             // Store the values we need before modifying grid
-                            let current_pos = start_position;
+                            let current_pos = last_position;
                             let next_pos = *pos;
 
                             // Now we can modify grid
@@ -520,7 +1025,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                             direction = 'v';
 
                             
-                            start_position = next_pos;
+                            last_position = next_pos;
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         }
@@ -530,7 +1035,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 match cell {
                                     '.' | 'X' | '^' => {
                                         // Store the values we need before modifying grid
-                                        let current_pos = start_position;
+                                        let current_pos = last_position;
                                         let next_pos = *pos;
 
                                         // Now we can modify grid
@@ -538,7 +1043,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                         direction = '<';
                                         
-                                        start_position = next_pos;
+                                        last_position = next_pos;
                                         // Get new neighbors after modification
                                         neighbors = Some(grid.get_neighbors(next_pos));
                                     },
@@ -547,7 +1052,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                             match cell {
                                                 '.' | 'X' | '^' => {
                                                     // Store the values we need before modifying grid
-                                                    let current_pos = start_position;
+                                                    let current_pos = last_position;
                                                     let next_pos = *pos;
                                                     
                                                     // Now we can modify grid
@@ -555,7 +1060,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                     direction = '^';
                                                     
-                                                    start_position = next_pos;
+                                                    last_position = next_pos;
                                                     // Get new neighbors after modification
                                                     neighbors = Some(grid.get_neighbors(next_pos));
                                                 },
@@ -564,7 +1069,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                                         match cell {
                                                             '.' | 'X' | '^' => {
                                                                 // Store the values we need before modifying grid
-                                                                let current_pos = start_position;
+                                                                let current_pos = last_position;
                                                                 let next_pos = *pos;
 
                                                                 // Now we can modify grid
@@ -572,7 +1077,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                                 direction = '>';
                                                                 
-                                                                start_position = next_pos;
+                                                                last_position = next_pos;
                                                                 // Get new neighbors after modification
                                                                 neighbors = Some(grid.get_neighbors(next_pos));
                                                             }
@@ -596,7 +1101,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     match cell {
                         '.' | 'X' | '^' => {
                             // Store the values we need before modifying grid
-                            let current_pos = start_position;
+                            let current_pos = last_position;
                             let next_pos = *pos;
 
                             // Now we can modify grid
@@ -604,7 +1109,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                             direction = '<';
                             
-                            start_position = next_pos;
+                            last_position = next_pos;
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         }
@@ -614,7 +1119,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 match cell {
                                     '.' | 'X' | '^' => {
                                         // Store the values we need before modifying grid
-                                        let current_pos = start_position;
+                                        let current_pos = last_position;
                                         let next_pos = *pos;
                                         
                                         // Now we can modify grid
@@ -622,7 +1127,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                         direction = '^';
                                         
-                                        start_position = next_pos;
+                                        last_position = next_pos;
                                         // Get new neighbors after modification
                                         neighbors = Some(grid.get_neighbors(next_pos));
                                     },
@@ -631,7 +1136,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                             match cell {
                                                 '.' | 'X' | '^' => {
                                                     // Store the values we need before modifying grid
-                                                    let current_pos = start_position;
+                                                    let current_pos = last_position;
                                                     let next_pos = *pos;
                                                     
                                                     // Now we can modify grid
@@ -639,7 +1144,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                     direction = '>';
                                                     
-                                                    start_position = next_pos;
+                                                    last_position = next_pos;
                                                     // Get new neighbors after modification
                                                     neighbors = Some(grid.get_neighbors(next_pos));
                                                 },
@@ -648,7 +1153,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                                         match cell {
                                                             '.' | 'X' | '^' => {
                                                                 // Store the values we need before modifying grid
-                                                                let current_pos = start_position;
+                                                                let current_pos = last_position;
                                                                 let next_pos = *pos;
 
                                                                 // Now we can modify grid
@@ -656,7 +1161,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                                 direction = 'v';
                                                                 
-                                                                start_position = next_pos;
+                                                                last_position = next_pos;
                                                                 // Get new neighbors after modification
                                                                 neighbors = Some(grid.get_neighbors(next_pos));
                                                             },
@@ -691,7 +1196,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     match cell {
                         '.' | 'X' | '^' => {
                             // Store the values we need before modifying grid
-                            let current_pos = start_position;
+                            let current_pos = last_position;
                             let next_pos = *pos;
 
                             // Now we can modify grid
@@ -699,7 +1204,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                             direction = '<';
                             
-                            start_position = next_pos;
+                            last_position = next_pos;
                             // Get new neighbors after modification
                             neighbors = Some(grid.get_neighbors(next_pos));
                         }
@@ -709,7 +1214,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                 match cell {
                                     '.' | 'X' | '^' => {
                                         // Store the values we need before modifying grid
-                                        let current_pos = start_position;
+                                        let current_pos = last_position;
                                         let next_pos = *pos;
                                         
                                         // Now we can modify grid
@@ -717,7 +1222,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                         direction = '^';
                                         
-                                        start_position = next_pos;
+                                        last_position = next_pos;
                                         // Get new neighbors after modification
                                         neighbors = Some(grid.get_neighbors(next_pos));
                                     },
@@ -726,7 +1231,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                             match cell {
                                                 '.' | 'X' | '^' => {
                                                     // Store the values we need before modifying grid
-                                                    let current_pos = start_position;
+                                                    let current_pos = last_position;
                                                     let next_pos = *pos;
                                                     
                                                     // Now we can modify grid
@@ -734,7 +1239,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                     direction = '>';
                                                     
-                                                    start_position = next_pos;
+                                                    last_position = next_pos;
                                                     // Get new neighbors after modification
                                                     neighbors = Some(grid.get_neighbors(next_pos));
                                                 },
@@ -743,7 +1248,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                                                         match cell {
                                                             '.' | 'X' | '^' => {
                                                                 // Store the values we need before modifying grid
-                                                                let current_pos = start_position;
+                                                                let current_pos = last_position;
                                                                 let next_pos = *pos;
                                                                 
                                                                 // Now we can modify grid
@@ -751,7 +1256,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
                                                                 direction = 'v';
                                                                 
-                                                                start_position = next_pos;
+                                                                last_position = next_pos;
                                                                 // Get new neighbors after modification
                                                                 neighbors = Some(grid.get_neighbors(next_pos));
                                                             },
@@ -793,11 +1298,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     // grid.print();
     // let output = grid.2.chars().filter(|c| *c == 'X').count();
 
-    dbg!(&grid.find());
+    dbg!(&grid.find_cycles());
 
-    let output = grid.3.len();
+    // dbg!(&grid.find_crossings());
+    dbg!(&grid.find_stuff());
 
-    Ok((output + 1).to_string())
+    return Ok(grid.find_stuff().to_string());
+
+    // // let output = grid.3.len();
+    // let output = grid.distinct_positions();
+
+    // Ok((output + 1).to_string())
 }
 
 
