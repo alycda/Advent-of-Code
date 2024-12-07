@@ -36,6 +36,7 @@ bevy = { version = "0.15.0" }
 criterion = { version = "0.5.1", features = ["html_reports"] }
 dhat = "0.3.2"
 divan = "0.1.11"
+glam = "0.29.0"
 indicatif = { version = "0.17.7", features = ["rayon"] }
 itertools = "0.13.0"
 # re-enable for bevy performance, see https://bevyengine.org/learn/quick-start/getting-started/setup/
