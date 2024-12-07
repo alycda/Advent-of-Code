@@ -61,22 +61,39 @@ impl Grid {
         self.1
     }
 
+    // fn place_obstacles(&self, start_position: IVec2, existing_walls: &HashSet<IVec2>) -> usize {
+    //     self.2.iter()
+    //         .take(1)
+    //         .filter(|(new_obstacle, _)| {
+
+    //             let mut new_walls = existing_walls.clone();
+    //             new_walls.insert(new_obstacle.clone());
+    //             let ref mut new_grid = Grid::new(self.get_cols(), self.get_rows());
+
+    //             // start position
+    //             sentry(start_position, Direction::Up, new_grid, &new_walls);
+
+    //             dbg!(&self.2, &new_grid.2);
+
+    //             false
+    //         }).count()
+    // }
+
     fn place_obstacles(&self, start_position: IVec2, existing_walls: &HashSet<IVec2>) -> usize {
         self.2.iter()
-            .take(1)
             .filter(|(new_obstacle, _)| {
-
                 let mut new_walls = existing_walls.clone();
                 new_walls.insert(new_obstacle.clone());
-                let ref mut new_grid = Grid::new(self.get_cols(), self.get_rows());
+                let mut new_grid = Grid::new(self.get_cols(), self.get_rows());
 
-                // start position
-                sentry(start_position, Direction::Up, new_grid, &new_walls);
-
-                dbg!(&self.2, &new_grid.2);
-
-                false
-            }).count()
+                // Start position
+                if let Some(cycle_detected) = sentry_2(start_position, Direction::Up, &mut new_grid, &new_walls, &self.2) {
+                    cycle_detected
+                } else {
+                    false
+                }
+            })
+            .count()
     }
 
     fn insert(&mut self, pos: IVec2, cardinal: Direction) {
@@ -128,6 +145,34 @@ fn sentry(mut position: IVec2, mut direction: Direction, grid: &mut Grid, walls:
 
         if let Some(_) = walls.get(&next_position) {
             // direction = Ivec2::rotate
+            direction = direction.right_turn();            
+        } else {
+            position = next_position;
+            grid.insert(position, direction);
+        }
+    }
+}
+
+fn sentry_2(mut position: IVec2, mut direction: Direction, grid: &mut Grid, walls: &HashSet<IVec2>, original_path: &[(IVec2, Direction)]) -> Option<bool> {
+    let mut visited = HashSet::new();
+
+    loop {
+        if grid.exit(position, direction) {
+            return None;
+        }
+
+        if !visited.insert((position, direction)) {
+            return Some(true); // Found a cycle
+        }
+
+        // Check if the current position and direction match any position and direction in the original path
+        if original_path.contains(&(position, direction)) {
+            return Some(true); // Found a cycle
+        }
+
+        let next_position = position + direction.to_position();
+
+        if let Some(_) = walls.get(&next_position) {
             direction = direction.right_turn();            
         } else {
             position = next_position;
