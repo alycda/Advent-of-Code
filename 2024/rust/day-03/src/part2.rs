@@ -1,156 +1,79 @@
-// use miette::miette;
-// use nom::{
-//     branch::alt, bytes::complete::{tag, take_until}, character::complete::{self, anychar}, combinator::value, error::{Error, ErrorKind}, multi::{many1, many_till}, sequence::{delimited, separated_pair}, IResult, Parser
-// };
-
-// use std::cmp::Ordering;
-
-use nom::{bytes::complete::take_until, error::{Error, ErrorKind}, IResult};
-
+use nom::{error::{Error, ErrorKind}, IResult};
 use crate::{custom_error::AocError, parse_mul, Product};
 
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let sum: Vec<Product> = Vec::new();
     let first_do = input.find("do()");
     let first_dont = input.find("don't()");
 
     if let (_, None) = (first_do, first_dont) {
-        dbg!("that was easy");
         return crate::part1::process(input);
     }
 
-    // all mul() before the first don't() are VALID
-    let (first, last) = input.split_at(first_dont.unwrap());
+    // Process everything before the first don't()
+    let (first, mut remainder) = input.split_at(first_dont.unwrap());
+    let mut total = crate::part1::process(first).unwrap().parse::<usize>().unwrap();
+    
+    while !remainder.is_empty() {
+        if let Some(dont_idx) = remainder.find("don't()") {
+            // Find next do() after this don't()
+            if let Some(do_idx) = remainder[dont_idx..].find("do()") {
+                // Skip everything between don't() and do()
+                let next_dont = remainder[dont_idx + do_idx..].find("don't()");
+                let end_idx = match next_dont {
+                    Some(idx) => dont_idx + do_idx + idx,
+                    None => remainder.len()
+                };
+                
+                // Process the chunk between do() and next don't() (or end)
+                let process_chunk = &remainder[dont_idx + do_idx..end_idx];
+                let sum: Vec<Product> = Vec::new();
+                if let Ok((_, products)) = parse(sum, process_chunk) {
+                    total += products.iter().map(|p| p.value()).sum::<usize>();
+                }
+                
+                remainder = &remainder[end_idx..];
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
 
-    // dbg!(first, last);
-    dbg!(first);
-    let easy = dbg!(crate::part1::process(first).unwrap().parse::<usize>().unwrap());
-
-    // sum.push(easy);
-    dbg!(last);
-    let hard = dbg!(parse(sum, last));
-
-    // panic!("halt");
-
-    Ok((easy + hard.unwrap().1.iter().map(|p| p.value()).sum::<usize>()).to_string())
+    Ok(total.to_string())
 }
 
 fn parse<'a>(mut sum: Vec<Product>, input: &'a str) -> IResult<&'a str, Vec<Product>> {
-    // dbg!(&sum);
-    // todo!("halt");
-    assert!(&input[0..7] == "don't()");
-
-    match take_until::<&str, &str, Error<&str>>("do()")(input) {
-        Ok((remainder, section)) => {
-            dbg!(&remainder, section);
-
-            // First try to parse any mul operations in the current section
-            let current_section = remainder;
-            // while let Ok((remaining_section, (a, b))) = parse_mul(current_section) {
-            //     let a = a.parse::<usize>().unwrap();
-            //     let b = b.parse::<usize>().unwrap();
-
-            //     // dbg!(a, b);
-
-            //     sum.push(a * b);
-            //     // Advance the input for next iteration
-            //     current_section = remaining_section;
-            // }
-
-            match take_until::<&str, &str, Error<&str>>("do()")(input) {
-                Ok((remainder, _)) => {
-                    let mut current_section = remainder;
-                    
-                    loop {
-                        match parse_mul(current_section) {
-                            Ok((remaining_section, (a, b))) => {
-                                sum.push(Product::new(a, b));
-
-                                // dbg!(a, b);
-
-                                current_section = remaining_section;
-                            },
-                            Err(e) => {
-                                if let nom::Err::Error(err) = &e {
-                                    match err {
-                                        Error { code: ErrorKind::Char, .. } => {
-                                            if current_section.len() > 1 {
-                                                current_section = &current_section[1..];
-                                                continue;
-                                            }
-                                            break;
-                                        },
-                                        Error { code: ErrorKind::TakeUntil, .. } => break,
-                                        _ => break,
-                                    }
-                                } else {
-                                    break;
-                                }
+    let mut current_section = input;
+    
+    loop {
+        match parse_mul(current_section) {
+            Ok((remaining_section, (a, b))) => {
+                sum.push(Product::new(a, b));
+                current_section = remaining_section;
+            },
+            Err(e) => {
+                if let nom::Err::Error(err) = &e {
+                    match err {
+                        Error { code: ErrorKind::Char, .. } => {
+                            if current_section.len() > 1 {
+                                current_section = &current_section[1..];
+                                continue;
                             }
-                        }
+                            break;
+                        },
+                        Error { code: ErrorKind::TakeUntil, .. } => break,
+                        _ => break,
                     }
-        
-                    if let Some(idx) = remainder.find("don't()") {
-                        parse(sum, &remainder[idx..])
-                    } else {
-                        Ok((remainder, sum))
-                    }
-                },
-                Err(_) => Ok((input, sum))
+                } else {
+                    break;
+                }
             }
-        },
-        Err(_) => {
-            // Base case - no more "do()" patterns found
-            Ok((input, sum))
         }
     }
+    
+    Ok((current_section, sum))
 }
-
-// #[tracing::instrument]
-// pub fn process(input: &str) -> miette::Result<String, AocError> {
-//     let mut a = 0;
-//     let mut sum: Vec<usize> = Vec::new();
-//     let first_do = input.find("do()");
-//     let first_dont = input.find("don't()");
-
-//     if let (_, None) = (first_do, first_dont) {
-//         dbg!("that was easy");
-//         return crate::part1::process(input);
-//     }
-
-//     // dbg!(first_do, first_dont);
-
-//     // match first_do.cmp(&first_dont) {
-//     //     Ordering::Less => {
-//     //         panic!("do first");
-//     //     }
-//     //     Ordering::Greater => {
-//             let (first, last) = input.split_at(first_dont.unwrap());
-
-//             // dbg!(first, last);
-
-//             a = crate::part1::process(first).unwrap().parse::<usize>().unwrap();
-
-//             dbg!(a);
-//             // todo!();
-
-//             dbg!(last);
-//             panic!("halt");
-//             if let Ok((_, v)) = parse(sum, last) {
-//                 dbg!(&v);
-//                 // panic!("halt");
-//                 // dbg!(v.len());
-//                 return Ok((v.iter().sum::<usize>() + a).to_string())
-//             } else {
-//                 todo!();
-//             }
-//     //     }
-//     //     _ => panic!("unexpected ordering"),
-//     // }
-
-//     // Ok(sum.iter().sum::<usize>().to_string())
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
