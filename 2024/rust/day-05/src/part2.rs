@@ -86,16 +86,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 mod tests {
     use super::*;
 
-//     use rstest::rstest;
-
-//     #[rstest]
-//     #[case("75,97,47,61,53
-// 61,13,29
-// 97,13,75,29,47", 123)]
-//     fn test_cases(#[case] input: &str, #[case] expected: usize) {
-//         assert_eq!(process_update(fix_order(input)), expected);
-//     }
-
     #[test]
     fn test_process() -> miette::Result<()> {
         let input = "47|53
