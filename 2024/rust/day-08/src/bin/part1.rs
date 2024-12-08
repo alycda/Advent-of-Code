@@ -18,6 +18,3 @@ fn main() -> miette::Result<()> {
     println!("{}", result);
     Ok(())
 }
-
-// < 624
-// < 414

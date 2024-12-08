@@ -22,7 +22,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 .enumerate()
                 .filter_map(|(col, c)| {
 
-                    if c != '.' {
+                    if c != '.' && c != '#' {
                         Some((IVec2::new(col as i32, row as i32), c))
                     } else {
                         None
