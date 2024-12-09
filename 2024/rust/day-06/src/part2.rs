@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, hash::Hash};
+use std::{collections::HashSet, hash::Hash};
 
 use glam::IVec2;
 
@@ -62,44 +62,34 @@ impl Grid {
         ((0, max_x), (0, max_y))
     }
 
-    // fn place_obstacles(&self, start_position: IVec2, existing_walls: &HashSet<IVec2>) -> usize {
-    //     self.2.iter()
-    //         .filter(|(new_obstacle, _)| {
-    //             let mut new_walls = existing_walls.clone();
-    //             new_walls.insert(*new_obstacle);
-    //             sentry(start_position, Direction::Up, &new_walls, new_obstacle, self.get_bounds())
-    //         })
-    //         .count()
-    // }
-
     fn place_obstacles(&self, start_position: IVec2, existing_walls: &HashSet<IVec2>) -> usize {
-        // dbg!(self.get_bounds());
-        self.2.iter()
-            .filter(|(new_obstacle, _)| {
-                dbg!(new_obstacle);
+        let mut valid_positions = HashSet::new();
+        let mut pos = start_position;
+        let mut dir = Direction::Up;
+        let bounds = self.get_bounds();
+        
+        // First get all valid guard positions
+        loop {
+            let next_pos = pos + dir.to_position();
+            if existing_walls.contains(&next_pos) {
+                dir = dir.turn_right();
+            } else if (bounds.0.0..=bounds.0.1).contains(&next_pos.x) 
+                && (bounds.1.0..=bounds.1.1).contains(&next_pos.y) {
+                pos = next_pos;
+                valid_positions.insert(pos);
+            } else {
+                break;
+            }
+        }
+    
+        // Then check each valid position for cycles when used as a new wall
+        valid_positions.iter()
+            .filter(|pos| {
                 let mut new_walls = existing_walls.clone();
-                new_walls.insert(*new_obstacle);
-                let result = sentry(start_position, Direction::Up, &new_walls, &new_obstacle, self.get_bounds());
-                dbg!(result);
-                result
+                new_walls.insert(**pos);
+                sentry(start_position, Direction::Up, &new_walls, pos, bounds)
             })
             .count()
-    }
-
-    fn insert(&mut self, pos: IVec2, cardinal: Direction) {
-        self.2.push((pos, cardinal));
-    }
-
-    fn exit(&self, pos: IVec2, dir: Direction) -> bool {
-        let col = pos.x as usize;
-        let row = pos.y as usize;
-
-        match dir {
-            Direction::Up => row == 0,
-            Direction::Down => row + 1 == self.get_rows(),
-            Direction::Left => col == 0,
-            Direction::Right => col + 1 == self.get_cols(),
-        }
     }
 }
 
@@ -110,28 +100,25 @@ fn sentry(
     new_wall: &IVec2,
     bounds: ((i32, i32), (i32, i32)),
 ) -> bool {
-    // dbg!(position, direction);
-
     let mut visited: HashSet<(IVec2, Direction)> = HashSet::new();
     let (x_minmax, y_minmax) = bounds;
 
     loop {
+        if !visited.insert((position, direction)) {
+            return true;
+        }
+
         let next_position = position + direction.to_position();
-        // dbg!(next_position, direction);
 
         if walls.contains(&next_position) || next_position == *new_wall {
             direction = direction.turn_right();
-        } else if !visited.insert((position, direction)) {
-            return true; // Found a cycle
         } else if (x_minmax.0..=x_minmax.1).contains(&next_position.x)
             && (y_minmax.0..=y_minmax.1).contains(&next_position.y)
         {
             position = next_position;
         } else {
-            return false; // No cycle found
+            return false;
         }
-
-        dbg!(&visited);
     }
 }
 
@@ -140,7 +127,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let cols = peekable.peek().unwrap().chars().count();
     let rows = peekable.count();
 
-    let mut grid = Grid::new(cols, rows);
+    let grid = Grid::new(cols, rows);
     let start = input.find("^").unwrap();
     let walls = input.match_indices("#")
         .map(|(idx, _)| grid.to_position(idx))
@@ -148,9 +135,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     let start_position = grid.to_position(start);
     let direction = Direction::Up;
-
-    // dbg!(&walls.len());
-    // dbg!(start_position);
 
     sentry(start_position, direction, &walls, &start_position, grid.get_bounds());
 

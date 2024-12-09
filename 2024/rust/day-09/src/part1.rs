@@ -51,36 +51,12 @@ fn checksum(expanded_rearranged: &HashMap<usize, usize>) -> u128 {
         .sum()
 }
 
-// fn checksum(exp: &HashMap<usize, usize>) -> u128 {
-//     exp.iter()
-//         .map(|(loc, file_id)| (*loc as u128) * (*file_id as u128))
-//         .sum()
-// }
-
-// pub fn process(input: &str) -> miette::Result<String, AocError> {
-//     let mut expanded = expand(input);
-//     expanded = rearrange(expanded);
-//     Ok(checksum(&expanded).to_string())
-// }
-
-fn process_disk(input: &str) -> u128 {
-    let expanded = expand(input);
-
-    let disk_copy = rearrange(expanded.clone());
-
-    // Calculate checksum
-    disk_copy.iter()
-        .map(|(loc, file_id)| (*loc as u128) * (*file_id as u128))  // Cast to u128 for multiplication
-        .sum()
-}
-
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut expanded = expand(input);
     expanded = rearrange(expanded.clone());
+    
     Ok(checksum(&expanded).to_string())
-
-    // Ok(process_disk(input).to_string())
 }
 
 #[cfg(test)]
