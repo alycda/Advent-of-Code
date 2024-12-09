@@ -3,7 +3,7 @@ use crate::custom_error::AocError;
 use std::collections::HashMap;
 
 fn expand(input: &str) -> HashMap<usize, usize> {
-    let mut d: HashMap<usize, usize> = HashMap::new();  // Changed to usize
+    let mut d: HashMap<usize, usize> = HashMap::new();
     let mut current_position = 0;
     let mut is_file = true;
     let mut b = 0;
@@ -12,7 +12,6 @@ fn expand(input: &str) -> HashMap<usize, usize> {
         if let Some(length) = c.to_digit(10) {
             let length = length as usize;
             if is_file {
-                // Add file
                 for loc in 0..length {
                     d.insert(current_position + loc, b);
                 }

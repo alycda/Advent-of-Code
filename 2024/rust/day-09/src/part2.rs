@@ -1,13 +1,13 @@
 use crate::custom_error::AocError;
 
-use std::collections::HashMap;
-
+#[derive(Debug, Clone, Copy)]
 struct FileBlock {
     id: usize,
     size: usize,
     start_pos: usize,
 }
 
+#[derive(Debug, Clone)]
 struct DiskLayout {
     files: Vec<FileBlock>,
     gaps: Vec<(usize, usize)>, // (start, size)
@@ -15,43 +15,31 @@ struct DiskLayout {
 }
 
 impl DiskLayout {
-    // Helper for debugging - produces string representation like your original
+
+    // fn to_string(&self) -> String {
+    //     let mut result = vec!['.'; self.total_length];
+    //     for file in &self.files {
+    //         for pos in file.start_pos..file.start_pos + file.size {
+    //             result[pos] = char::from_digit(file.id as u32, 10).unwrap();
+    //         }
+    //     }
+    //     result.into_iter().collect()
+    // }
+
     fn to_string(&self) -> String {
         let mut result = vec!['.'; self.total_length];
         for file in &self.files {
             for pos in file.start_pos..file.start_pos + file.size {
-                result[pos] = char::from_digit(file.id as u32, 10).unwrap();
+                result[pos] = if file.id < 10 {
+                    char::from_digit(file.id as u32, 10).unwrap()
+                } else {
+                    '#' 
+                };
             }
         }
         result.into_iter().collect()
     }
 }
-
-// fn expand(input: &str) -> HashMap<usize, usize> {
-//     let mut d: HashMap<usize, usize> = HashMap::new();  // Changed to usize
-//     let mut current_position = 0;
-//     let mut is_file = true;
-//     let mut b = 0;
-
-//     for c in input.chars() {
-//         if let Some(length) = c.to_digit(10) {
-//             let length = length as usize;
-//             if is_file {
-//                 // Add file
-//                 for loc in 0..length {
-//                     d.insert(current_position + loc, b);
-//                 }
-//                 b += 1;
-//                 is_file = false;
-//             } else {
-//                 is_file = true;
-//             }
-//             current_position += length;
-//         }
-//     }
-
-//     d
-// }
 
 fn expand(input: &str) -> DiskLayout {
     let mut files = Vec::new();
@@ -101,37 +89,58 @@ fn print_disk_state(layout: &DiskLayout) {
     }
 }
 
-fn rearrange(mut rearranged: HashMap<usize, usize>) -> HashMap<usize, usize> {
-    let mut left = 0;
-    let mut right = *rearranged.keys().max().unwrap_or(&0);
-    
-    while left < right {
-        if let Some(file_id) = rearranged.remove(&right) {
-            while rearranged.contains_key(&left) {
-                left += 1;
-            }
-            rearranged.insert(left, file_id);
-        }
-        right -= 1;
-    }
+fn defrag(mut layout: DiskLayout) -> DiskLayout {
+    for i in (0..layout.files.len()).rev() {
+        let file = &layout.files[i];
+        let file_size = file.size;
+        let file_start = file.start_pos;
 
-    rearranged
+        // Only look at gaps that are to the left of our current file
+        let potential_gaps: Vec<_> = layout.gaps.iter()
+            .enumerate()
+            .filter(|(_, (gap_start, _))| gap_start < &file_start)
+            .collect();
+
+        for (gap_idx, (gap_start, gap_size)) in potential_gaps {
+            if gap_size >= &file_size {
+                layout.files[i].start_pos = *gap_start;
+                
+                if gap_size == &file_size {
+                    layout.gaps.remove(gap_idx);
+                } else {
+                    layout.gaps[gap_idx] = (*gap_start + file_size, gap_size - file_size);
+                }
+                
+                layout.gaps.push((file_start, file_size));
+                layout.gaps.sort_by_key(|(start, _)| *start);
+                break;
+            }
+        }
+    }
+    
+    layout
 }
 
-fn checksum(expanded_rearranged: &HashMap<usize, usize>) -> u128 {
-    expanded_rearranged.iter()
-        .map(|(loc, file_id)| (*loc as u128) * (*file_id as u128))  // Cast to u128 for multiplication
+fn checksum(layout: &DiskLayout) -> u128 {
+    layout.files.iter()
+        .flat_map(|file| {
+            (file.start_pos..file.start_pos + file.size)
+                .map(move |pos| (pos as u128) * (file.id as u128))
+        })
         .sum()
 }
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let mut expanded = expand(input);
+    let layout = expand(input);
 
-    todo!("refactoring");
-    // expanded = rearrange(expanded.clone());
+    // print_disk_state(&layout);
+
+    let defrag = defrag(layout.clone());
+
+    // print_disk_state(&defrag);
     
-    // Ok(checksum(&expanded).to_string())
+    Ok(checksum(&defrag).to_string())
 }
 #[cfg(test)]
 mod tests {
@@ -160,28 +169,17 @@ mod tests {
     fn test_expand() {
         let input = "2333133121414131402";
         let layout = expand(input);
-        print_disk_state(&layout);
+        // print_disk_state(&layout);
         assert_eq!(
             layout.to_string(),
             "00...111...2...333.44.5555.6666.777.888899"
         );
     }
 
-    // #[test]
-    // fn test_expand() -> miette::Result<()> {
-    //     let input = "2333133121414131402";
-
-    //     dbg!(expand(input));
-    //     panic!("stop");
-
-    //     // assert_eq!("2858", process(input)?);
-    //     Ok(())
-    // }
-
-    // #[test]
-    // fn test_process() -> miette::Result<()> {
-    //     let input = "2333133121414131402";
-    //     assert_eq!("2858", process(input)?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_process() -> miette::Result<()> {
+        let input = "2333133121414131402";
+        assert_eq!("2858", process(input)?);
+        Ok(())
+    }
 }
