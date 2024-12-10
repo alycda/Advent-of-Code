@@ -76,62 +76,47 @@ impl Grid {
     }
 
     fn find_paths(&self, pos: IVec2, current_value: u32, mut path: Vec<IVec2>) -> usize {
-        // Base case: we've reached 0
+        // Add debugging to see the current path being explored
+        println!("Exploring position: {:?}, value: {}", pos, current_value);
+        println!("Current path: {:?}", path);
+
         if current_value == 0 {
+            println!("Found valid path: {:?}", path);
             return 1;
         }
 
-        // Add current position to path
         path.push(pos);
-        
-        // Look for the next number in sequence (current_value - 1) in neighbors
         let target = current_value - 1;
         
-        self.get_neighbors(pos)
+        let paths_sum = self.get_neighbors(pos)
             .into_iter()
-            // .filter(|direction| {
-            //     // Extract the char value from the direction and convert to digit
-            //     let neighbor_value = match direction {
-            //         Direction::Up(_, c) |
-            //         Direction::Down(_, c) |
-            //         Direction::Left(_, c) |
-            //         Direction::Right(_, c) => dbg!(c.to_digit(10)).unwrap()
-            //     };
-            //     neighbor_value == target
-            // })
-            .filter(|direction| {
-                let neighbor_value = match direction {
-                    Direction::Up(_, c) |
-                    Direction::Down(_, c) |
-                    Direction::Left(_, c) |
-                    Direction::Right(_, c) => c.to_digit(10)
-                    // {
-                    //     let digit = c.to_digit(10);
-                    //     if digit.is_none() {
-                    //         // Using debug! macro if you have logging set up
-                    //         println!("Found non-digit character: {}", c);
-                    //     }
-                    //     digit
-                    // }
+            .filter_map(|direction| {
+                let (next_pos, c) = match direction {
+                    Direction::Up(p, c) |
+                    Direction::Down(p, c) |
+                    Direction::Left(p, c) |
+                    Direction::Right(p, c) => (p, c)
                 };
                 
-                // Only proceed if we got a valid digit and it matches our target
-                matches!(neighbor_value, Some(value) if value == target)
-            })
-            .map(|direction| {
-                // Extract the position from the direction
-                match direction {
-                    Direction::Up(pos, _) |
-                    Direction::Down(pos, _) |
-                    Direction::Left(pos, _) |
-                    Direction::Right(pos, _) => pos
-                }
+                // Debug neighbor checking
+                println!("Checking neighbor at {:?}, value: {}", next_pos, c);
+                
+                c.to_digit(10).and_then(|value| {
+                    if value == target {
+                        Some(next_pos)
+                    } else {
+                        None
+                    }
+                })
             })
             .map(|next_pos| {
-                // Recursively find paths from this position
+                println!("Found valid next step at {:?}", next_pos);
                 self.find_paths(next_pos, target, path.clone())
             })
-            .sum()
+            .sum();
+
+        println!("Found {} paths from position {:?}", paths_sum, pos);
+        paths_sum
     }
 }
 
@@ -142,6 +127,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     let grid = Grid::new(cols, rows, input.to_string());
 
+    let mut trailhead_scores = Vec::new();
 
     let output: usize = input
         .lines()
@@ -163,8 +149,21 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 .filter(|(_, c)| *c == '9')
                 .map(move |(col, _)| IVec2::new(col as i32, row as i32))
         })
-        .map(|start_pos| grid.find_paths(start_pos, 9, Vec::new()))
+        .map(|start_pos| {
+            dbg!(&start_pos);
+
+            let paths = dbg!(grid.find_paths(start_pos, 9, Vec::new()));
+            trailhead_scores.push(paths.clone());
+
+            paths
+        })
         .sum();
+
+    dbg!(&trailhead_scores);
+    let total = trailhead_scores.iter().sum::<usize>();
+    dbg!(total);
+
+    panic!("halt");
 
     Ok(output.to_string())
 }
