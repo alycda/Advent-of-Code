@@ -22,10 +22,6 @@ impl Grid {
         // Parse input string into grid
         for (x, line) in input.lines().enumerate() {
             for (y, height) in line.chars().enumerate() {
-                // heights.insert(
-                //     IVec2::new(x as i32, y as i32),
-                //     height.to_digit(10).unwrap()
-                // );
                 if let Some(digit) = height.to_digit(10) {
                     heights.insert(IVec2::new(x as i32, y as i32), digit);
                 }
@@ -70,64 +66,6 @@ impl Grid {
         total
     }
 
-    // fn get_rating(&self, pos: IVec2, path: &mut Vec<IVec2>) -> usize {
-    //     // Add position to path
-    //     path.push(pos);
-
-    //     // Debug print current path
-    //     let current_path: String = path.iter()
-    //         .map(|p| self.heights.get(p).unwrap().to_string())
-    //         .collect::<Vec<_>>()
-    //         .join(" -> ");
-    //     println!("Exploring path: {}", current_path);
-
-    //     let result = if self.heights.get(&pos) == Some(&9) {
-    //         println!("Found valid path: {}", current_path);
-    //         1
-    //     } else {
-    //         let current_height = *self.heights.get(&pos).unwrap();
-    //         let mut total = 0;
-
-    //         for (dx, dy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-    //             let next_pos = IVec2::new(pos.x + dx, pos.y + dy);
-                
-    //             if let Some(&height) = self.heights.get(&next_pos) {
-    //                 if height == current_height + 1 && !path.contains(&next_pos) {
-    //                     total += self.get_rating(next_pos, path);
-    //                 }
-    //             }
-    //         }
-    //         total
-    //     };
-
-    //     path.pop();
-    //     result
-    // }
-
-    // // Calculate rating for a single position
-    // fn get_rating(&self, pos: IVec2) -> usize {
-    //     // Base case: if we're at a 9, we've found a valid path
-    //     if self.heights.get(&pos) == Some(&9) {
-    //         return 1;
-    //     }
-
-    //     let current_height = *self.heights.get(&pos).unwrap();
-    //     let mut total = 0;
-
-    //     // Check all four adjacent positions
-    //     for (dx, dy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-    //         let next_pos = IVec2::new(pos.x + dx, pos.y + dy);
-            
-    //         // If we find a position with exactly the next height, add its rating
-    //         if let Some(&height) = self.heights.get(&next_pos) {
-    //             if height == current_height + 1 {
-    //                 total += self.get_rating(next_pos);
-    //             }
-    //         }
-    //     }
-
-    //     total
-    // }
 }
 
 #[tracing::instrument]
@@ -151,30 +89,25 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     }
 
     Ok(total.to_string())
-
-    // let map = Grid::new(input);
-    
-    // // Get the sum of ratings from all trail heads
-    // let total: usize = map
-    //     .get_trail_heads()
-    //     .into_iter()
-    //     .map(|pos| map.get_rating(pos))
-    //     .sum();
-
-    // Ok(total.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // use rstest::rstest;
+//     use rstest::rstest;
 
-    // #[rstest]
-    // #[case("", "")]
-    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
-    //     assert_eq!(process(input).unwrap(), expected);
-    // }
+//     #[rstest]
+//     #[case("10..9..
+// 2...8..
+// 3...7..
+// 4567654
+// ...8..3
+// ...9..2
+// .....01", "2")]
+//     fn test_cases(#[case] input: &str, #[case] expected: &str) {
+//         assert_eq!(process(input).unwrap(), expected);
+//     }
 
     #[test]
     fn test_process() -> miette::Result<()> {
