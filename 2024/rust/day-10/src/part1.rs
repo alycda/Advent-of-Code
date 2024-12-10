@@ -75,20 +75,25 @@ impl Grid {
         neighbors
     }
 
-    fn find_paths(&self, pos: IVec2, current_value: u32, mut path: Vec<IVec2>) -> usize {
-        // Add debugging to see the current path being explored
-        println!("Exploring position: {:?}, value: {}", pos, current_value);
-        println!("Current path: {:?}", path);
-
+    fn find_paths(&self, pos: IVec2, current_value: u32, mut path: Vec<(IVec2, char)>) -> usize {
+        // Store both position and value in our path for better debugging
+        let current_char = self.get_char(&pos);
+        
+        println!("Exploring: {:?} (value: {})", pos, current_char);
+        
         if current_value == 0 {
-            println!("Found valid path: {:?}", path);
+            println!("Found complete path:");
+            path.iter().for_each(|(pos, val)| {
+                println!("  Position: {:?}, Value: {}", pos, val);
+            });
+            println!("----------------");
             return 1;
         }
-
-        path.push(pos);
+    
+        path.push((pos, current_char));
         let target = current_value - 1;
         
-        let paths_sum = self.get_neighbors(pos)
+        self.get_neighbors(pos)
             .into_iter()
             .filter_map(|direction| {
                 let (next_pos, c) = match direction {
@@ -98,26 +103,97 @@ impl Grid {
                     Direction::Right(p, c) => (p, c)
                 };
                 
-                // Debug neighbor checking
-                println!("Checking neighbor at {:?}, value: {}", next_pos, c);
+                println!("  Checking neighbor at {:?}: {}", next_pos, c);
                 
                 c.to_digit(10).and_then(|value| {
                     if value == target {
+                        println!("    Found valid step: {} -> {}", current_value, value);
                         Some(next_pos)
                     } else {
                         None
                     }
                 })
             })
-            .map(|next_pos| {
-                println!("Found valid next step at {:?}", next_pos);
-                self.find_paths(next_pos, target, path.clone())
-            })
-            .sum();
-
-        println!("Found {} paths from position {:?}", paths_sum, pos);
-        paths_sum
+            .map(|next_pos| self.find_paths(next_pos, target, path.clone()))
+            .sum()
     }
+    
+    // fn find_paths(&self, pos: IVec2, current_value: u32, mut path: Vec<IVec2>) -> usize {
+    //     if current_value == 0 {
+    //         return 1;
+    //     }
+    
+    //     path.push(pos);
+        
+    //     // We want exactly one less than our current value
+    //     let target = current_value - 1;
+        
+    //     self.get_neighbors(pos)
+    //         .into_iter()
+    //         .filter_map(|direction| {
+    //             let (next_pos, c) = match direction {
+    //                 Direction::Up(p, c) |
+    //                 Direction::Down(p, c) |
+    //                 Direction::Left(p, c) |
+    //                 Direction::Right(p, c) => (p, c)
+    //             };
+                
+    //             // Only proceed if we find exactly our target value
+    //             c.to_digit(10).and_then(|value| {
+    //                 if value == target {
+    //                     Some(next_pos)
+    //                 } else {
+    //                     None
+    //                 }
+    //             })
+    //         })
+    //         .map(|next_pos| self.find_paths(next_pos, target, path.clone()))
+    //         .sum()
+    // }
+
+    // fn find_paths(&self, pos: IVec2, current_value: u32, mut path: Vec<IVec2>) -> usize {
+    //     // Add debugging to see the current path being explored
+    //     println!("Exploring position: {:?}, value: {}", pos, current_value);
+    //     println!("Current path: {:?}", path);
+
+    //     if current_value == 0 {
+    //         println!("Found valid path: {:?}", path);
+    //         return 1;
+    //     }
+
+    //     path.push(pos);
+    //     let target = current_value - 1;
+        
+    //     let paths_sum = self.get_neighbors(pos)
+    //         .into_iter()
+    //         .filter_map(|direction| {
+    //             let (next_pos, c) = match direction {
+    //                 Direction::Up(p, c) |
+    //                 Direction::Down(p, c) |
+    //                 Direction::Left(p, c) |
+    //                 Direction::Right(p, c) => (p, c)
+    //             };
+                
+    //             // Debug neighbor checking
+    //             println!("Checking neighbor at {:?}, value: {}", next_pos, c);
+                
+    //             c.to_digit(10).and_then(|value| {
+    //                 if value == target {
+    //                     Some(next_pos)
+    //                 } else {
+    //                     None
+    //                 }
+    //             })
+    //         })
+    //         .map(|next_pos| {
+    //             println!("Found valid next step at {:?}", next_pos);
+    //             self.find_paths(next_pos, target, path.clone())
+    //         })
+    //         .sum();
+
+    //     println!("Found {} paths from position {:?}", paths_sum, pos);
+    //     paths_sum
+    // }
 }
 
 pub fn process(input: &str) -> miette::Result<String, AocError> {    
