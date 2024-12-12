@@ -49,81 +49,56 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: IVec2, visited: &mut HashSet<IVec2>)
 }
 
 fn count_region_edges(grid: &Vec<Vec<char>>, region: &HashSet<IVec2>) -> usize {
-    let mut processed_edges = HashSet::new();
     let mut edge_count = 0;
+    // let mut visited_positions = HashSet::new();
 
-    // Helper to check if a position is at the grid border
-    let is_border = |pos: IVec2| -> bool {
-        pos.x == 0 || 
-        pos.y == 0 || 
-        pos.x == (grid[0].len() - 1) as i32 || 
-        pos.y == (grid.len() - 1) as i32
-    };
+    // Pre-compute grid boundaries
+    let max_x = (grid[0].len() - 1) as i32;
+    let max_y = (grid.len() - 1) as i32;
 
-    // For each position in the region
-    for &pos in region {
-        // Check each direction only once
-        for delta in [(0, 1), (1, 0)] {  // Only check right and down
-            let dir_pos = IVec2::new(pos.x + delta.0, pos.y + delta.1);
-            
-            // Skip if we've already processed this edge
-            if processed_edges.contains(&(pos, dir_pos)) {
-                continue;
+    // Find the bounding box of the region to reduce iteration space
+    let min_x = region.iter().map(|p| p.x).min().unwrap_or(0);
+    let max_region_x = region.iter().map(|p| p.x).max().unwrap_or(max_x);
+    let min_y = region.iter().map(|p| p.y).min().unwrap_or(0);
+    let max_region_y = region.iter().map(|p| p.y).max().unwrap_or(max_y);
+
+    // Process only the bounding box of the region
+    for y in min_y..=max_region_y {
+        let mut in_region = false;
+        let mut last_char = None;
+
+        for x in min_x..=max_region_x {
+            let pos = IVec2::new(x, y);
+            let is_in_region = region.contains(&pos);
+
+            // Count vertical edges when we enter/exit the region
+            if is_in_region != in_region {
+                edge_count += 1;
+                in_region = is_in_region;
             }
 
-            // If this is an edge (different region or border)
-            if !region.contains(&dir_pos) || is_border(pos) {
-                // Follow the edge to find its length
-                let mut current = pos;
-                let mut length = 0;
-                
-                while let Some(check_pos) = Some(IVec2::new(current.x + delta.0, current.y + delta.1)) {
-                    if !region.contains(&check_pos) {
-                        // Mark this edge as processed
-                        processed_edges.insert((current, check_pos));
-                        length += 1;
-                        current = check_pos;
-                    } else {
-                        break;
+            // Count horizontal edges
+            if is_in_region {
+                // Top edge
+                if y == 0 || !region.contains(&IVec2::new(x, y - 1)) {
+                    if last_char != Some(true) {
+                        edge_count += 1;
+                        last_char = Some(true);
                     }
-                }
-                
-                // Only count this as one edge regardless of length
-                if length > 0 {
-                    edge_count += 1;
+                } else {
+                    last_char = None;
                 }
             }
-        }
-
-        // Count border edges
-        if is_border(pos) {
-            edge_count += 1;
         }
     }
 
+    // Add border edges if we touch the grid boundaries
+    if region.iter().any(|p| p.x == 0 || p.x == max_x || p.y == 0 || p.y == max_y) {
+        edge_count += 1;
+    }
+
     edge_count
-
-    // let mut edges = 0;
-    
-    // for &pos in region {
-    //     for neighbor in get_all_neighbors(pos, grid) {
-    //         // let row = neighbor.y as usize;
-    //         // let col = neighbor.x as usize;
-            
-    //         // If neighbor is outside region, it's an edge
-    //         if !region.contains(&neighbor) {
-    //             edges += 1;
-    //         }
-    //     }
-        
-    //     // Count border edges
-    //     if pos.x == 0 || pos.x == (grid[0].len() - 1) as i32 { edges += 1; }
-    //     if pos.y == 0 || pos.y == (grid.len() - 1) as i32 { edges += 1; }
-    // }
-    
-    // edges
 }
-
 
 /// COLS, ROWS, GRID
 #[derive(Debug, Clone, PartialEq, Eq)]
