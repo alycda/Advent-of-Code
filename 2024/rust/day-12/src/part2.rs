@@ -50,54 +50,29 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: IVec2, visited: &mut HashSet<IVec2>)
 
 fn count_region_edges(grid: &Vec<Vec<char>>, region: &HashSet<IVec2>) -> usize {
     let mut edge_count = 0;
-    // let mut visited_positions = HashSet::new();
+    let rows = grid.len() as i32;
+    let cols = grid[0].len() as i32;
 
-    // Pre-compute grid boundaries
-    let max_x = (grid[0].len() - 1) as i32;
-    let max_y = (grid.len() - 1) as i32;
+    for &pos in region {
+        // Count horizontal edges (left/right)
+        if pos.x == 0 || !region.contains(&IVec2::new(pos.x - 1, pos.y)) {
+            edge_count += 1;
+        }
+        if pos.x == cols - 1 || !region.contains(&IVec2::new(pos.x + 1, pos.y)) {
+            edge_count += 1;
+        }
 
-    // Find the bounding box of the region to reduce iteration space
-    let min_x = region.iter().map(|p| p.x).min().unwrap_or(0);
-    let max_region_x = region.iter().map(|p| p.x).max().unwrap_or(max_x);
-    let min_y = region.iter().map(|p| p.y).min().unwrap_or(0);
-    let max_region_y = region.iter().map(|p| p.y).max().unwrap_or(max_y);
-
-    // Process only the bounding box of the region
-    for y in min_y..=max_region_y {
-        let mut in_region = false;
-        let mut last_char = None;
-
-        for x in min_x..=max_region_x {
-            let pos = IVec2::new(x, y);
-            let is_in_region = region.contains(&pos);
-
-            // Count vertical edges when we enter/exit the region
-            if is_in_region != in_region {
-                edge_count += 1;
-                in_region = is_in_region;
-            }
-
-            // Count horizontal edges
-            if is_in_region {
-                // Top edge
-                if y == 0 || !region.contains(&IVec2::new(x, y - 1)) {
-                    if last_char != Some(true) {
-                        edge_count += 1;
-                        last_char = Some(true);
-                    }
-                } else {
-                    last_char = None;
-                }
-            }
+        // Count vertical edges (up/down)
+        if pos.y == 0 || !region.contains(&IVec2::new(pos.x, pos.y - 1)) {
+            edge_count += 1;
+        }
+        if pos.y == rows - 1 || !region.contains(&IVec2::new(pos.x, pos.y + 1)) {
+            edge_count += 1;
         }
     }
 
-    // Add border edges if we touch the grid boundaries
-    if region.iter().any(|p| p.x == 0 || p.x == max_x || p.y == 0 || p.y == max_y) {
-        edge_count += 1;
-    }
-
-    edge_count
+    // Since we counted each edge twice (once from each side), divide by 2
+    edge_count / 2
 }
 
 /// COLS, ROWS, GRID
