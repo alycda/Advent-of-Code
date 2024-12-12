@@ -4,10 +4,15 @@ pub trait Solution {
 
     fn parse(input: &str) -> Self;
 
-    // fn parse_nom(input: &str) -> Self where Self: Sized {
+    // /// https://tfpk.github.io/nominomicon/introduction.html
+    // fn parse_nom(_input: &str) -> Self where Self: Sized {
     //     todo!()
     // }
     
+    fn nom_parser(_input: &str) -> nom::IResult<&str, Self, nom::error::Error<&str>> where Self: Sized {
+        todo!()
+    }
+
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
         todo!()
     }

@@ -1,3 +1,5 @@
+
+use ornaments::{Part, Solution};
 use day_01::*;
 
 fn main() {
@@ -7,10 +9,10 @@ fn main() {
 
 #[divan::bench]
 fn part1() {
-    part1::process(divan::black_box(include_str!("../input1.txt",))).unwrap();
+    Day1::parse(divan::black_box(include_str!("../input1.txt",))).solve(Part::One).unwrap();
 }
 
 #[divan::bench]
 fn part2() {
-    part2::process(divan::black_box(include_str!("../input2.txt",))).unwrap();
+    Day1::parse(divan::black_box(include_str!("../input1.txt",))).solve(Part::Two).unwrap();
 }

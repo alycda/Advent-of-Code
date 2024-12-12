@@ -26,6 +26,16 @@
         {
           "type": "cargo",
           "command": "run",
+          "args": ["--bin", "${input:part}"],
+          "label": "rust: run part",
+          "options": {
+            "cwd": "${fileDirname}"
+          },
+          "problemMatcher": []
+        },
+        {
+          "type": "cargo",
+          "command": "run",
           "args": ["--release", "--bin", "${fileBasenameNoExtension}"],
           "label": "rust: run-release",
           "options": {
@@ -54,6 +64,12 @@
         "id": "day",
         "type": "promptString",
         "description": "Enter the day number (e.g., 01, 02, etc.)"
+      },
+      {
+        "id": "part",
+        "type": "pickString",
+        "description": "Select the part to run",
+        "options": ["part1", "part2"]
       }
     ]
 }
