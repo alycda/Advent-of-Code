@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 
-members = ["day-*"]
+members = ["day-*", "ornaments"]
 default-members = ["day-*"]
 
 # Enable a small amount of optimization in the dev profile. (for bevy)
@@ -32,6 +32,7 @@ opt-level = "s"
 strip = "debuginfo"
 
 [workspace.dependencies]
+ornaments = { path = "ornaments" }
 bevy = { version = "0.15.0" }
 criterion = { version = "0.5.1", features = ["html_reports"] }
 dhat = "0.3.2"
