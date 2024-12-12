@@ -2,7 +2,7 @@ pub trait Solution {
     /// Ensures the output can be converted to a string
     type Output: std::fmt::Display;  
 
-    fn parse(input: &str) -> Self;
+    fn parse(input: &'static str) -> Self;
 
     // /// https://tfpk.github.io/nominomicon/introduction.html
     // fn parse_nom(_input: &str) -> Self where Self: Sized {

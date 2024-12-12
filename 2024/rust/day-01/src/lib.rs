@@ -166,18 +166,19 @@ mod tests {
     use ornaments::Part;
     
     #[test]
-    fn test_day1_part1() {
+    fn test_day1_part1() -> miette::Result<()> {
         let input = "3   4
     4   3
     2   5
     1   3
     3   9
     3   3";
-        assert_eq!("11", Day1::parse(input).solve(Part::One).unwrap());
+        assert_eq!("11", Day1::parse(input).solve(Part::One)?);
+        Ok(())
     }
     
     // #[test]
-    // fn test_day1_part1_nom() {
+    // fn test_day1_part1_nom() -> miette::Result<()> {
     //     let input = "3   4
     // 4   3
     // 2   5
@@ -188,18 +189,19 @@ mod tests {
     // }
     
     #[test]
-    fn test_day1_part2() {
+    fn test_day1_part2() -> miette::Result<()> {
         let input = "3   4
     4   3
     2   5
     1   3
     3   9
     3   3";
-        assert_eq!("31", Day1::parse(input).solve(Part::Two).unwrap());
+        assert_eq!("31", Day1::parse(input).solve(Part::Two)?);
+        Ok(())
     }
     
 //     #[test]
-//     fn test_day1_part2_hashmap() {
+//     fn test_day1_part2_hashmap() -> miette::Result<()> {
 //         let input = "3   4
 //     4   3
 //     2   5
