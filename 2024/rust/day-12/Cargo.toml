@@ -15,6 +15,7 @@ miette.workspace = true
 thiserror.workspace = true
 aho-corasick = "1.1.2"
 dhat.workspace = true
+glam.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
