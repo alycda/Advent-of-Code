@@ -13,6 +13,7 @@ impl<'a> Day2<'a> {
 
 impl<'a> Solution for Day2<'a> {
     type Output = usize;
+    type Item = &'a str;
 
     fn parse(input: &'static str) -> Self {
         Day2(input.lines())

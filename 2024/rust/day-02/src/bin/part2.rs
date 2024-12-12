@@ -16,7 +16,7 @@ fn main() -> miette::Result<()> {
     tracing_subscriber::fmt::init();
 
     let file = include_str!("../../input1.txt");
-    let result = Day2::parse(file).solve(ornaments::Part::Two).context("process part 1")?;
+    let result = Day2::parse(file).solve(ornaments::Part::Two).context("process part 2")?;
 
     println!("{}", result);
     Ok(())

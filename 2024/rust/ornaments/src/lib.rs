@@ -1,15 +1,12 @@
 pub trait Solution {
     /// Ensures the output can be converted to a string
     type Output: std::fmt::Display;  
+    type Item;
 
     fn parse(input: &'static str) -> Self;
 
-    // /// https://tfpk.github.io/nominomicon/introduction.html
-    // fn parse_nom(_input: &str) -> Self where Self: Sized {
-    //     todo!()
-    // }
-    
-    fn nom_parser(_input: &str) -> nom::IResult<&str, Self, nom::error::Error<&str>> where Self: Sized {
+    /// https://tfpk.github.io/nominomicon/introduction.html
+    fn nom_parser(_input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> where Self: Sized {
         todo!()
     }
 
@@ -53,4 +50,14 @@ pub enum AocError {
     #[error(transparent)]
     #[diagnostic(code(aoc::io_error))]
     IoError(#[from] std::io::Error),
+    
+    #[error("Failed to parse input: {msg}")]
+    #[diagnostic(code(aoc::parse_error))]
+    ParseError {
+        msg: String,
+        #[source_code]
+        input: String,
+        #[label("error occurred here")]
+        span: Option<(usize, usize)>,
+    }
 }

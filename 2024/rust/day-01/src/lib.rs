@@ -19,6 +19,7 @@ pub struct Day1(Vec<i32>, Vec<i32>);
 
 impl Solution for Day1 {
     type Output = i32;
+    type Item = (i32, i32);
 
     fn parse(input: &str) -> Self {
         let (left, right) = input.lines()
