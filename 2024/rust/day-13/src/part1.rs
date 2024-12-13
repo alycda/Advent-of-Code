@@ -40,7 +40,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             (a, b, prize)
         })
         .filter_map(|(button_a, button_b, prize_location)| {
-            dbg!(solve_button_presses(button_a, button_b, prize_location))
+            solve_button_presses(button_a, button_b, prize_location)
         }).map(|(a, b)| {
             (a * 3) + b
         }).sum();
