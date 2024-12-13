@@ -59,32 +59,16 @@ impl Grid {
     // pub fn go_straight<F: Fn() -> bool>(&self, start: IVec2, direction: IVec2, steps: usize, _test: Option<F>) -> Option<Vec<char>> {
     #[instrument]
     pub fn go_straight(&self, start: IVec2, direction: IVec2, steps: usize) -> Option<Vec<char>> {
-        if !self.in_bounds(start * (direction * steps as i32)) {
+        let end_pos = start + (direction * steps as i32);
+        if !self.in_bounds(end_pos) {
             debug!("{steps} steps from {start} in direction {direction} is out of bounds");
             return None;
         }
 
-        let mut line = Vec::with_capacity(steps);
-
-        // if let None = steps {
-        //     while let Some(value) = self.get_at(start + direction.to_offset()) {
-        //         line.push(value);
-        //     }
-        // } else {}
-
-        let mut pos = start;
-        for _ in 0..steps {
-            pos += direction;
-            // line.push(self.get_at_unbounded(pos));
-            line.push(self.get_at(pos));
-        }
-
-        if line.iter().any(|c| c.is_none()) {
-            return None;
-        } 
-
-        // dbg!(Some(line))
-        Some(line.iter().map(|c| c.unwrap()).collect::<Vec<_>>())
+        (1..=steps)
+            .map(|i| start + (direction * i as i32))
+            .map(|pos| self.get_at(pos))
+            .collect::<Option<Vec<_>>>()
     }
 
     fn get_at_unbounded(&self, pos: IVec2) -> char {
