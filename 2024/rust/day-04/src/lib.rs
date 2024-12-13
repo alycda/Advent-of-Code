@@ -15,11 +15,17 @@ pub struct CrossPattern;
 
 impl Pattern for XmasPattern {
     fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
+        if grid.get_at(pos).unwrap() != 'X' {
+            return false;
+        }
+
         ALL_DIRECTIONS.iter()
             .filter_map(|dir| {
                 grid.go_straight(pos, *dir, 3)
             })
-            .any(|chars| chars.iter().collect::<String>() == "MAS")
+            .any(|chars| {
+                chars.iter().collect::<String>() == "MAS"
+            })
     }
 
     fn find_starting_positions(grid: &Grid) -> HashSet<IVec2> {
@@ -32,6 +38,41 @@ impl Pattern for XmasPattern {
         positions
     }
 }
+
+// impl Pattern for XmasPattern {
+//     // fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
+//     //     ALL_DIRECTIONS.iter()
+//     //         .filter_map(|dir| grid.go_straight(pos, *dir, 3))
+//     //         // From your working code, this succeeds only when chars together spell "MAS"
+//     //         .any(|chars| chars.iter().collect::<String>() == "MAS")
+//     // }
+
+//     fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
+//         ALL_DIRECTIONS.iter()
+//             .filter_map(|dir| {
+//                 let result = grid.go_straight(pos, *dir, 3);
+//                 if let Some(chars) = &result {
+//                     println!("From {:?} in dir {:?}: {:?}", pos, dir, chars);
+//                 }
+//                 result
+//             })
+//             .any(|chars| {
+//                 let s = chars.iter().collect::<String>();
+//                 println!("Testing string: {}", s);
+//                 s == "MAS"
+//             })
+//     }
+
+//     fn find_starting_positions(grid: &Grid) -> HashSet<IVec2> {
+//         let mut positions = HashSet::new();
+//         grid.walk(|pos| {
+//             if grid.get_at(pos).unwrap() == 'X' {
+//                 positions.insert(pos);
+//             }
+//         });
+//         positions
+//     }
+// }
 
 impl Pattern for CrossPattern {
     fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
@@ -94,16 +135,97 @@ impl<P: Pattern> Solution for Day4<P> {
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
+        // Keep original working implementation for XmasPattern
+        if std::any::type_name::<P>().contains("XmasPattern") {
+            let output = self.set.iter()
+                .flat_map(|pos| {
+                    ALL_DIRECTIONS.iter().filter_map(|dir| {
+                        self.grid.go_straight(*pos, *dir, 3)
+                    })
+                })
+                .filter(|chars| {
+                    chars.iter().collect::<String>() == "MAS"
+                })
+                .count();
+            Ok(output)
+        } else {
+            // Use Pattern trait for CrossPattern
+            let pattern = P::default();
+            Ok(self.set.iter()
+                .filter(|&pos| pattern.matches(&self.grid, *pos))
+                .count())
+        }
+    }
+
+    fn part2(&mut self) -> Result<Self::Output, AocError> {
         let pattern = P::default();
         Ok(self.set.iter()
             .filter(|&pos| pattern.matches(&self.grid, *pos))
             .count())
     }
-
-    fn part2(&mut self) -> Result<Self::Output, AocError> {
-        self.part1()
-    }
 }
+
+// impl<P: Pattern> Solution for Day4<P> {
+//     type Output = usize;
+//     type Item = HashSet<IVec2>;
+
+//     fn parse(input: &'static str) -> Self {
+//         let grid = Self::to_grid(input);
+//         let set = P::find_starting_positions(&grid);
+        
+//         Self {
+//             grid,
+//             set,
+//             _pattern: PhantomData
+//         }
+//     }
+
+//     fn part1(&mut self) -> Result<Self::Output, AocError> {
+//         let output = self.set.iter()
+//             .flat_map(|pos| {
+//                 ALL_DIRECTIONS.iter().filter_map(|dir| {
+//                     self.grid.go_straight(*pos, *dir, 3)
+//                 })
+//             })
+//             .filter(|chars| {
+//                 chars.iter().collect::<String>() == "MAS"
+//             })
+//             .count();
+
+//         Ok(output)
+//     }
+
+//     fn part2(&mut self) -> Result<Self::Output, AocError> {
+//         self.part1()
+//     }
+// }
+
+// impl<P: Pattern> Solution for Day4<P> {
+//     type Output = usize;
+//     type Item = HashSet<IVec2>;
+
+//     fn parse(input: &'static str) -> Self {
+//         let grid = Self::to_grid(input);
+//         let set = P::find_starting_positions(&grid);
+        
+//         Self {
+//             grid,
+//             set,
+//             _pattern: PhantomData
+//         }
+//     }
+
+//     fn part1(&mut self) -> Result<Self::Output, AocError> {
+//         let pattern = P::default();
+//         Ok(self.set.iter()
+//             .filter(|&pos| pattern.matches(&self.grid, *pos))
+//             .count())
+//     }
+
+//     fn part2(&mut self) -> Result<Self::Output, AocError> {
+//         self.part1()
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
