@@ -1,68 +1,6 @@
-use nom::{
-    bytes::complete::tag, character::complete::{alpha1, char, digit1}, combinator::{map, map_res, opt}, sequence::{preceded, tuple}, IResult
-};
 use glam::IVec2;
 
-use crate::AocError;
-
-#[derive(Debug)]
-struct Button(IVec2);
-
-impl std::ops::Deref for Button {
-    type Target = IVec2;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-fn parse_number(input: &str) -> IResult<&str, i32> {
-    map_res(
-        tuple((
-            opt(char('+')),
-            digit1
-        )),
-        |(_sign, num): (Option<char>, &str)| num.parse::<i32>()
-    )(input)
-}
-
-fn parse_coordinates(input: &str) -> IResult<&str, IVec2> {
-    map(
-        tuple((
-            preceded(tag("X"), parse_number),
-            preceded(tag(", Y"), parse_number)
-        )),
-        |(x, y)| IVec2::new(x, y)
-    )(input)
-}
-
-fn parse_button(input: &str) -> IResult<&str, IVec2> {
-    preceded(
-        tuple((
-            tag("Button "),
-            alpha1,
-            tag(": ")
-        )),
-        parse_coordinates
-    )(input)
-}
-
-fn parse_prize_coordinates(input: &str) -> IResult<&str, IVec2> {
-    map(
-        tuple((
-            preceded(tag("X="), parse_number),
-            preceded(tag(", Y="), parse_number)
-        )),
-        |(x, y)| IVec2::new(x, y)
-    )(input)
-}
-
-fn parse_prize(input: &str) -> IResult<&str, IVec2> {
-    preceded(
-        tag("Prize: "),
-        parse_prize_coordinates
-    )(input)
-}
+use crate::{parse_button, parse_prize, AocError, Button};
 
 fn solve_button_presses(button_a: Button, button_b: Button, target: IVec2) -> Option<(i32, i32)> {
     let denominator = button_a.x * button_b.y - button_a.y * button_b.x;
