@@ -4,19 +4,34 @@ use itertools::Itertools;
 
 use ornaments::{AocError, Solution};
 
-// pub struct Day5(HashMap<&str, HashSet<&str>>);
 pub struct Day5 {
     rules: HashMap<&'static str, HashSet<&'static str>>,
     updates: &'static str,
 }
 
-// impl std::ops::Deref for Day5 {
-//     type Target = HashMap<&str, HashSet<&str>>;
-    
-//     fn deref(&self) -> &Self::Target {
-//         &self.0
-//     }
-// }
+impl Day5 {
+    fn is_valid_path(&self, segments: &[&str]) -> bool {
+        segments.windows(2).all(|pair| {
+            let (current, next) = (pair[0], pair[1]);
+            self.rules.get(current)
+                .map_or(false, |rules| rules.contains(next))
+        })
+    }
+
+    fn process_updates<F>(&self, handle_valid: F) -> usize 
+        where 
+            F: Fn(bool, &str) -> Option<String>
+        {
+            self.updates.lines()
+                .filter_map(|update| {
+                    let segments: Vec<_> = update.split(",").collect();
+                    let is_valid = self.is_valid_path(&segments);
+                    handle_valid(is_valid, update)
+                        .map(|result| process_update(&result))
+                })
+                .sum()
+        }
+}
 
 impl Solution for Day5 {
     type Output = usize;
@@ -42,48 +57,16 @@ impl Solution for Day5 {
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
-        let output = self.updates.lines()
-            .enumerate()
-            .filter_map(|(row, update)| {
-                let segments: Vec<_> = update.split(",").collect();
-                // Check if path is valid by looking at consecutive pairs
-                let is_valid = segments.windows(2).all(|pair| {
-                    let (current, next) = (pair[0], pair[1]);
-                    self.rules.get(current)
-                        .map_or(false, |rules| rules.contains(next))
-                });
-                
-                match is_valid {
-                    true => Some((row, update)),
-                    false => None,
-                }
-            })
-            .map(|(_, x)| process_update(x))
-            .sum::<usize>();
-
+        let output = self.process_updates(|is_valid, update| {
+            if is_valid { Some(update.to_string()) } else { None }
+        });
         Ok(output)
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        let output = self.updates.lines()
-            .enumerate()
-            .filter_map(|(row, update)| {
-                let segments: Vec<_> = update.split(",").collect();
-                // Check if path is valid by looking at consecutive pairs
-                let is_valid = segments.windows(2).all(|pair| {
-                    let (current, next) = (pair[0], pair[1]);
-                    self.rules.get(current)
-                        .map_or(false, |rules| rules.contains(next))
-                });
-                
-                match is_valid {
-                    false => Some((row, fix_order(update, &self.rules))),
-                    true => None,
-                }
-            })
-            .map(|(_, x)| process_update(&x))
-            .sum::<usize>();
-
+        let output = self.process_updates(|is_valid, update| {
+            if !is_valid { Some(fix_order(update, &self.rules)) } else { None }
+        });
         Ok(output)
     }
 }
