@@ -1,10 +1,9 @@
 use std::{collections::HashSet, marker::PhantomData};
-
 use glam::IVec2;
 use ornaments::{AocError, Grid, Solution, ALL_DIRECTIONS};
 
 pub trait Pattern: Default {
-    fn matches(&self, chars: &Grid, pos: IVec2) -> bool;
+    fn matches(&self, grid: &Grid, pos: IVec2) -> bool;
     fn find_starting_positions(grid: &Grid) -> HashSet<IVec2>;
 }
 
@@ -17,7 +16,9 @@ pub struct CrossPattern;
 impl Pattern for XmasPattern {
     fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
         ALL_DIRECTIONS.iter()
-            .filter_map(|dir| grid.go_straight(pos, *dir, 3))
+            .filter_map(|dir| {
+                grid.go_straight(pos, *dir, 3)
+            })
             .any(|chars| chars.iter().collect::<String>() == "MAS")
     }
 
@@ -34,25 +35,30 @@ impl Pattern for XmasPattern {
 
 impl Pattern for CrossPattern {
     fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
-        if grid.get_at(pos).unwrap() != 'A' {
+        // Get all diagonal neighbors
+        let diagonals = [
+            IVec2::new(-1, -1), // top-left
+            IVec2::new(-1, 1),  // top-right
+            IVec2::new(1, -1),  // bottom-left
+            IVec2::new(1, 1),   // bottom-right
+        ];
+        
+        let chars: Vec<char> = diagonals.iter()
+            .filter_map(|&dir| {
+                let new_pos = pos + dir;
+                grid.get_at(new_pos)
+            })
+            .collect();
+
+        if chars.len() != 4 {
             return false;
         }
 
-        let diagonals = [
-            (IVec2::new(-1, -1), IVec2::new(-1, 1)), // TL, TR
-            (IVec2::new(1, -1), IVec2::new(1, 1)),   // BL, BR
-        ];
-
-        diagonals.iter().any(|(dir1, dir2)| {
-            let pair1 = grid.go_straight(pos, *dir1, 1)
-                .and_then(|v| v.first().copied());
-            let pair2 = grid.go_straight(pos, *dir2, 1)
-                .and_then(|v| v.first().copied());
-
-            matches!((pair1, pair2), 
-                (Some('M'), Some('S')) |
-                (Some('S'), Some('M')))
-        })
+        matches!(&chars[..], 
+            &['M', 'S', 'M', 'S'] | 
+            &['S', 'M', 'S', 'M'] | 
+            &['M', 'M', 'S', 'S'] |
+            &['S', 'S', 'M', 'M'])
     }
 
     fn find_starting_positions(grid: &Grid) -> HashSet<IVec2> {
@@ -95,10 +101,7 @@ impl<P: Pattern> Solution for Day4<P> {
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        let pattern = P::default();
-        Ok(self.set.iter()
-            .filter(|&pos| pattern.matches(&self.grid, *pos))
-            .count())
+        self.part1()
     }
 }
 
