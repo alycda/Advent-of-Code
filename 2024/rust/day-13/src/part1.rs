@@ -79,6 +79,28 @@ fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
     (gcd, x, y)
 }
 
+fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> Option<(i32, i32)> {
+    // Solve for x coordinate
+    let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
+    if target.x % gcd_x != 0 {
+        return None; // No solution exists
+    }
+    
+    // Solve for y coordinate
+    let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
+    if target.y % gcd_y != 0 {
+        return None; // No solution exists
+    }
+    
+    // Find range of k that gives non-negative solutions for both coordinates
+    // We need to find k where both x and y solutions are non-negative
+    // This is where we minimize 80a + 40b
+    
+    // TODO: Implement solution search within valid k ranges
+    
+    dbg!(Some((0, 0))) // Placeholder
+}
+
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let _ = input.split("\n\n")
@@ -107,6 +129,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
             dbg!(gcd_x, x0, y0);
             dbg!(gcd_y, x1, y1);
+
+            find_button_presses(button_a, button_b, *prize_location);
         }).count();
 
     // let a = Button(IVec2::new(94, 34));
