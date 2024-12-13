@@ -5,9 +5,6 @@ use glam::IVec2;
 
 use crate::AocError;
 
-// A = 3 tokens
-// B = 1 token
-
 #[derive(Debug)]
 struct Button(IVec2);
 
@@ -67,65 +64,6 @@ fn parse_prize(input: &str) -> IResult<&str, IVec2> {
     )(input)
 }
 
-fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
-    if b == 0 {
-        return (a, 1, 0);
-    }
-    
-    let (gcd, x1, y1) = extended_gcd(b, a % b);
-    let x = y1;
-    let y = x1 - (a / b) * y1;
-    
-    (gcd, x, y)
-}
-
-fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> Option<(i32, i32)> {
-    // Find base solutions for x coordinate
-    let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
-    if target.x % gcd_x != 0 {
-        return None;
-    }
-    
-    // Find base solutions for y coordinate
-    let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
-    if target.y % gcd_y != 0 {
-        return None;
-    }
-    
-    // Compute base solutions scaled by target
-    let t_x = target.x / gcd_x;
-    let t_y = target.y / gcd_y;
-    let base_x = (x0 * t_x, y0 * t_x);
-    let base_y = (x1 * t_y, y1 * t_y);
-    
-    // Generate possible k values for each coordinate
-    // For x: base_x.0 + k * (button_b.x/gcd_x) >= 0 and base_x.1 - k * (button_a.x/gcd_x) >= 0
-    // For y: base_y.0 + k * (button_b.y/gcd_y) >= 0 and base_y.1 - k * (button_a.y/gcd_y) >= 0
-    
-    // Find k values that work for both x and y
-    let mut min_cost = i32::MAX;
-    let mut best_solution = None;
-    
-    // Try reasonable k values (-1000 to 1000 should cover our problem space)
-    for k in -50000..=50000 {
-        let ax = base_x.0 + k * (button_b.x/gcd_x);
-        let bx = base_x.1 - k * (button_a.x/gcd_x);
-        let ay = base_y.0 + k * (button_b.y/gcd_y);
-        let by = base_y.1 - k * (button_a.y/gcd_y);
-        
-        // Check if this solution is valid for both coordinates
-        if ax >= 0 && bx >= 0 && ay >= 0 && by >= 0 {
-            let cost = 80 * ax + 40 * bx;
-            if cost < min_cost {
-                min_cost = cost;
-                best_solution = dbg!(Some((ax, bx)));
-            }
-        }
-    }
-    
-    dbg!(best_solution)
-}
-
 fn solve_button_presses(button_a: Button, button_b: Button, target: IVec2) -> Option<(i32, i32)> {
     let denominator = button_a.x * button_b.y - button_a.y * button_b.x;
     
@@ -164,13 +102,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             (a, b, prize)
         })
         .filter_map(|(button_a, button_b, prize_location)| {
-            // let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
-            // let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
-
-            // dbg!(gcd_x, x0, y0);
-            // dbg!(gcd_y, x1, y1);
-
-            // find_button_presses(button_a, button_b, *prize_location);
             dbg!(solve_button_presses(button_a, button_b, prize_location))
         }).map(|(a, b)| {
             (a * 3) + b
