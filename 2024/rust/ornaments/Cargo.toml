@@ -5,6 +5,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
+glam.workspace = true
 miette.workspace = true
 nom.workspace = true
 thiserror.workspace = true

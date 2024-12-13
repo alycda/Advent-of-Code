@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, str::Lines};
+use std::str::Lines;
 
 use ornaments::{Solution, AocError};
 
@@ -8,6 +8,31 @@ pub struct Day2<'a>(Lines<'a>);
 impl<'a> Day2<'a> {
     fn get(&self) -> Lines<'a> {
         self.0.clone()
+    }
+
+    fn line_to_nums(line: &str) -> Vec<i32> {
+        line.split_whitespace()
+            .map(|c| c.parse::<i32>().unwrap())
+            .collect::<Vec<_>>()
+    }
+
+    fn is_safe(nums: Vec<i32>) -> bool {
+        if nums.len() < 2 { return false; }
+        
+        let is_ascending = nums[0] < nums[1];
+        let mut prev = nums[0];
+        
+        nums.into_iter()
+            .skip(1)
+            .all(|n| {
+                let valid = if is_ascending {
+                    n > prev && (n - prev).abs() <= 3
+                } else {
+                    n < prev && (n - prev).abs() <= 3
+                };
+                prev = n;
+                valid
+            })
     }
 }
 
@@ -22,7 +47,7 @@ impl<'a> Solution for Day2<'a> {
     fn part1(&mut self) -> Result<Self::Output, AocError> {
         // let output = self.0.clone()
         let output = self.get()
-            .filter(|line: &&str| is_safe(line_to_nums(line)))
+            .filter(|line: &&str| Day2::is_safe(Day2::line_to_nums(line)))
             .count();
 
         Ok(output)
@@ -31,15 +56,15 @@ impl<'a> Solution for Day2<'a> {
     fn part2(&mut self) -> Result<Self::Output, AocError> {
         let (safe, notsafe): (Vec<_>, Vec<_>) = self.get()
             .enumerate()
-            .partition(|(_idx, line)| is_safe(line_to_nums(line)));
+            .partition(|(_idx, line)| Day2::is_safe(Day2::line_to_nums(line)));
 
         let dampened = notsafe
             .iter()
             .filter(|(_idx, line)| {
-                let nums = line_to_nums(line);
+                let nums = Day2::line_to_nums(line);
                 // Check if removing any single number makes the sequence safe
                 nums.iter().enumerate().any(|(skip_idx, _)| {
-                    is_safe(
+                    Day2::is_safe(
                         nums.iter()
                             .enumerate()
                             .filter(|(i, _)| *i != skip_idx)
@@ -52,78 +77,6 @@ impl<'a> Solution for Day2<'a> {
     
         Ok(safe.len() + dampened)
     }
-}
-
-#[deprecated]
-fn line_to_nums(line: &str) -> Vec<i32> {
-    line.split_whitespace()
-        .map(|c| c.parse::<i32>().unwrap())
-        .collect::<Vec<_>>()
-}
-
-/// The numbers are either all increasing or all decreasing.
-/// Any two adjacent numbers differ by at least one and at most three.
-#[deprecated]
-fn is_safe(nums: Vec<i32>) -> bool {
-    let mut safe = false;
-
-    let nums2 = nums.clone();
-    let mut last = 0;
-    let mut direction = ' ';
-
-    for n in nums {
-        match direction {
-            '+' => {
-                if n > last {
-                    // dbg!((last - n).abs());
-                    match (last - n).abs() {
-                        1..=3 => {
-                            safe = true;
-                        }
-                        _ => {
-                            safe = false;
-                            break;
-                        }
-                    }
-                } else {
-                    safe = false;
-                    break;
-                }
-            }
-            '-' => {
-                if n < last {
-                    match (n - last).abs() {
-                        1..=3 => {
-                            safe = true;
-                        }
-                        _ => {
-                            safe = false;
-                            break;
-                        }
-                    }
-                } else {
-                    safe = false;
-                    break;
-                }
-            }
-            // first pass
-            _ => match n.cmp(&nums2[1]) {
-                Ordering::Greater => {
-                    direction = '-';
-                }
-                Ordering::Less => {
-                    direction = '+';
-                }
-                Ordering::Equal => {
-                    safe = false;
-                    break;
-                }
-            },
-        }
-        last = n;
-    }
-
-    safe
 }
 
 #[cfg(test)]

@@ -75,7 +75,7 @@ fn transpose<T: Clone>(matrix: &Vec<Vec<T>>) -> Vec<Vec<T>> {
     transposed
 }
 
-#[tracing::instrument]
+// #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let horizontal_count = input
         .lines()
