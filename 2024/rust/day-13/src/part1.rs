@@ -67,6 +67,18 @@ fn parse_prize(input: &str) -> IResult<&str, IVec2> {
     )(input)
 }
 
+fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
+    if b == 0 {
+        return (a, 1, 0);
+    }
+    
+    let (gcd, x1, y1) = extended_gcd(b, a % b);
+    let x = y1;
+    let y = x1 - (a / b) * y1;
+    
+    (gcd, x, y)
+}
+
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let _ = input.split("\n\n")
@@ -90,7 +102,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             (a, b, prize)
         })
         .inspect(|(button_a, button_b, prize_location)| {
+            let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
+            let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
 
+            dbg!(gcd_x, x0, y0);
+            dbg!(gcd_y, x1, y1);
         }).count();
 
     // let a = Button(IVec2::new(94, 34));
