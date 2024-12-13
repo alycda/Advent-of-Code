@@ -80,25 +80,50 @@ fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
 }
 
 fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> Option<(i32, i32)> {
-    // Solve for x coordinate
+    // Find base solutions for x coordinate
     let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
     if target.x % gcd_x != 0 {
-        return None; // No solution exists
+        return None;
     }
     
-    // Solve for y coordinate
+    // Find base solutions for y coordinate
     let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
     if target.y % gcd_y != 0 {
-        return None; // No solution exists
+        return None;
     }
     
-    // Find range of k that gives non-negative solutions for both coordinates
-    // We need to find k where both x and y solutions are non-negative
-    // This is where we minimize 80a + 40b
+    // Compute base solutions scaled by target
+    let t_x = target.x / gcd_x;
+    let t_y = target.y / gcd_y;
+    let base_x = (x0 * t_x, y0 * t_x);
+    let base_y = (x1 * t_y, y1 * t_y);
     
-    // TODO: Implement solution search within valid k ranges
+    // Generate possible k values for each coordinate
+    // For x: base_x.0 + k * (button_b.x/gcd_x) >= 0 and base_x.1 - k * (button_a.x/gcd_x) >= 0
+    // For y: base_y.0 + k * (button_b.y/gcd_y) >= 0 and base_y.1 - k * (button_a.y/gcd_y) >= 0
     
-    dbg!(Some((0, 0))) // Placeholder
+    // Find k values that work for both x and y
+    let mut min_cost = i32::MAX;
+    let mut best_solution = None;
+    
+    // Try reasonable k values (-1000 to 1000 should cover our problem space)
+    for k in -1000..=1000 {
+        let ax = base_x.0 + k * (button_b.x/gcd_x);
+        let bx = base_x.1 - k * (button_a.x/gcd_x);
+        let ay = base_y.0 + k * (button_b.y/gcd_y);
+        let by = base_y.1 - k * (button_a.y/gcd_y);
+        
+        // Check if this solution is valid for both coordinates
+        if ax >= 0 && bx >= 0 && ay >= 0 && by >= 0 {
+            let cost = 80 * ax + 40 * bx;
+            if cost < min_cost {
+                min_cost = cost;
+                best_solution = Some((ax, bx));
+            }
+        }
+    }
+    
+    dbg!(best_solution)
 }
 
 #[tracing::instrument]
@@ -111,15 +136,14 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
             // 3 tokens
             let (_, a) = parse_button(game.next().unwrap()).unwrap();
-            let a = dbg!(Button(a));
+            let a = Button(a);
 
             // 1 token
             let (_, b) = parse_button(game.next().unwrap()).unwrap();
-            let b = dbg!(Button(b));
+            let b = Button(b);
 
             // prize
             let (_, prize) = parse_prize(game.next().unwrap()).unwrap();
-            dbg!(&prize);
 
             (a, b, prize)
         })
@@ -127,8 +151,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
             let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
 
-            dbg!(gcd_x, x0, y0);
-            dbg!(gcd_y, x1, y1);
+            // dbg!(gcd_x, x0, y0);
+            // dbg!(gcd_y, x1, y1);
 
             find_button_presses(button_a, button_b, *prize_location);
         }).count();
@@ -142,6 +166,16 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // #[test]
+    // fn test_button_solver() {
+    //     let button_a = Button(IVec2::new(94, 34));
+    //     let button_b = Button(IVec2::new(22, 67));
+    //     let target = IVec2::new(8400, 5400);
+        
+    //     let (a, b) = find_button_presses(&button_a, &button_b, target).unwrap();
+    //     assert_eq!(*button_a * a + *button_b * b, target);
+    // }
 
     // use rstest::rstest;
 
