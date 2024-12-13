@@ -21,6 +21,15 @@ impl Direction {
     }    
 }
 
+impl<'a> IntoIterator for &'a Direction {
+    type Item = Direction;
+    type IntoIter = std::vec::IntoIter<Direction>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        vec![Direction::Up, Direction::Right, Direction::Down, Direction::Left].into_iter()
+    }
+}
+
 const DIRECTIONS: [IVec2; 4] = [IVec2::Y, IVec2::NEG_Y, IVec2::X, IVec2::NEG_X];
 
 fn explore(start: IVec2, grid: &Vec<Vec<char>>, seen: &mut HashSet<IVec2>) -> (usize, usize) {

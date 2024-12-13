@@ -1,5 +1,5 @@
 [package]
-name = "{{project-name}}"
+name = "day-13"
 version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
@@ -8,6 +8,7 @@ rust-version = "1.85"
 
 [dependencies]
 # ornaments.workspace = true
+glam.workspace = true
 itertools.workspace = true
 nom.workspace = true
 tracing.workspace = true
@@ -23,12 +24,12 @@ divan.workspace = true
 rstest.workspace = true
 
 [[bench]]
-name = "{{project-name}}-bench"
+name = "day-13-bench"
 path = "benches/benchmarks.rs"
 harness = false
 
 [[bench]]
-name = "{{project-name}}-bench-criterion"
+name = "day-13-bench-criterion"
 path = "benches/benchmarks-criterion.rs"
 harness = false
 

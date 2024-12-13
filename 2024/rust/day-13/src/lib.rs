@@ -7,3 +7,6 @@ pub enum AocError {
     #[diagnostic(code(aoc::io_error))]
     IoError(#[from] std::io::Error),
 }
+
+pub mod part1;
+pub mod part2;
