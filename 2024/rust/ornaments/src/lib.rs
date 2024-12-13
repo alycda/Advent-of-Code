@@ -5,9 +5,13 @@ use glam::IVec2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
+    /// A, North
     Up,
+    /// X, South
     Down,
+    /// #, West
     Left,
+    /// O, East
     Right
 }
 
@@ -18,6 +22,15 @@ impl Direction {
             Direction::Down => IVec2::Y,
             Direction::Left => IVec2::NEG_X,
             Direction::Right => IVec2::X
+        }
+    }
+
+    pub fn turn_right(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
         }
     }
 }
@@ -31,11 +44,11 @@ pub const ALL_DIRECTIONS: [IVec2; 8] = [IVec2::NEG_Y, IVec2::ONE, IVec2::X, IVec
 pub struct Grid(Vec<Vec<char>>);
 
 impl Grid {
-    fn get_width(&self) -> usize {
+    pub fn get_width(&self) -> usize {
         self[0].len()
     }
 
-    fn get_height(&self) -> usize {
+    pub fn get_height(&self) -> usize {
         self.len()
     }
 
@@ -71,7 +84,7 @@ impl Grid {
             .collect::<Option<Vec<_>>>()
     }
 
-    fn get_at_unbounded(&self, pos: IVec2) -> char {
+    pub fn get_at_unbounded(&self, pos: IVec2) -> char {
         self[pos.y as usize][pos.x as usize]
     }
 
@@ -83,6 +96,14 @@ impl Grid {
 
         Some(self[pos.y as usize][pos.x as usize])
         // Some(self.get_at_unbounded(pos))
+    }
+
+    pub fn to_position(&self, idx: usize) -> IVec2 {
+        let cols = self.get_width();
+        let chars_per_row = cols + 1;
+        let col = idx % chars_per_row;
+        let row = idx / chars_per_row;
+        IVec2::new(col as i32, row as i32)
     }
 
     /// Bounded by the grid's dimensions
