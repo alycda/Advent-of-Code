@@ -107,7 +107,7 @@ fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> O
     let mut best_solution = None;
     
     // Try reasonable k values (-1000 to 1000 should cover our problem space)
-    for k in -1000..=1000 {
+    for k in -50000..=50000 {
         let ax = base_x.0 + k * (button_b.x/gcd_x);
         let bx = base_x.1 - k * (button_a.x/gcd_x);
         let ay = base_y.0 + k * (button_b.y/gcd_y);
@@ -118,7 +118,7 @@ fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> O
             let cost = 80 * ax + 40 * bx;
             if cost < min_cost {
                 min_cost = cost;
-                best_solution = Some((ax, bx));
+                best_solution = dbg!(Some((ax, bx)));
             }
         }
     }
@@ -126,9 +126,25 @@ fn find_button_presses(button_a: &Button, button_b: &Button, target: IVec2) -> O
     dbg!(best_solution)
 }
 
+fn solve_button_presses(button_a: Button, button_b: Button, target: IVec2) -> Option<(i32, i32)> {
+    let denominator = button_a.x * button_b.y - button_a.y * button_b.x;
+    
+    // Using Cramer's rule
+    let a = (button_b.y * target.x - button_b.x * target.y) / denominator;
+    let b = (-button_a.y * target.x + button_a.x * target.y) / denominator;
+    
+    // Check if we got integer solutions
+    if a * denominator == (button_b.y * target.x - button_b.x * target.y) && 
+       b * denominator == (-button_a.y * target.x + button_a.x * target.y) {
+        Some((a, b))
+    } else {
+        None
+    }
+}
+
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let _ = input.split("\n\n")
+    let output: i32 = input.split("\n\n")
         .map(|mini_game| {
             // dbg!(mini_game);
 
@@ -147,20 +163,20 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
             (a, b, prize)
         })
-        .inspect(|(button_a, button_b, prize_location)| {
-            let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
-            let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
+        .filter_map(|(button_a, button_b, prize_location)| {
+            // let (gcd_x, x0, y0) = extended_gcd(button_a.x, button_b.x);
+            // let (gcd_y, x1, y1) = extended_gcd(button_a.y, button_b.y);
 
             // dbg!(gcd_x, x0, y0);
             // dbg!(gcd_y, x1, y1);
 
-            find_button_presses(button_a, button_b, *prize_location);
-        }).count();
+            // find_button_presses(button_a, button_b, *prize_location);
+            dbg!(solve_button_presses(button_a, button_b, prize_location))
+        }).map(|(a, b)| {
+            (a * 3) + b
+        }).sum();
 
-    // let a = Button(IVec2::new(94, 34));
-    // let b: = Button(IVec2::new(22, 67));
-
-    Ok("0".to_string())
+    Ok(output.to_string())
 }
 
 #[cfg(test)]
@@ -197,6 +213,15 @@ mod tests {
     // fn test_cases(#[case] input: &str, #[case] expected: &str) {
     //     assert_eq!(process(input).unwrap(), expected);
     // }
+
+//     #[test]
+//     fn test_process() -> miette::Result<()> {
+//         let input = "Button A: X+94, Y+34
+// Button B: X+22, Y+67
+// Prize: X=8400, Y=5400";
+//         assert_eq!("280", process(input)?);
+//         Ok(())
+//     }
 
     #[test]
     fn test_process() -> miette::Result<()> {
