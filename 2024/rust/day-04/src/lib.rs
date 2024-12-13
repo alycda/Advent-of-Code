@@ -1,4 +1,4 @@
-use std::{collections::HashSet, marker::PhantomData};
+use std::collections::HashSet;
 use glam::IVec2;
 use ornaments::{AocError, Grid, Solution, ALL_DIRECTIONS};
 
@@ -78,10 +78,10 @@ impl Pattern for CrossPattern {
     }
 }
 
-pub struct Day4<P> {
+pub struct Day4<P: Pattern> {
     grid: Grid,
     set: HashSet<IVec2>,
-    _pattern: PhantomData<P>
+    pattern: P
 }
 
 impl<P: Pattern> Solution for Day4<P> {
@@ -95,37 +95,29 @@ impl<P: Pattern> Solution for Day4<P> {
         Self {
             grid,
             set,
-            _pattern: PhantomData
+            pattern: P::default()
         }
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
-        // Keep original working implementation for XmasPattern
-        if std::any::type_name::<P>().contains("XmasPattern") {
-            let output = self.set.iter()
-                .flat_map(|pos| {
-                    ALL_DIRECTIONS.iter().filter_map(|dir| {
-                        self.grid.go_straight(*pos, *dir, 3)
-                    })
+        // XmasPattern impl maintains original functionality
+        let output = self.set.iter()
+            .flat_map(|pos| {
+                ALL_DIRECTIONS.iter().filter_map(|dir| {
+                    self.grid.go_straight(*pos, *dir, 3)
                 })
-                .filter(|chars| {
-                    chars.iter().collect::<String>() == "MAS"
-                })
-                .count();
-            Ok(output)
-        } else {
-            // Use Pattern trait for CrossPattern
-            let pattern = P::default();
-            Ok(self.set.iter()
-                .filter(|&pos| pattern.matches(&self.grid, *pos))
-                .count())
-        }
+            })
+            .filter(|chars| {
+                chars.iter().collect::<String>() == "MAS"
+            })
+            .count();
+
+        Ok(output)
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        let pattern = P::default();
         Ok(self.set.iter()
-            .filter(|&pos| pattern.matches(&self.grid, *pos))
+            .filter(|&pos| self.pattern.matches(&self.grid, *pos))
             .count())
     }
 }
