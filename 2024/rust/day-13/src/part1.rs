@@ -1,5 +1,5 @@
 use nom::{
-    bytes::complete::tag, character::complete::{alpha1, char, digit1, space0, space1}, combinator::{map, map_res, opt}, sequence::{preceded, tuple}, IResult
+    bytes::complete::tag, character::complete::{alpha1, char, digit1}, combinator::{map, map_res, opt}, sequence::{preceded, tuple}, IResult
 };
 use glam::IVec2;
 
@@ -25,7 +25,7 @@ fn parse_number(input: &str) -> IResult<&str, i32> {
             opt(char('+')),
             digit1
         )),
-        |(sign, num): (Option<char>, &str)| num.parse::<i32>()
+        |(_sign, num): (Option<char>, &str)| num.parse::<i32>()
     )(input)
 }
 
@@ -50,22 +50,48 @@ fn parse_button(input: &str) -> IResult<&str, IVec2> {
     )(input)
 }
 
+fn parse_prize_coordinates(input: &str) -> IResult<&str, IVec2> {
+    map(
+        tuple((
+            preceded(tag("X="), parse_number),
+            preceded(tag(", Y="), parse_number)
+        )),
+        |(x, y)| IVec2::new(x, y)
+    )(input)
+}
+
+fn parse_prize(input: &str) -> IResult<&str, IVec2> {
+    preceded(
+        tag("Prize: "),
+        parse_prize_coordinates
+    )(input)
+}
+
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    input.split("\n\n").for_each(|mini_game| {
-        // dbg!(mini_game);
+    let _ = input.split("\n\n")
+        .map(|mini_game| {
+            // dbg!(mini_game);
 
-        let mut game = mini_game.lines();
+            let mut game = mini_game.lines();
 
-        let (_, a) = parse_button(game.next().unwrap()).unwrap();
-        let a = Button(a);
-        dbg!(a);
-        
-        let (_, b) = parse_button(game.next().unwrap()).unwrap();
-        let b = Button(b);
-        dbg!(b);
+            // 3 tokens
+            let (_, a) = parse_button(game.next().unwrap()).unwrap();
+            let a = dbg!(Button(a));
 
-    });
+            // 1 token
+            let (_, b) = parse_button(game.next().unwrap()).unwrap();
+            let b = dbg!(Button(b));
+
+            // prize
+            let (_, prize) = parse_prize(game.next().unwrap()).unwrap();
+            dbg!(&prize);
+
+            (a, b, prize)
+        })
+        .inspect(|(button_a, button_b, prize_location)| {
+
+        }).count();
 
     // let a = Button(IVec2::new(94, 34));
     // let b: = Button(IVec2::new(22, 67));
