@@ -15,7 +15,7 @@ fn main() -> miette::Result<()> {
     #[cfg(not(feature = "dhat-heap"))]
     tracing_subscriber::fmt::init();
 
-    let file = include_str!("../../input1.txt");
+    let file = include_str!("../../input.txt");
     let result = Day2::parse(file).solve(ornaments::Part::Two).context("process part 2")?;
 
     println!("{}", result);
