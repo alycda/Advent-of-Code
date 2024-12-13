@@ -9,3 +9,4 @@ glam.workspace = true
 miette.workspace = true
 nom.workspace = true
 thiserror.workspace = true
+tracing.workspace = true
