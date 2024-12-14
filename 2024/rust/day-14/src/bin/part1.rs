@@ -1,4 +1,5 @@
 use day_14::part1::process;
+use glam::IVec2;
 use miette::Context;
 
 #[cfg(feature = "dhat-heap")]
@@ -14,7 +15,7 @@ fn main() -> miette::Result<()> {
     tracing_subscriber::fmt::init();
 
     let file = include_str!("../../input.txt");
-    let result = process(file).context("process part 1")?;
+    let result = process(file, IVec2::new(101,103)).context("process part 1")?;
     println!("{}", result);
     Ok(())
 }

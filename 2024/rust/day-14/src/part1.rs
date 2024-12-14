@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use glam::IVec2;
 use nom::{
     bytes::complete::tag, character::complete::{i32 as parse_i32, space0}, sequence::{preceded, separated_pair, tuple}, IResult
@@ -13,10 +15,12 @@ struct Position(IVec2);
 struct Velocity(IVec2);
 
 #[derive(Debug, Clone)]
-struct Robot {
+pub struct Robot {
     position: Position,
     velocity: Velocity,
 }
+
+pub struct Robots(Vec<Robot>);
 
 fn parse_position(input: &str) -> IResult<&str, Position> {
     let (input, coords) = preceded(
@@ -46,18 +50,83 @@ fn parse_robot(input: &str) -> IResult<&str, Robot> {
     Ok((input, Robot { position, velocity }))
 }
 
+#[derive(Debug)]
+/// only stores the interesting positions and minmax bounds
+pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
+
+impl PhantomGrid {
+    // Creates new grid with given dimensions
+    pub fn new(width: i32, height: i32) -> Self {
+        Self(
+            HashSet::new(),
+            (IVec2::ZERO, IVec2::new(width - 1, height - 1))
+        )
+    }
+
+    // Simulates one step for all robots
+    pub fn step(&mut self, robots: &mut Vec<Robot>) {
+        // Update all positions
+        for robot in robots.iter_mut() {
+            let new_pos = self.wrap_position(robot.position.0 + robot.velocity.0);
+            robot.position.0 = new_pos;
+        }
+
+        // Update grid state
+        self.0.clear();
+        for robot in robots.iter() {
+            self.0.insert(robot.position.0);
+        }
+    }
+
+    pub fn in_bounds(&self, pos: IVec2) -> bool {
+        pos.x >= 0 && pos.y >= 0 
+            && pos.x <= self.1.1.x 
+            && pos.y <= self.1.1.y
+    }
+
+    pub fn wrap_position(&self, pos: IVec2) -> IVec2 {
+        // Adding width/height + 1 to handle negative positions
+        let width = self.1.1.x + 1;
+        let height = self.1.1.y + 1;
+        
+        IVec2::new(
+            (pos.x % width + width) % width,
+            (pos.y % height + height) % height
+        )
+    }
+}
+
+impl std::ops::Deref for PhantomGrid {
+    type Target = HashSet<IVec2>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let _ = input.lines().for_each(|line| {
-        // let (remainder, pos) = parse_position(line).unwrap();
-        // let (_, vel) = parse_velocity(remainder).unwrap();
+pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocError> {
+    let mut robots = input.lines()
+        .map(|line| {
+            let (_, robot) = parse_robot(line).unwrap();
 
-        // dbg!(pos, remainder);
+            // dbg!(robot)
+            robot
+        })
+        .collect::<Vec<_>>();
+    assert!(robots.len() > 0);
 
-        let (_, rob) = parse_robot(line).unwrap();
+    // dbg!(robots);
+    println!("Initial state:");
+    println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
-        dbg!(rob);
-    });
+    let mut grid = PhantomGrid::new(dimensions.x, dimensions.y);
+
+    grid.step(&mut robots);
+    println!("Next state:");
+    println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
+
+    panic!("stop");
 
     Ok("0".to_string())
 }
@@ -88,9 +157,34 @@ p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
 p=9,5 v=-3,-3";
-        assert_eq!("12", process(input)?);
+        let grid_size = IVec2::new(11, 7);
+
+        assert_eq!("12", process(input, grid_size)?);
         Ok(())
     }
+}
+
+// a method on PhantomGrid?
+fn visualize_robots(robots: &[Robot], width: i32, height: i32) -> String {
+    let mut output = String::new();
+    for y in 0..height {
+        for x in 0..width {
+            let count = robots.iter()
+                .filter(|r| r.position.0.x == x && r.position.0.y == y)
+                .count();
+            
+            output.push(if count == 0 {
+                '.'
+            } else if count < 10 {
+                // Convert count to char ('1' through '9')
+                (b'0' + count as u8) as char
+            } else {
+                '#' // For counts >= 10
+            });
+        }
+        output.push('\n');
+    }
+    output
 }
 
 impl std::ops::Deref for Position {
@@ -106,5 +200,35 @@ impl std::ops::Deref for Velocity {
     
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+// impl std::ops::Deref for Robot {
+//     type Target = Position;
+    
+//     fn deref(&self) -> &Self::Target {
+//         &self.position
+//     }
+// }
+
+impl std::fmt::Display for Robot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "p={},{} v={},{}", 
+            self.position.0.x, self.position.0.y,
+            self.velocity.0.x, self.velocity.0.y)
+    }
+}
+
+impl std::ops::Deref for Robots {
+    type Target = Vec<Robot>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for Robots {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
