@@ -140,8 +140,8 @@ pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocErro
     assert!(robots.len() > 0);
 
     // dbg!(robots);
-    println!("Initial state:");
-    println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
+    // println!("Initial state:");
+    // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
     let mut grid = PhantomGrid::new(dimensions.x, dimensions.y);
 
@@ -151,8 +151,8 @@ pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocErro
         // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
     }
 
-    println!("Final state:");
-    println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
+    // println!("Final state:");
+    // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
     let q0 = grid.get_quadrant_robots(&robots, 0).len(); // Top Left
     let q1 = grid.get_quadrant_robots(&robots, 1).len(); // Top Right  
