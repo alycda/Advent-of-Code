@@ -1,30 +1,20 @@
-use std::str::Lines;
-
 use ornaments::{Solution, AocError};
 
-#[derive(Debug, Clone)]
-pub struct Day2<'a>(Lines<'a>);
+#[derive(Debug)]
+pub struct Sequence(Vec<i32>);
 
-impl<'a> Day2<'a> {
-    fn get(&self) -> Lines<'a> {
-        self.0.clone()
-    }
-
-    fn line_to_nums(line: &str) -> Vec<i32> {
-        line.split_whitespace()
-            .map(|c| c.parse::<i32>().unwrap())
-            .collect::<Vec<_>>()
-    }
-
-    fn is_safe(nums: Vec<i32>) -> bool {
-        if nums.len() < 2 { return false; }
+impl Sequence {
+    fn is_safe(&self) -> bool {
+        if self.0.len() < 2 { 
+            return false; 
+        }
         
-        let is_ascending = nums[0] < nums[1];
-        let mut prev = nums[0];
+        let is_ascending = self.0[0] < self.0[1];
+        let mut prev = self.0[0];
         
-        nums.into_iter()
+        self.0.iter()
             .skip(1)
-            .all(|n| {
+            .all(|&n| {
                 let valid = if is_ascending {
                     n > prev && (n - prev).abs() <= 3
                 } else {
@@ -34,47 +24,60 @@ impl<'a> Day2<'a> {
                 valid
             })
     }
+
+    fn can_dampen(&self) -> bool {
+        let nums = &self.0;
+        nums.iter().enumerate().any(|(skip_idx, _)| {
+            let filtered: Vec<_> = nums.iter()
+                .enumerate()
+                .filter(|(i, _)| *i != skip_idx)
+                .map(|(_, &n)| n)
+                .collect();
+                
+            Sequence(filtered).is_safe()
+        })
+    }
 }
 
-impl<'a> Solution for Day2<'a> {
+pub struct Day2 {
+    sequences: Vec<Sequence>
+}
+
+impl Solution for Day2 {
     type Output = usize;
-    type Item = &'a str;
+    type Item = Vec<Sequence>;
 
     fn parse(input: &'static str) -> Self {
-        Day2(input.lines())
+        let sequences = input.lines()
+            .filter_map(|line| {
+                let nums: Vec<i32> = line.split_whitespace()
+                    .filter_map(|n| n.parse().ok())
+                    .collect();
+                if !nums.is_empty() {
+                    Some(Sequence(nums))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        Self { sequences }
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
-        // let output = self.0.clone()
-        let output = self.get()
-            .filter(|line: &&str| Day2::is_safe(Day2::line_to_nums(line)))
-            .count();
-
-        Ok(output)
+        Ok(self.sequences.iter()
+            .filter(|seq| seq.is_safe())
+            .count())
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        let (safe, notsafe): (Vec<_>, Vec<_>) = self.get()
-            .enumerate()
-            .partition(|(_idx, line)| Day2::is_safe(Day2::line_to_nums(line)));
+        let (safe, notsafe): (Vec<_>, Vec<_>) = self.sequences.iter()
+            .partition(|seq| seq.is_safe());
 
-        let dampened = notsafe
-            .iter()
-            .filter(|(_idx, line)| {
-                let nums = Day2::line_to_nums(line);
-                // Check if removing any single number makes the sequence safe
-                nums.iter().enumerate().any(|(skip_idx, _)| {
-                    Day2::is_safe(
-                        nums.iter()
-                            .enumerate()
-                            .filter(|(i, _)| *i != skip_idx)
-                            .map(|(_, &n)| n)
-                            .collect(),
-                    )
-                })
-            })
+        let dampened = notsafe.iter()
+            .filter(|seq| seq.can_dampen())
             .count();
-    
+
         Ok(safe.len() + dampened)
     }
 }
@@ -82,7 +85,6 @@ impl<'a> Solution for Day2<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use ornaments::Part;
     
     #[test]
@@ -108,5 +110,4 @@ mod tests {
         assert_eq!("4", Day2::parse(input).solve(Part::Two)?);
         Ok(())
     }
-
 }
