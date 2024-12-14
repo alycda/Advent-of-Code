@@ -94,6 +94,29 @@ impl PhantomGrid {
             (pos.y % height + height) % height
         )
     }
+
+    fn get_quadrant_robots<'a>(&self, robots: &'a [Robot], quadrant: usize) -> Vec<&'a Robot> {
+        let mid_x = self.1.1.x / 2;
+        let mid_y = self.1.1.y / 2;
+        
+        robots.iter()
+            .filter(|robot| {
+                let pos = robot.position.0;
+                // Skip middle lines
+                if pos.x == mid_x || pos.y == mid_y {
+                    return false;
+                }
+                
+                match quadrant {
+                    0 => pos.x < mid_x && pos.y < mid_y,    // Top Left
+                    1 => pos.x > mid_x && pos.y < mid_y,    // Top Right
+                    2 => pos.x < mid_x && pos.y > mid_y,    // Bottom Left
+                    3 => pos.x > mid_x && pos.y > mid_y,    // Bottom Right
+                    _ => false
+                }
+            })
+            .collect()
+    }
 }
 
 impl std::ops::Deref for PhantomGrid {
@@ -122,13 +145,27 @@ pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocErro
 
     let mut grid = PhantomGrid::new(dimensions.x, dimensions.y);
 
-    grid.step(&mut robots);
-    println!("Next state:");
+    for i in 0..100 {
+        grid.step(&mut robots);
+        // println!("Next state:");
+        // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
+    }
+
+    println!("Final state:");
     println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
-    panic!("stop");
+    let q0 = grid.get_quadrant_robots(&robots, 0).len(); // Top Left
+    let q1 = grid.get_quadrant_robots(&robots, 1).len(); // Top Right  
+    let q2 = grid.get_quadrant_robots(&robots, 2).len(); // Bottom Left
+    let q3 = grid.get_quadrant_robots(&robots, 3).len(); // Bottom Right
 
-    Ok("0".to_string())
+    // The safety factor is the product of all quadrants
+    let safety_factor = q0 * q1 * q2 * q3;
+
+    // println!("Quadrant counts: {} {} {} {}", q0, q1, q2, q3);
+    // println!("Safety factor: {}", safety_factor);
+
+    Ok(safety_factor.to_string())
 }
 
 #[cfg(test)]
@@ -141,6 +178,15 @@ mod tests {
     // #[case("", "")]
     // fn test_cases(#[case] input: &str, #[case] expected: &str) {
     //     assert_eq!(process(input).unwrap(), expected);
+    // }
+
+    // #[test]
+    // fn test_process() -> miette::Result<()> {
+    //     let input = "p=2,4 v=2,-3";
+    //     let grid_size = IVec2::new(11, 7);
+
+    //     assert_eq!("12", process(input, grid_size)?);
+    //     Ok(())
     // }
 
     #[test]
