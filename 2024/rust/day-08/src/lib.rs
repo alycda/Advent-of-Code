@@ -3,12 +3,8 @@ use std::collections::{HashMap, HashSet};
 use glam::IVec2;
 use ornaments::{AocError, Solution};
 
-pub mod custom_error;
-
-pub mod part1;
-pub mod part2;
-
-pub struct Day8(HashMap<char, Vec<IVec2>>);
+/// , grid max size
+pub struct Day8(HashMap<char, Vec<IVec2>>, IVec2);
 
 impl std::ops::Deref for Day8 {
     type Target = HashMap<char, Vec<IVec2>>;
@@ -23,6 +19,9 @@ impl Solution for Day8 {
     type Item = IVec2;
 
     fn parse(input: &'static str) -> Self {
+        let mut max_x = 0;
+        let mut max_y = 0;
+
         let mut antennas = input
             .lines()
             .enumerate()
@@ -31,6 +30,8 @@ impl Solution for Day8 {
                     .chars()
                     .enumerate()
                     .filter_map(|(col, c)| {
+                        max_x = col;
+                        max_y = row;
 
                         if c != '.' && c != '#' {
                             Some((IVec2::new(col as i32, row as i32), c))
@@ -48,7 +49,7 @@ impl Solution for Day8 {
         // ignore any single antennas
         antennas.retain(|_k, v| v.len() != 1);
 
-        Self(antennas)
+        Self(antennas, IVec2::new(max_x as i32, max_y as i32))
     }
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
@@ -64,8 +65,8 @@ impl Solution for Day8 {
             .filter_map(|(_, a, b)|{
                 let new_pos = *a + b;
                 
-                if new_pos.x >= 0 && new_pos.x < grid.x 
-                && new_pos.y >= 0 && new_pos.y < grid.y {
+                if new_pos.x >= 0 && new_pos.x < self.1.x 
+                && new_pos.y >= 0 && new_pos.y < self.1.y {
                     Some(new_pos)
                 } else {
                     None
@@ -77,6 +78,10 @@ impl Solution for Day8 {
             });
 
         Ok(offsets_by_char.len())
+    }
+
+    fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
+        todo!()
     }
 }
 
