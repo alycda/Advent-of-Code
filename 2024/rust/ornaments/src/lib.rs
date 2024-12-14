@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::{HashMap, HashSet}, hash::Hash};
 use tracing::{debug, instrument};
 
 use glam::IVec2;
@@ -40,8 +40,10 @@ pub const DIRECTIONS: [IVec2; 4] = [IVec2::NEG_Y, IVec2::X, IVec2::Y, IVec2::NEG
 /// Up, NE, Right, SE, Down, SW, Left, NW
 pub const ALL_DIRECTIONS: [IVec2; 8] = [IVec2::NEG_Y, IVec2::ONE, IVec2::X, IVec2::new(1, -1), IVec2::Y,  IVec2::new(-1, -1), IVec2::NEG_X, IVec2::new(-1, 1)];
 
+/// stores all chars, not recommended for NUMBERS (u8 vs char)
 #[derive(Debug)]
 pub struct Grid(Vec<Vec<char>>);
+// pub struct Grid<T>(Vec<Vec<T>>);
 
 impl Grid {
     pub fn get_width(&self) -> usize {
@@ -181,6 +183,26 @@ impl Grid {
 
 impl std::ops::Deref for Grid {
     type Target = Vec<Vec<char>>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug)]
+/// only stores the interesting positions and minmax bounds
+pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
+
+impl PhantomGrid {
+    pub fn in_bounds(&self, pos: IVec2) -> bool {
+        pos.x >= 0 && pos.y >= 0 
+            && pos.x <= self.1.1.x 
+            && pos.y <= self.1.1.y
+    }
+}
+
+impl std::ops::Deref for PhantomGrid {
+    type Target = HashSet<IVec2>;
     
     fn deref(&self) -> &Self::Target {
         &self.0
