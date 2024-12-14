@@ -65,8 +65,8 @@ impl Solution for Day8 {
             .filter_map(|(_, a, b)|{
                 let new_pos = *a + b;
                 
-                if new_pos.x >= 0 && new_pos.x < self.1.x 
-                && new_pos.y >= 0 && new_pos.y < self.1.y {
+                if new_pos.x >= 0 && new_pos.x < self.1.x + 1 
+                && new_pos.y >= 0 && new_pos.y < self.1.y + 1 {
                     Some(new_pos)
                 } else {
                     None
