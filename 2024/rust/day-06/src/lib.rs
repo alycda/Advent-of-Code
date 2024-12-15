@@ -91,6 +91,7 @@ impl Solution for Day6 {
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
         let visited = self.follow_path(self.start_pos, None);
+        
         Ok(visited.len())
     }
 

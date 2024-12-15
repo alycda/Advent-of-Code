@@ -1,7 +1,7 @@
 // use std::collections::HashMap;
 
 use nom::{
-    character::complete::{self, line_ending, space1}, error::Error, multi::separated_list1, sequence::separated_pair, IResult
+    character::complete::{self, line_ending, space1}, multi::separated_list1, sequence::separated_pair
 };
 
 use ornaments::{Solution, AocError};
@@ -11,18 +11,12 @@ use ornaments::{Solution, AocError};
 #[derive(Debug, Clone)]
 pub struct Day1(Vec<i32>, Vec<i32>);
 
-// impl Day1 {
-//     fn get_parts_mut(&mut self) -> (&mut Vec<i32>, &mut Vec<i32>) {
-//         (&mut self.0, &mut self.1)
-//     }
-// }
-
 impl Solution for Day1 {
     type Output = i32;
     type Item = Vec<(i32, i32)>;
 
     fn parse(input: &str) -> Self {
-        let (left, right) = input.lines()
+        let (mut left, mut right): (Vec<i32>, Vec<i32>) = input.lines()
             .map(|line| {
                 let nums = line
                     .split_whitespace()
@@ -32,12 +26,15 @@ impl Solution for Day1 {
             })
             .unzip();
 
+        left.sort();
+        right.sort();
+
         Self(left, right)
     }
 
-    fn nom_parser(input: &str) -> IResult<&str, Self::Item, Error<&str>> {
+    fn nom_parser(input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> {
         separated_list1(
-            line_ending::<&str, Error<&str>>,
+            line_ending::<&str, nom::error::Error<&str>>,
             separated_pair(
                 complete::i32,
                 space1,
@@ -63,9 +60,6 @@ impl Solution for Day1 {
     fn part1(&mut self) -> Result<Self::Output, AocError> {
         // let Day1(ref mut left, ref mut right) = *self;
         let Day1(left, right) = self.get_mut();
-        
-        left.sort();
-        right.sort();
 
         let output = left
             .iter()
@@ -80,9 +74,6 @@ impl Solution for Day1 {
         // let (left, right) = (&mut self.0, &mut self.1);
         let Day1(left, right) = self.get_mut();
         
-        left.sort();
-        right.sort();
-
         let output = left
             .iter()
             .map(|n| n * right.iter().filter(|&x| x == n).count() as Self::Output)
@@ -179,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn nom_parser() {
+    fn day1_nom_parser() {
         let input = "3   4";
         let result = Day1::nom_parser(input);
         assert_eq!(Ok(("", vec![(3, 4)])), result);

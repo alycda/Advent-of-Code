@@ -1,6 +1,7 @@
+use nom::{character::complete::{self, line_ending, space1}, multi::separated_list1};
 use ornaments::{Solution, AocError};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Sequence(Vec<i32>);
 
 impl std::ops::Deref for Sequence {
@@ -59,7 +60,7 @@ impl std::ops::Deref for Day2 {
 
 impl Solution for Day2 {
     type Output = usize;
-    type Item = Vec<Sequence>;
+    type Item = Vec<Vec<i32>>;
 
     fn parse(input: &'static str) -> Self {
         let sequences = input.lines()
@@ -76,6 +77,13 @@ impl Solution for Day2 {
             .collect();
 
         Self(sequences)
+    }
+
+    fn nom_parser(input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> {
+        separated_list1(
+            line_ending,
+            separated_list1(space1, complete::i32),
+        )(input)
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
@@ -112,6 +120,26 @@ mod tests {
         assert_eq!("2", Day2::parse(input).solve(Part::One)?);
         Ok(())
     }
+
+//     #[test]
+//     fn day2_nom_parser() {
+//         let input = "7 6 4 2 1
+// 1 2 7 8 9
+// 9 7 6 2 1
+// 1 3 2 4 5
+// 8 6 4 4 1
+// 1 3 6 7 9";
+
+//         let (_, parsed) = Day2::nom_parser(input).unwrap();
+//         assert_eq!(vec![
+//             Sequence(vec![7, 6, 4, 2, 1]),
+//             Sequence(vec![1, 2, 7, 8, 9]),
+//             Sequence(vec![9, 7, 6, 2, 1]),
+//             Sequence(vec![1, 3, 2, 4, 5]),
+//             Sequence(vec![8, 6, 4, 4, 1]),
+//             Sequence(vec![1, 3, 6, 7, 9]),
+//         ], parsed);
+//     }
 
     #[test]
     fn test_day2_part2() -> miette::Result<()> {
