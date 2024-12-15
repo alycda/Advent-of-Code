@@ -1,19 +1,17 @@
-use std::collections::HashSet;
-use glam::IVec2;
-use ornaments::{AocError, Direction, PhantomGrid, Solution};
+use ornaments::{AocError, Backtracks, Direction, PhantomGrid, Position, Solution, UniquePositions};
 
 #[derive(Debug)]
 // pub struct Day6(PhantomGrid, IVec2);
 pub struct Day6 {
     walls: PhantomGrid,
-    start_pos: IVec2,
+    start_pos: Position,
 }
 
 impl Day6 {
-    fn follow_path(&self, start: IVec2, extra_wall: Option<IVec2>) -> HashSet<IVec2> {
+    fn follow_path(&self, start: Position, extra_wall: Option<Position>) -> UniquePositions {
         let mut pos = start;
         let mut dir = Direction::Up;
-        let mut visited = HashSet::from([start]);
+        let mut visited = UniquePositions::from([start]);
         
         loop {
             let next_pos = pos + dir.to_offset();
@@ -31,10 +29,10 @@ impl Day6 {
         visited
     }
 
-    fn creates_cycle(&self, start: IVec2, wall_pos: IVec2) -> bool {
+    fn creates_cycle(&self, start: Position, wall_pos: Position) -> bool {
         let mut pos = start;
         let mut dir = Direction::Up;
-        let mut visited = HashSet::new();
+        let mut visited = Backtracks::new();
         
         while self.walls.in_bounds(pos) {
             if !visited.insert((pos, dir)) {
@@ -58,10 +56,10 @@ impl Day6 {
 
 impl Solution for Day6 {
     type Output = usize;
-    type Item = IVec2;
+    type Item = Position;
 
     fn parse(input: &str) -> Self {
-        let mut walls = HashSet::new();
+        let mut walls = UniquePositions::new();
         let mut start_pos = None;
         let mut max_x = 0;
         let mut max_y = 0;
@@ -72,7 +70,7 @@ impl Solution for Day6 {
             for (x, c) in line.chars().enumerate() {
                 max_x = x;
 
-                let pos = IVec2::new(x as i32, y as i32);
+                let pos = Position::new(x as i32, y as i32);
                 match c {
                     '#' => { walls.insert(pos); }
                     '^' => { start_pos = Some(pos); }
@@ -81,8 +79,8 @@ impl Solution for Day6 {
             }
         }
 
-        let bounds = IVec2::new(max_x as i32, max_y as i32);
-        let bounds = (IVec2::ZERO, bounds);
+        let bounds = Position::new(max_x as i32, max_y as i32);
+        let bounds = (Position::ZERO, bounds);
         let walls = PhantomGrid(walls, bounds);
         
         let start_pos = start_pos.expect("Missing start position");

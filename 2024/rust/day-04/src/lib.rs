@@ -1,10 +1,8 @@
-use std::collections::HashSet;
-use glam::IVec2;
-use ornaments::{AocError, Grid, Solution, ALL_DIRECTIONS};
+use ornaments::{AocError, Grid, Position, Solution, UniquePositions, ALL_DIRECTIONS};
 
 pub trait Pattern: Default {
-    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool;
-    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2>;
+    fn matches(&self, grid: &Grid<char>, pos: Position) -> bool;
+    fn find_starting_positions(grid: &Grid<char>) -> UniquePositions;
 }
 
 #[derive(Default)]
@@ -14,7 +12,7 @@ pub struct XmasPattern;
 pub struct CrossPattern;
 
 impl Pattern for XmasPattern {
-    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool {
+    fn matches(&self, grid: &Grid<char>, pos: Position) -> bool {
         if grid.get_at(pos).unwrap() != 'X' {
             return false;
         }
@@ -28,8 +26,8 @@ impl Pattern for XmasPattern {
             })
     }
 
-    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2> {
-        let mut positions = HashSet::new();
+    fn find_starting_positions(grid: &Grid<char>) -> UniquePositions {
+        let mut positions = UniquePositions::new();
         grid.walk(|pos| {
             if grid.get_at(pos).unwrap() == 'X' {
                 positions.insert(pos);
@@ -40,13 +38,13 @@ impl Pattern for XmasPattern {
 }
 
 impl Pattern for CrossPattern {
-    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool {
+    fn matches(&self, grid: &Grid<char>, pos: Position) -> bool {
         // Get all diagonal neighbors
         let diagonals = [
-            IVec2::new(-1, -1), // top-left
-            IVec2::new(-1, 1),  // top-right
-            IVec2::new(1, -1),  // bottom-left
-            IVec2::new(1, 1),   // bottom-right
+            Position::new(-1, -1), // top-left
+            Position::new(-1, 1),  // top-right
+            Position::new(1, -1),  // bottom-left
+            Position::new(1, 1),   // bottom-right
         ];
         
         let chars: Vec<char> = diagonals.iter()
@@ -67,8 +65,8 @@ impl Pattern for CrossPattern {
             &['S', 'S', 'M', 'M'])
     }
 
-    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2> {
-        let mut positions = HashSet::new();
+    fn find_starting_positions(grid: &Grid<char>) -> UniquePositions {
+        let mut positions = UniquePositions::new();
         grid.walk(|pos| {
             if grid.get_at(pos).unwrap() == 'A' {
                 positions.insert(pos);
@@ -80,13 +78,13 @@ impl Pattern for CrossPattern {
 
 pub struct Day4<P: Pattern> {
     grid: Grid<char>,
-    set: HashSet<IVec2>,
+    set: UniquePositions,
     pattern: P
 }
 
 impl<P: Pattern> Solution for Day4<P> {
     type Output = usize;
-    type Item = HashSet<IVec2>;
+    type Item = UniquePositions;
 
     fn parse(input: &str) -> Self {
         let grid = Self::to_grid(input);

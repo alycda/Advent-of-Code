@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}, hash::Hash};
 use tracing::{debug, instrument};
 
-use glam::IVec2;
+pub type Position = glam::IVec2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
@@ -16,12 +16,12 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn to_offset(&self) -> IVec2 {
+    pub fn to_offset(&self) -> Position {
         match self {
-            Direction::Up => IVec2::NEG_Y,
-            Direction::Down => IVec2::Y,
-            Direction::Left => IVec2::NEG_X,
-            Direction::Right => IVec2::X
+            Direction::Up => Position::NEG_Y,
+            Direction::Down => Position::Y,
+            Direction::Left => Position::NEG_X,
+            Direction::Right => Position::X
         }
     }
 
@@ -36,16 +36,33 @@ impl Direction {
 }
 
 /// Up, Right, Down, Left
-pub const DIRECTIONS: [IVec2; 4] = [IVec2::NEG_Y, IVec2::X, IVec2::Y, IVec2::NEG_X];
+pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
 /// Up, NE, Right, SE, Down, SW, Left, NW
-pub const ALL_DIRECTIONS: [IVec2; 8] = [IVec2::NEG_Y, IVec2::ONE, IVec2::X, IVec2::new(1, -1), IVec2::Y,  IVec2::new(-1, -1), IVec2::NEG_X, IVec2::new(-1, 1)];
+pub const ALL_DIRECTIONS: [Position; 8] = [Position::NEG_Y, Position::ONE, Position::X, Position::new(1, -1), Position::Y,  Position::new(-1, -1), Position::NEG_X, Position::new(-1, 1)];
 
 /// stores all chars, not recommended for NUMBERS (u8 vs char)
 #[derive(Debug)]
 pub struct Grid<T>(Vec<Vec<T>>);
 // pub struct Grid<T>(Vec<Vec<T>>);
 
-impl<T: std::fmt::Debug + Copy> Grid<T> {
+
+/// a Region or set of Positions
+pub type UniquePositions = HashSet<Position>;
+
+/// Visited positions and the direction in which they were travelled
+pub type Backtracks = HashSet<(Position, Direction)>;
+
+/// TODO: Day 10, height/rating
+pub struct Something<T>(HashMap<Position, T>);
+impl<T> std::ops::Deref for Something<T> {
+    type Target = HashMap<Position, T>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
     pub fn get_width(&self) -> usize {
         self[0].len()
     }
@@ -55,10 +72,10 @@ impl<T: std::fmt::Debug + Copy> Grid<T> {
     }
 
     /// Walks the grid from top-left to bottom-right
-    pub fn walk<F: FnMut(IVec2) -> O, O>(&self, mut see: F) {
+    pub fn walk<F: FnMut(Position) -> O, O>(&self, mut see: F) {
         for row in 0..self.get_height() {
             for col in 0..self.get_width() {
-                let pos = IVec2::new(col as i32, row as i32);
+                let pos = Position::new(col as i32, row as i32);
 
                 see(pos);
             }
@@ -73,25 +90,25 @@ impl<T: std::fmt::Debug + Copy> Grid<T> {
     // move in a straight line from the start direction the given number of steps
     // pub fn go_straight<F: Fn() -> bool>(&self, start: IVec2, direction: IVec2, steps: usize, _test: Option<F>) -> Option<Vec<char>> {
     #[instrument]
-    pub fn go_straight(&self, start: IVec2, direction: IVec2, steps: usize) -> Option<Vec<T>> {
-        let end_pos = start + (direction * steps as i32);
+    pub fn go_straight(&self, start: Position, towards: Position, steps: usize) -> Option<Vec<T>> {
+        let end_pos = start + (towards * steps as i32);
         if !self.in_bounds(end_pos) {
-            debug!("{steps} steps from {start} in direction {direction} is out of bounds");
+            debug!("{steps} steps from {start} to {towards} is out of bounds");
             return None;
         }
 
         (1..=steps)
-            .map(|i| start + (direction * i as i32))
+            .map(|i| start + (towards * i as i32))
             .map(|pos| self.get_at(pos))
             .collect::<Option<Vec<_>>>()
     }
 
-    pub fn get_at_unbounded(&self, pos: IVec2) -> T {
+    pub fn get_at_unbounded(&self, pos: Position) -> T {
         self[pos.y as usize][pos.x as usize]
     }
 
     /// Bounded by the grid's dimensions
-    pub fn get_at(&self, pos: IVec2) -> Option<T> {
+    pub fn get_at(&self, pos: Position) -> Option<T> {
         if pos.x < 0 || pos.y < 0 || pos.x >= self.get_width() as i32 || pos.y >= self.get_height() as i32 {
             return None;
         }
@@ -100,28 +117,28 @@ impl<T: std::fmt::Debug + Copy> Grid<T> {
         // Some(self.get_at_unbounded(pos))
     }
 
-    pub fn to_position(&self, idx: usize) -> IVec2 {
+    pub fn to_position(&self, idx: usize) -> Position {
         let cols = self.get_width();
         let chars_per_row = cols + 1;
         let col = idx % chars_per_row;
         let row = idx / chars_per_row;
-        IVec2::new(col as i32, row as i32)
+        Position::new(col as i32, row as i32)
     }
 
     /// Bounded by the grid's dimensions
-    pub fn get_neighbor(&self, from: IVec2, at: Direction) -> Option<T> {
+    pub fn get_neighbor(&self, from: Position, at: Direction) -> Option<T> {
         let neighbor = from + at.to_offset();
 
         // self[neighbor.y as usize][neighbor.x as usize]
         self.get_at(neighbor)
     }
 
-    fn in_bounds(&self, pos: IVec2) -> bool {
+    fn in_bounds(&self, pos: Position) -> bool {
         pos.x >= 0 && pos.y >= 0 && pos.x < self.get_width() as i32 && pos.y < self.get_height() as i32
     }
 
-    pub fn get_orthogonal_neighbors(&self, from: IVec2) -> HashMap<Direction, (IVec2, T)> {
-        let mut neighbors: HashMap<Direction, (IVec2, T)> = HashMap::new();
+    pub fn get_orthogonal_neighbors(&self, from: Position) -> HashMap<Direction, (Position, T)> {
+        let mut neighbors: HashMap<Direction, (Position, T)> = HashMap::new();
 
         // for direction in DIRECTIONS.iter() {
         //     let neighbor = from + *direction;
@@ -172,12 +189,56 @@ impl<T: std::fmt::Debug + Copy> Grid<T> {
         neighbors
     }
 
-    fn _get_diagonal_neghbors(&self, _from: IVec2) -> Vec<(IVec2, char)> {
+    fn _get_diagonal_neghbors(&self, _from: Position) -> Vec<(Position, T)> {
         todo!()
     }
 
-    fn _get_all_neighbors(&self, _from: IVec2) -> Vec<(IVec2, char)> {
+    fn get_all_neighbors(&self, _from: Position) -> Vec<(Position, T)> {
         todo!()
+    }
+
+    pub fn flood_fill(&self, start: Position, visited: &mut HashSet<Position>) -> HashSet<Position> {
+        let mut region = HashSet::new();
+        let mut stack = vec![start];
+        let target = self.get_at_unbounded(start);
+        
+        while let Some(pos) = stack.pop() {
+            if !region.insert(pos) {
+                continue;
+            }
+            visited.insert(pos);
+            
+            for neighbor in self.get_orthogonal_neighbors(pos) {
+                // let neighbor_target = self.get_at_unbounded(neighbor);
+                // let neighbor_target = neighbor.1;
+
+                // if target == neighbor.1 && !region.contains(&neighbor.0) {
+                //     stack.push(neighbor.0);
+                // }
+            }
+        }
+        
+        region
+    }
+
+    /// assumes Set of Positions that are adjacent/touching...
+    pub fn count_region_edges(&self, region: UniquePositions) -> usize {
+        let mut edges = 0;
+
+        for pos in &region {
+            for neighbor in self.get_orthogonal_neighbors(*pos) {                
+                // If neighbor is outside region, it's an edge
+                if !region.contains(&neighbor.1.0) {
+                    edges += 1;
+                }
+            }
+            
+            // Count border edges
+            if pos.x == 0 || pos.x == (self.get_width() - 1) as i32 { edges += 1; }
+            if pos.y == 0 || pos.y == (self.get_height() - 1) as i32 { edges += 1; }
+        }
+        
+        edges
     }
 }
 
@@ -191,10 +252,10 @@ impl<T> std::ops::Deref for Grid<T> {
 
 #[derive(Debug)]
 /// only stores the interesting positions and minmax bounds
-pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
+pub struct PhantomGrid(pub UniquePositions, pub (Position, Position));
 
 impl PhantomGrid {
-    pub fn in_bounds(&self, pos: IVec2) -> bool {
+    pub fn in_bounds(&self, pos: Position) -> bool {
         pos.x >= 0 && pos.y >= 0 
             && pos.x <= self.1.1.x 
             && pos.y <= self.1.1.y
@@ -202,7 +263,7 @@ impl PhantomGrid {
 }
 
 impl std::ops::Deref for PhantomGrid {
-    type Target = HashSet<IVec2>;
+    type Target = UniquePositions;
     
     fn deref(&self) -> &Self::Target {
         &self.0

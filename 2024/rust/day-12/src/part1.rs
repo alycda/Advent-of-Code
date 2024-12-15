@@ -3,7 +3,7 @@ use crate::custom_error::AocError;
 use std::collections::HashSet;
 use glam::IVec2;
 
-fn get_all_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
+fn get_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
     let mut neighbors = Vec::new();
     let rows = grid.len() as i32;
     let cols = grid[0].len() as i32;
@@ -30,7 +30,7 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: IVec2, visited: &mut HashSet<IVec2>)
         }
         visited.insert(pos);
         
-        for neighbor in get_all_neighbors(pos, grid) {
+        for neighbor in get_neighbors(pos, grid) {
             let neighbor_char = grid[neighbor.y as usize][neighbor.x as usize];
             if neighbor_char == target_char && !region.contains(&neighbor) {
                 stack.push(neighbor);
@@ -45,7 +45,7 @@ fn count_region_edges(grid: &Vec<Vec<char>>, region: &HashSet<IVec2>) -> usize {
     let mut edges = 0;
     
     for &pos in region {
-        for neighbor in get_all_neighbors(pos, grid) {
+        for neighbor in get_neighbors(pos, grid) {
             // let row = neighbor.y as usize;
             // let col = neighbor.x as usize;
             
