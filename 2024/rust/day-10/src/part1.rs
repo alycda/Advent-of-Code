@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use glam::IVec2;
 
-use crate::custom_error::AocError;
-
 #[derive(Debug)]
 struct Grid {
     // HashMap mapping coordinates to heights
@@ -69,7 +67,7 @@ impl Grid {
 }
 
 #[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String, ornaments::AocError> {
     let map = Grid::new(input);
     let mut total = 0;
 

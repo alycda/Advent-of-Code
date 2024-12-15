@@ -167,6 +167,10 @@ impl Solution for Day9 {
     fn part2(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
         Ok(self.defrag().checksum())
     }
+
+    fn print(_input: &str) {
+        print_disk_state(&Day9::expand("2333133121414131402"));
+    }
 }
 
 // For debugging

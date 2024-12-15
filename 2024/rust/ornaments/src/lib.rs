@@ -42,10 +42,10 @@ pub const ALL_DIRECTIONS: [IVec2; 8] = [IVec2::NEG_Y, IVec2::ONE, IVec2::X, IVec
 
 /// stores all chars, not recommended for NUMBERS (u8 vs char)
 #[derive(Debug)]
-pub struct Grid(Vec<Vec<char>>);
+pub struct Grid<T>(Vec<Vec<T>>);
 // pub struct Grid<T>(Vec<Vec<T>>);
 
-impl Grid {
+impl<T: std::fmt::Debug + Copy> Grid<T> {
     pub fn get_width(&self) -> usize {
         self[0].len()
     }
@@ -73,7 +73,7 @@ impl Grid {
     // move in a straight line from the start direction the given number of steps
     // pub fn go_straight<F: Fn() -> bool>(&self, start: IVec2, direction: IVec2, steps: usize, _test: Option<F>) -> Option<Vec<char>> {
     #[instrument]
-    pub fn go_straight(&self, start: IVec2, direction: IVec2, steps: usize) -> Option<Vec<char>> {
+    pub fn go_straight(&self, start: IVec2, direction: IVec2, steps: usize) -> Option<Vec<T>> {
         let end_pos = start + (direction * steps as i32);
         if !self.in_bounds(end_pos) {
             debug!("{steps} steps from {start} in direction {direction} is out of bounds");
@@ -86,12 +86,12 @@ impl Grid {
             .collect::<Option<Vec<_>>>()
     }
 
-    pub fn get_at_unbounded(&self, pos: IVec2) -> char {
+    pub fn get_at_unbounded(&self, pos: IVec2) -> T {
         self[pos.y as usize][pos.x as usize]
     }
 
     /// Bounded by the grid's dimensions
-    pub fn get_at(&self, pos: IVec2) -> Option<char> {
+    pub fn get_at(&self, pos: IVec2) -> Option<T> {
         if pos.x < 0 || pos.y < 0 || pos.x >= self.get_width() as i32 || pos.y >= self.get_height() as i32 {
             return None;
         }
@@ -109,7 +109,7 @@ impl Grid {
     }
 
     /// Bounded by the grid's dimensions
-    pub fn get_neighbor(&self, from: IVec2, at: Direction) -> Option<char> {
+    pub fn get_neighbor(&self, from: IVec2, at: Direction) -> Option<T> {
         let neighbor = from + at.to_offset();
 
         // self[neighbor.y as usize][neighbor.x as usize]
@@ -120,8 +120,8 @@ impl Grid {
         pos.x >= 0 && pos.y >= 0 && pos.x < self.get_width() as i32 && pos.y < self.get_height() as i32
     }
 
-    pub fn get_orthogonal_neighbors(&self, from: IVec2) -> HashMap<Direction, (IVec2, char)> {
-        let mut neighbors: HashMap<Direction, (IVec2, char)> = HashMap::new();
+    pub fn get_orthogonal_neighbors(&self, from: IVec2) -> HashMap<Direction, (IVec2, T)> {
+        let mut neighbors: HashMap<Direction, (IVec2, T)> = HashMap::new();
 
         // for direction in DIRECTIONS.iter() {
         //     let neighbor = from + *direction;
@@ -181,8 +181,8 @@ impl Grid {
     }
 }
 
-impl std::ops::Deref for Grid {
-    type Target = Vec<Vec<char>>;
+impl<T> std::ops::Deref for Grid<T> {
+    type Target = Vec<Vec<T>>;
     
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -242,10 +242,30 @@ pub trait Solution {
         self
     }
 
-    fn to_grid(input: &str) -> Grid {
+    fn to_grid(input: &str) -> Grid<char> {
         Grid(input.lines()
-            .map(|line| line.chars().collect())
-            .collect())
+            .map(|line| line.chars().collect::<Vec<_>>())
+            .collect::<Vec<Vec<_>>>())
+    }
+
+    // fn to_grid<T, F>(input: &str, parser: Option<F>) -> Grid<T>
+    // where
+    //     F: Fn(char) -> Option<T>,
+    // {
+    //     Grid(input.lines()
+    //         .map(|line| {
+    //             line.chars()
+    //                 .map(|c| {
+    //                     parser.as_ref()
+    //                         .map_or_else(|| c as T, |parse| parse(c).unwrap_or_else(|| c as T))
+    //                 })
+    //                 .collect::<Vec<_>>()
+    //         })
+    //         .collect::<Vec<Vec<_>>>())
+    // }
+
+    fn print(_input: &str) {
+        todo!()
     }
 
     // fn with_data<F, R>(&mut self, f: F) -> R 

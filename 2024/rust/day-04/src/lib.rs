@@ -3,8 +3,8 @@ use glam::IVec2;
 use ornaments::{AocError, Grid, Solution, ALL_DIRECTIONS};
 
 pub trait Pattern: Default {
-    fn matches(&self, grid: &Grid, pos: IVec2) -> bool;
-    fn find_starting_positions(grid: &Grid) -> HashSet<IVec2>;
+    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool;
+    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2>;
 }
 
 #[derive(Default)]
@@ -14,7 +14,7 @@ pub struct XmasPattern;
 pub struct CrossPattern;
 
 impl Pattern for XmasPattern {
-    fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
+    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool {
         if grid.get_at(pos).unwrap() != 'X' {
             return false;
         }
@@ -28,7 +28,7 @@ impl Pattern for XmasPattern {
             })
     }
 
-    fn find_starting_positions(grid: &Grid) -> HashSet<IVec2> {
+    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2> {
         let mut positions = HashSet::new();
         grid.walk(|pos| {
             if grid.get_at(pos).unwrap() == 'X' {
@@ -40,7 +40,7 @@ impl Pattern for XmasPattern {
 }
 
 impl Pattern for CrossPattern {
-    fn matches(&self, grid: &Grid, pos: IVec2) -> bool {
+    fn matches(&self, grid: &Grid<char>, pos: IVec2) -> bool {
         // Get all diagonal neighbors
         let diagonals = [
             IVec2::new(-1, -1), // top-left
@@ -67,7 +67,7 @@ impl Pattern for CrossPattern {
             &['S', 'S', 'M', 'M'])
     }
 
-    fn find_starting_positions(grid: &Grid) -> HashSet<IVec2> {
+    fn find_starting_positions(grid: &Grid<char>) -> HashSet<IVec2> {
         let mut positions = HashSet::new();
         grid.walk(|pos| {
             if grid.get_at(pos).unwrap() == 'A' {
@@ -79,7 +79,7 @@ impl Pattern for CrossPattern {
 }
 
 pub struct Day4<P: Pattern> {
-    grid: Grid,
+    grid: Grid<char>,
     set: HashSet<IVec2>,
     pattern: P
 }
