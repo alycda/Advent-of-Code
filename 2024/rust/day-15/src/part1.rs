@@ -161,35 +161,35 @@ impl Warehouse {
 
     fn try_move(&mut self, movement: Direction) {
         let delta = movement.to_position();
+        let next_pos = self.robot.0 + delta;
         
-        // First, check if the next position is even valid
-        let next_robot_pos = match self.robot.apply_delta(delta) {
-            Some(pos) if self.is_valid_move(pos) => pos,
-            _ => return,
-        };
+        // Basic validation
+        if !self.is_valid_move(next_pos) {
+            return;
+        }
     
-        // Collect any boxes that need to be moved
-        let mut boxes_to_move = Vec::new();
-        let mut check_pos = next_robot_pos;
-        
-        // Keep checking positions until we find an empty space or hit a wall
-        while let Some(box_idx) = self.boxes.iter().position(|&p| p == check_pos) {
-            let next_pos = check_pos + delta;
-            // If we can't move to next position, abort the whole move
-            if !self.is_valid_move(next_pos) {
-                return;
+        // If empty, simple robot move
+        if !self.boxes.contains(&next_pos) {
+            self.robot = Robot(next_pos);
+            return;
+        }
+    
+        // Found a box - scan to end of chain
+        let mut check_pos = next_pos;
+        while self.boxes.contains(&check_pos) {
+            check_pos = check_pos + delta;
+            if !self.is_valid_move(check_pos) {
+                return;  // Hit wall
             }
-            boxes_to_move.push((box_idx, next_pos));
-            check_pos = next_pos;
         }
     
-        // Move all boxes (in reverse order to avoid overwriting)
-        for (box_idx, new_pos) in boxes_to_move.into_iter().rev() {
-            self.boxes[box_idx] = new_pos;
+        // Move only the first box we encountered to the end position
+        if let Some(box_idx) = self.boxes.iter().position(|&p| p == next_pos) {
+            self.boxes[box_idx] = check_pos;
         }
     
-        // Move robot
-        self.robot = Robot(next_robot_pos);
+        // Move robot to where first box was
+        self.robot = Robot(next_pos);
     }
 
     // compute GPS coordinate for a position
@@ -382,30 +382,30 @@ let expected = "##########
 //         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
 //     }
 
-//     #[test]
-//     fn test_process_large() -> miette::Result<()> {
-//         let input = "##########
-// #..O..O.O#
-// #......O.#
-// #.OO..O.O#
-// #..O@..O.#
-// #O#..O...#
-// #O..O..O.#
-// #.OO.O.OO#
-// #....O...#
-// ##########
+    #[test]
+    fn test_process_large() -> miette::Result<()> {
+        let input = "##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
 
-// <vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
-// vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
-// ><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
-// <<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
-// ^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
-// ^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
-// >^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
-// <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
-// ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
-// v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
-//         assert_eq!("10092", process(input)?);
-//         Ok(())
-//     }
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
+        assert_eq!("10092", process(input)?);
+        Ok(())
+    }
 }
