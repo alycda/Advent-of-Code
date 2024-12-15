@@ -1,5 +1,7 @@
-use day_03::part2::process;
+use ornaments::Solution;
 use miette::Context;
+
+use day_03::Day3;
 
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]
@@ -13,8 +15,9 @@ fn main() -> miette::Result<()> {
     #[cfg(not(feature = "dhat-heap"))]
     tracing_subscriber::fmt::init();
 
-    let file = include_str!("../../input2.txt");
-    let result = process(file).context("process part 2")?;
+    let file = include_str!("../../input.txt");
+    let result = Day3::parse(file).solve(ornaments::Part::One).context("process part 2")?;
+
     println!("{}", result);
 
     assert_eq!(result, "72948684");

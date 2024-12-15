@@ -1,21 +1,16 @@
 {
   "folders": [
     {
+      "path": "."
+    },
+    {
       "path": "2024/rust",
       "name": "2024/advent of code"
     },
-    {
-      "path": "2024/everybody.codes",
-      "name": "2024/everybody.codes"
-    },
-    {
-      "path": "."
-    }
   ],
   "settings": {
     "rust-analyzer.linkedProjects": [
-      "${workspaceFolder}/2024/rust/Cargo.toml",
-      "Cargo.toml"
+      "${workspaceFolder}/2024/rust/Cargo.toml"
     ]
   }
 }

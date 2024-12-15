@@ -15,7 +15,7 @@ Inspired by [Chris Biscardi](https://github.com/ChristopherBiscardi/advent-of-co
     - `rustup override unset` if you want to undo. see https://rust-lang.github.io/rustup/overrides.html for more info
 - `brew install just tracy`
   - Github Codespaces: `cargo install just`
-- `cargo install cargo-nextest cargo-generate flamegraph`
+- `cargo install cargo-watch cargo-nextest cargo-generate flamegraph`
 
 ### Other
 

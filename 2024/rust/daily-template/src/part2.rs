@@ -1,4 +1,4 @@
-use crate::AocError;
+use ornaments::AocError;
 
 #[tracing::instrument]
 pub fn process(_input: &str) -> miette::Result<String, AocError> {

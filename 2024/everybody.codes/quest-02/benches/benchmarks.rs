@@ -24,7 +24,7 @@ fn part2() {
 #[divan::bench]
 fn part2_aho_corasick() {
     part2_aho_corasick::process(divan::black_box(
-        include_str!("../input2.txt",),
+        include_str!("../input.txt",),
     ))
     .unwrap();
 }
