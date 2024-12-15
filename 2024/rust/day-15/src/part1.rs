@@ -299,33 +299,8 @@ mod tests {
 
     #[test]
     fn test_box_chain_push() {
-//         let input = "\
-// ##########
-// #..OOOO..#
-// #...@....#
-// ##########
-
-// >>>>>";
-//         let expected = "\
-// ##########
-// #....OOOO#
-// #....@...#
-// ##########";
-
-//     let input = "##########
-// #...@OOO.#  
-// #........#
-// ##########
-
-// >>>>>";
-
-//     let expected = "##########
-// #.....@OO#
-// #........#
-// ##########";
-
 let input = "##########\n#...@OOO.#\n#........#\n##########\n\n>>>>>";
-let expected = "##########\n#.....@OO#\n#........#\n##########";
+let expected = "##########\n#....@OOO#\n#........#\n##########";
         
         let (_, mut game_state) = parse_input(input).unwrap();
         for movement in game_state.movements {
@@ -333,6 +308,79 @@ let expected = "##########\n#.....@OO#\n#........#\n##########";
         }
         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
     }
+
+    #[test]
+    fn test_box_chain_push_3() {
+let input = "##########
+#OOO..@..#
+#........#
+##########
+
+<<<";
+let expected = "##########
+#OOO@....#
+#........#
+##########";
+        
+        let (_, mut game_state) = parse_input(input).unwrap();
+        for movement in game_state.movements {
+            game_state.warehouse.try_move(movement);
+        }
+        assert_eq!(game_state.warehouse.display().trim(), expected.trim());
+    }
+
+//     #[test]
+//     fn test_box_chain_push_vertical() {
+// let expected = "##########\n#....O...#\n#....O...#\n#....@...#\n#........#\n##########\n\n^^";
+// let input = "##########\n#........#\n#....O...#\n#....O...#\n#....@...#\n##########";
+        
+//         let (_, mut game_state) = parse_input(input).unwrap();
+//         for movement in game_state.movements {
+//             game_state.warehouse.try_move(movement);
+//         }
+//         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
+//     }
+
+//     #[test]
+//     fn test_box_chain_push_2() {
+// let input = "##########
+// #..O..O.O#
+// #......O.#
+// #.OO..O.O#
+// #..O@..O.#
+// #O#..O...#
+// #O..O..O.#
+// #.OO.O.OO#
+// #....O...#
+// ##########
+
+// <vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+// vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+// ><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+// <<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+// ^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+// ^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+// >^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+// <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+// ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+// v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
+// let expected = "##########
+// #.O.O.OOO#
+// #........#
+// #OO......#
+// #OO@.....#
+// #O#.....O#
+// #O.....OO#
+// #O.....OO#
+// #OO....OO#
+// ##########";
+        
+//         let (_, mut game_state) = parse_input(input).unwrap();
+//         for movement in game_state.movements {
+//             game_state.warehouse.try_move(movement);
+//         }
+//         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
+//     }
 
 //     #[test]
 //     fn test_process_large() -> miette::Result<()> {
