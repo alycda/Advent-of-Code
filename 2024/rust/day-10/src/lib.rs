@@ -1,9 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use glam::IVec2;
 
-use ornaments::Solution;
+use ornaments::{Solution, DIRECTIONS};
 
-pub mod part1;
 pub mod part2;
 
 pub struct Day10(HashMap<IVec2, u32>);
@@ -13,6 +12,42 @@ impl std::ops::Deref for Day10 {
     
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Day10 {
+    // Find all positions containing 0
+    fn get_trail_heads(&self) -> Vec<IVec2> {
+        self.iter()
+            .filter(|&(_, &height)| height == 0)
+            .map(|(&pos, _)| pos)
+            .collect()
+    }
+
+    fn get_rating(&self, pos: IVec2, visited: &mut HashSet<IVec2>) -> usize {
+        // If we've found a 9, count it only if we haven't seen it before
+        if self.get(&pos) == Some(&9) {
+            if visited.insert(pos) {  // returns true if this 9 wasn't in the set
+                return 1;
+            }
+            return 0;  // we've already counted this 9
+        }
+
+        let current_height = *self.get(&pos).unwrap();
+        let mut total = 0;
+
+        // Check all four directions
+        for IVec2 { x: dx, y: dy } in DIRECTIONS {
+            let next_pos = IVec2::new(pos.x + dx, pos.y + dy);
+            
+            if let Some(&height) = self.get(&next_pos) {
+                if height == current_height + 1 {
+                    total += self.get_rating(next_pos, visited);
+                }
+            }
+        }
+
+        total
     }
 }
 
@@ -34,7 +69,24 @@ impl Solution for Day10 {
     }
 
     fn part1(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
-        Ok(0)
+        let mut total = 0;
+
+        for start_pos in self.get_trail_heads() {
+            let paths = self.get_rating(start_pos, &mut HashSet::new());
+            total += paths;
+        }
+
+        Ok(total)
+    }
+
+    fn print(input: &str) {
+        let grid = Day10::to_grid(input);
+        for x in 0..grid.get_height() {
+            for y in 0..grid.get_width() {
+                print!("{}", grid.get_at_unbounded(IVec2::new(x as i32, y as i32)));
+            }
+            println!();
+        }
     }
 }
 
