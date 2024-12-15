@@ -106,19 +106,40 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     let mut ty = ny;
                     let mut dist = 0;
                     
-                    while ty < warehouse[0].len() && 
-                          (warehouse[tx][ty] == '[' || warehouse[tx][ty] == ']') {
-                        dist += 1;
-                        ty = (ty as i32 + dy) as usize;
-                    }
-                    
-                    if ty >= warehouse[0].len() || warehouse[tx][ty] == '#' {
-                        continue;
-                    }
-                    
-                    for _ in 0..dist {
-                        warehouse[tx][ty] = warehouse[tx][ty - dy as usize];
-                        ty = (ty as i32 - dy) as usize;
+                    // When moving right
+                    if dy > 0 {
+                        while ty < warehouse[0].len() && 
+                              (warehouse[tx][ty] == '[' || warehouse[tx][ty] == ']') {
+                            dist += 1;
+                            ty += 1;
+                        }
+                        
+                        if ty >= warehouse[0].len() || warehouse[tx][ty] == '#' {
+                            continue;
+                        }
+                        
+                        // Push from right to left
+                        for _ in 0..dist {
+                            warehouse[tx][ty] = warehouse[tx][ty - 1];
+                            ty -= 1;
+                        }
+                    } else {
+                        // When moving left
+                        while ty > 0 && 
+                              (warehouse[tx][ty] == '[' || warehouse[tx][ty] == ']') {
+                            dist += 1;
+                            ty -= 1;
+                        }
+                        
+                        if ty == 0 || warehouse[tx][ty] == '#' {
+                            continue;
+                        }
+                        
+                        // Push from left to right
+                        for _ in 0..dist {
+                            warehouse[tx][ty] = warehouse[tx][ty + 1];
+                            ty += 1;
+                        }
                     }
                     
                     warehouse[nx][ny] = '@';
