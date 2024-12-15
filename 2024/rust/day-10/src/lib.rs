@@ -3,8 +3,6 @@ use glam::IVec2;
 
 use ornaments::{Solution, DIRECTIONS};
 
-pub mod part2;
-
 pub struct Day10(HashMap<IVec2, u32>);
 
 impl std::ops::Deref for Day10 {
@@ -24,7 +22,7 @@ impl Day10 {
             .collect()
     }
 
-    fn get_rating(&self, pos: IVec2, visited: &mut HashSet<IVec2>) -> usize {
+    fn get_rating_part1(&self, pos: IVec2, visited: &mut HashSet<IVec2>) -> usize {
         // If we've found a 9, count it only if we haven't seen it before
         if self.get(&pos) == Some(&9) {
             if visited.insert(pos) {  // returns true if this 9 wasn't in the set
@@ -42,11 +40,36 @@ impl Day10 {
             
             if let Some(&height) = self.get(&next_pos) {
                 if height == current_height + 1 {
-                    total += self.get_rating(next_pos, visited);
+                    total += self.get_rating_part1(next_pos, visited);
                 }
             }
         }
 
+        total
+    }
+
+    fn get_rating_part2(&self, pos: IVec2, path: &mut Vec<IVec2>) -> usize {
+        // Base case: found a 9 (reached a peak)
+        if self.get(&pos) == Some(&9) {
+            return 1;  // Count this as one valid path
+        }
+    
+        let current_height = *self.get(&pos).unwrap();
+        let mut total = 0;
+    
+        // Try all possible next steps
+        
+        for IVec2 { x: dx, y: dy } in DIRECTIONS {
+            let next_pos = IVec2::new(pos.x + dx, pos.y + dy);
+            
+            // Only follow paths that increase by exactly 1
+            if let Some(&height) = self.get(&next_pos) {
+                if height == current_height + 1 && !path.contains(&next_pos) {
+                    total += self.get_rating_part2(next_pos, path);
+                }
+            }
+        }
+    
         total
     }
 }
@@ -72,7 +95,18 @@ impl Solution for Day10 {
         let mut total = 0;
 
         for start_pos in self.get_trail_heads() {
-            let paths = self.get_rating(start_pos, &mut HashSet::new());
+            let paths = self.get_rating_part1(start_pos, &mut HashSet::new());
+            total += paths;
+        }
+
+        Ok(total)
+    }
+
+    fn part2(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
+        let mut total = 0;
+
+        for start_pos in self.get_trail_heads() {
+            let paths = self.get_rating_part2(start_pos, &mut Vec::new());
             total += paths;
         }
 
