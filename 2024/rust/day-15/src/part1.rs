@@ -165,25 +165,30 @@ impl Warehouse {
         // First, check if the next position is even valid
         let next_robot_pos = match self.robot.apply_delta(delta) {
             Some(pos) if self.is_valid_move(pos) => pos,
-            _ => return, // Can't move there
+            _ => return,
         };
     
-        // Now check if there's a box at the target position
-        if let Some(box_idx) = self.boxes.iter().position(|&p| p == next_robot_pos) {
-            // There's a box - check if we can push it
-            let next_box_pos = next_robot_pos + delta;
-            
-            // If we can't move the box there (wall or another box), the whole move fails
-            if !self.is_valid_move(next_box_pos) || 
-               self.boxes.iter().any(|&p| p == next_box_pos) {
+        // Collect any boxes that need to be moved
+        let mut boxes_to_move = Vec::new();
+        let mut check_pos = next_robot_pos;
+        
+        // Keep checking positions until we find an empty space or hit a wall
+        while let Some(box_idx) = self.boxes.iter().position(|&p| p == check_pos) {
+            let next_pos = check_pos + delta;
+            // If we can't move to next position, abort the whole move
+            if !self.is_valid_move(next_pos) {
                 return;
             }
-    
-            // We can push the box
-            self.boxes[box_idx] = next_box_pos;
+            boxes_to_move.push((box_idx, next_pos));
+            check_pos = next_pos;
         }
     
-        // If we got here, either there was no box or we successfully pushed it
+        // Move all boxes (in reverse order to avoid overwriting)
+        for (box_idx, new_pos) in boxes_to_move.into_iter().rev() {
+            self.boxes[box_idx] = new_pos;
+        }
+    
+        // Move robot
         self.robot = Robot(next_robot_pos);
     }
 
@@ -277,7 +282,7 @@ mod tests {
     // }
 
     #[test]
-    fn test_process() -> miette::Result<()> {
+    fn test_process_small() -> miette::Result<()> {
         let input = "########
 #..O.O.#
 ##@.O..#
@@ -292,8 +297,45 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_box_chain_push() {
+//         let input = "\
+// ##########
+// #..OOOO..#
+// #...@....#
+// ##########
+
+// >>>>>";
+//         let expected = "\
+// ##########
+// #....OOOO#
+// #....@...#
+// ##########";
+
+//     let input = "##########
+// #...@OOO.#  
+// #........#
+// ##########
+
+// >>>>>";
+
+//     let expected = "##########
+// #.....@OO#
+// #........#
+// ##########";
+
+let input = "##########\n#...@OOO.#\n#........#\n##########\n\n>>>>>";
+let expected = "##########\n#.....@OO#\n#........#\n##########";
+        
+        let (_, mut game_state) = parse_input(input).unwrap();
+        for movement in game_state.movements {
+            game_state.warehouse.try_move(movement);
+        }
+        assert_eq!(game_state.warehouse.display().trim(), expected.trim());
+    }
+
 //     #[test]
-//     fn test_process() -> miette::Result<()> {
+//     fn test_process_large() -> miette::Result<()> {
 //         let input = "##########
 // #..O..O.O#
 // #......O.#
