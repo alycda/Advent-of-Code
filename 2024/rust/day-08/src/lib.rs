@@ -81,7 +81,42 @@ impl Solution for Day8 {
     }
 
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
-        todo!()
+        let grid = IVec2::new(self.1.x + 1, self.1.y + 1);
+
+        let offsets_by_char = self.iter()
+            .flat_map(|(_k, v)| {
+                (0..v.len()).flat_map(move |i| {
+                    v[i+1..].iter().flat_map(move |second| {
+                        let first = v[i];
+                        let delta = *second - first;
+                        let grid = grid; // Capture grid by value here
+                        
+                        // Generate all positions in both directions
+                        let mut positions = Vec::new();
+                        
+                        // Forward direction
+                        let mut pos = first;
+                        while pos.x >= 0 && pos.x < grid.x && pos.y >= 0 && pos.y < grid.y {
+                            positions.push(pos);
+                            pos += delta;
+                        }
+                        
+                        // Backward direction
+                        let mut pos = first;
+                        pos -= delta; // Start one step back
+                        while pos.x >= 0 && pos.x < grid.x && pos.y >= 0 && pos.y < grid.y {
+                            positions.push(pos);
+                            pos -= delta;
+                        }
+                        
+                        positions
+                    })
+                })
+            })
+            .collect::<HashSet<_>>()  
+            .len();
+
+        Ok(offsets_by_char)
     }
 }
 
