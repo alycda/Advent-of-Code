@@ -1,16 +1,6 @@
-use std::ops::Add;
-
-use glam::IVec2;
-use nom::{
-    branch::alt,
-    character::complete::{char, line_ending},
-    multi::{many1, separated_list1},
-    IResult, Parser,
-};
-
 use crate::AocError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum Cell {
     Wall,
     Empty,
@@ -18,255 +8,122 @@ enum Cell {
     Robot,
 }
 
-// parse individual cells
-fn cell(input: &str) -> IResult<&str, Cell> {
-    alt((
-        char('#').map(|_| Cell::Wall),
-        char('.').map(|_| Cell::Empty),
-        char('O').map(|_| Cell::Box),
-        char('@').map(|_| Cell::Robot),
-    ))(input)
-}
-
-// Parse a single row of the warehouse
-fn grid_row(input: &str) -> IResult<&str, Vec<Cell>> {
-    many1(cell)(input)
-}
-
-// Parse the entire warehouse grid
-fn warehouse(input: &str) -> IResult<&str, Vec<Vec<Cell>>> {
-    separated_list1(line_ending, grid_row)(input)
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    fn to_position(&self) -> IVec2 {
-        match self {
-            Direction::Up => IVec2::NEG_Y,
-            Direction::Down => IVec2::Y,
-            Direction::Right => IVec2::X,
-            Direction::Left => IVec2::NEG_X,
+impl From<char> for Cell {
+    fn from(c: char) -> Self {
+        match c {
+            '#' => Cell::Wall,
+            '.' => Cell::Empty,
+            'O' => Cell::Box,
+            '@' => Cell::Robot,
+            _ => panic!("Invalid cell character"),
         }
     }
 }
 
-fn movement(input: &str) -> IResult<&str, Direction> {
-    alt((
-        char('^').map(|_| Direction::Up),
-        char('v').map(|_| Direction::Down),
-        char('<').map(|_| Direction::Left),
-        char('>').map(|_| Direction::Right),
-    ))(input)
-}
-
-fn movements(input: &str) -> IResult<&str, Vec<Direction>> {
-    many1(movement)(input)
-}
-
-#[derive(Debug)]
-struct GameState {
-    // warehouse: Vec<Vec<Cell>>,
-    warehouse: Warehouse,
-    movements: Vec<Direction>,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Robot(IVec2);
-
-impl Robot {
-    fn apply_delta(&self, delta: IVec2) -> Option<IVec2> {
-        let new_pos = *self + delta;
-        Some(new_pos)
+impl From<Cell> for char {
+    fn from(cell: Cell) -> Self {
+        match cell {
+            Cell::Wall => '#',
+            Cell::Empty => '.',
+            Cell::Box => 'O',
+            Cell::Robot => '@',
+        }
     }
 }
 
-impl std::ops::Deref for Robot {
-    type Target = IVec2;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+type Warehouse = Vec<Vec<Cell>>;
+type Position = (usize, usize);
+
+fn parse_input(input: &str) -> (Warehouse, String) {
+    let mut parts = input.split("\n\n");
+    let warehouse = parts
+        .next()
+        .unwrap()
+        .lines()
+        .map(|line| line.chars().map(Cell::from).collect())
+        .collect();
+    let instructions = parts.next().unwrap().trim().to_string();
+    (warehouse, instructions)
 }
 
-// support Robot + IVec2
-impl Add<IVec2> for Robot {
-    type Output = IVec2;  // Note: returns IVec2, not Robot
-    
-    fn add(self, rhs: IVec2) -> Self::Output {
-        self.0 + rhs
-    }
-}
-
-// If we need &Robot + IVec2
-impl Add<IVec2> for &Robot {
-    type Output = IVec2;
-    
-    fn add(self, rhs: IVec2) -> Self::Output {
-        self.0 + rhs
-    }
-}
-
-#[derive(Debug)]
-struct Warehouse {
-    grid: Vec<Vec<Cell>>,
-    robot: Robot,
-    // Optionally track box positions separately for easier GPS calculation later
-    boxes: Vec<IVec2>,
-}
-
-impl Warehouse {
-    fn from_grid(grid: Vec<Vec<Cell>>) -> Result<Self, AocError> {
-        let mut robot = None;
-        let mut boxes = Vec::new();
-        
-        // Scan grid to find robot and boxes
-        for (row, line) in grid.iter().enumerate() {
-            for (col, cell) in line.iter().enumerate() {
-                match cell {
-                    Cell::Robot => {
-                        if robot.is_some() {
-                            return Err(AocError::ParseError("Multiple robots found".into()));
-                        }
-                        robot = Some(Robot(IVec2::new(col as i32, row as i32)))
-                    }
-                    Cell::Box => boxes.push(IVec2::new(col as i32, row as i32)),
-                    _ => {}
-                }
+fn find_robot(warehouse: &Warehouse) -> Position {
+    for (i, row) in warehouse.iter().enumerate() {
+        for (j, &cell) in row.iter().enumerate() {
+            if cell == Cell::Robot {
+                return (i, j);
             }
         }
-        
-        let robot = robot.ok_or_else(|| AocError::ParseError("No robot found".into()))?;
-        
-        Ok(Warehouse { grid, robot, boxes })
     }
-
-    // Helper method to check if a position is within bounds and not a wall
-    fn is_valid_move(&self, pos: IVec2) -> bool {
-        pos.y < self.grid.len() as i32
-            && pos.x < self.grid[0].len() as i32
-            && self.grid[pos.y as usize][pos.x as usize] != Cell::Wall
-    }
-
-    // need this to calculate GPS coordinates
-    fn dimensions(&self) -> (usize, usize) {
-        (self.grid.len(), self.grid[0].len())
-    }
-
-    fn try_move(&mut self, movement: Direction) {
-        let delta = movement.to_position();
-        let next_pos = self.robot.0 + delta;
-        
-        // Check if next position is within bounds and not a wall
-        if next_pos.y < 0 || next_pos.y >= self.grid.len() as i32 
-            || next_pos.x < 0 || next_pos.x >= self.grid[0].len() as i32
-            || self.grid[next_pos.y as usize][next_pos.x as usize] == Cell::Wall {
-            return;
-        }
-    
-        // If empty, simple robot move
-        if self.grid[next_pos.y as usize][next_pos.x as usize] == Cell::Empty {
-            self.robot = Robot(next_pos);
-            return;
-        }
-    
-        // Found a box - scan to end of chain
-        let mut check_pos = next_pos;
-        while self.grid[check_pos.y as usize][check_pos.x as usize] == Cell::Box {
-            check_pos = check_pos + delta;
-            if check_pos.y < 0 || check_pos.y >= self.grid.len() as i32
-                || check_pos.x < 0 || check_pos.x >= self.grid[0].len() as i32
-                || self.grid[check_pos.y as usize][check_pos.x as usize] == Cell::Wall {
-                return; // Hit wall or boundary
-            }
-        }
-    
-        // Move only the first box we encountered to the end position
-        self.grid[next_pos.y as usize][next_pos.x as usize] = Cell::Empty;
-        self.grid[check_pos.y as usize][check_pos.x as usize] = Cell::Box;
-    
-        // Move robot to where first box was
-        self.robot = Robot(next_pos);
-    }
-
-    fn gps_coordinate(&self, pos: IVec2) -> u32 {
-        (pos.y * 100 + pos.x) as u32
-    }
-
-    // Calculate sum of all box GPS coordinates
-    fn total_gps_score(&self) -> u32 {
-        self.boxes.iter()
-            .map(|&pos| self.gps_coordinate(pos))
-            .sum()
-    }
-
-    // for debugging
-    fn display(&self) -> String {
-        let mut display = self.grid.clone();
-        
-        for (y, row) in display.iter_mut().enumerate() {
-            for (x, cell) in row.iter_mut().enumerate() {
-                if IVec2::new(x as i32, y as i32) == self.robot.0 {
-                    *cell = Cell::Robot;
-                } else if self.boxes.contains(&IVec2::new(x as i32, y as i32)) {
-                    *cell = Cell::Box;
-                } else if *cell == Cell::Robot || *cell == Cell::Box {
-                    *cell = Cell::Empty;
-                }
-            }
-        }
-    
-        display.iter()
-            .map(|row| row.iter()
-                .map(|cell| match cell {
-                    Cell::Wall => '#',
-                    Cell::Empty => '.',
-                    Cell::Box => 'O',
-                    Cell::Robot => '@',
-                })
-                .collect::<String>()
-            )
-            .collect::<Vec<_>>()
-            .join("\n")
-    }
+    panic!("Robot not found");
 }
 
-fn parse_input(input: &str) -> IResult<&str, GameState> {
-    let (input, warehouse_grid) = warehouse(input)?;
-    let (input, _) = many1(line_ending)(input)?;  // Skip empty lines
-    let (input, moves) = movements(input)?;
-    
-    Ok((input, GameState {
-        warehouse: Warehouse::from_grid(warehouse_grid).unwrap(),
-        movements: moves,
-    }))
+fn is_valid_pos(x: i32, y: i32, warehouse: &Warehouse) -> bool {
+    x >= 0 && x < warehouse.len() as i32 && y >= 0 && y < warehouse[0].len() as i32
+}
+
+fn calculate_total_gps(warehouse: &Warehouse) -> u32 {
+    let mut total = 0;
+    for (i, row) in warehouse.iter().enumerate() {
+        for (j, &cell) in row.iter().enumerate() {
+            if cell == Cell::Box {
+                total += 100 * i as u32 + j as u32;
+            }
+        }
+    }
+    total
 }
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (_, mut game_state) = parse_input(input).unwrap();
-
-    println!("Initial state:\n{}\n", game_state.warehouse.display());
+    let (mut warehouse, instructions) = parse_input(&input);
+    let mut robot_pos = find_robot(&warehouse);
     
-    for (i, movement) in game_state.movements.iter().enumerate() {
-        game_state.warehouse.try_move(*movement);
-        println!("After move {}: {:?}\n{}\n", 
-            i + 1, 
-            movement, 
-            game_state.warehouse.display()
-        );
-    }
+    // dbg!(&instructions);
 
-    Ok(game_state.warehouse.total_gps_score().to_string())
+    instructions.chars()
+        // .enumerate()
+        .filter(|c| !c.is_whitespace())
+        .for_each(|inst| {
+        // if idx == 70 {
+        //     panic!("{inst}");
+        // }
 
-    // let output = &game_state.warehouse.total_gps_score();
-    // Ok(output.to_string())
+        let (dx, dy) = match inst {
+            'v' => (1, 0),
+            '<' => (0, -1),
+            '>' => (0, 1),
+            '^' => (-1, 0),
+            // _ => (0, 0),
+            _ => panic!("Invalid instruction: {inst}"),
+        };
+        
+        let (rx, ry) = robot_pos;
+        let (nx, ny) = (rx as i32 + dx, ry as i32 + dy);
+        
+        if is_valid_pos(nx, ny, &warehouse) {
+            if warehouse[nx as usize][ny as usize] == Cell::Empty {
+                warehouse[rx][ry] = Cell::Empty;
+                warehouse[nx as usize][ny as usize] = Cell::Robot;
+                robot_pos = (nx as usize, ny as usize);
+            } else if warehouse[nx as usize][ny as usize] == Cell::Box {
+                let mut tx = nx;
+                let mut ty = ny;
+                while is_valid_pos(tx + dx, ty + dy, &warehouse) && warehouse[(tx + dx) as usize][(ty + dy) as usize] == Cell::Box {
+                    tx += dx;
+                    ty += dy;
+                }
+                
+                if is_valid_pos(tx + dx, ty + dy, &warehouse) && warehouse[(tx + dx) as usize][(ty + dy) as usize] == Cell::Empty {
+                    warehouse[(tx + dx) as usize][(ty + dy) as usize] = Cell::Box;
+                    warehouse[nx as usize][ny as usize] = Cell::Robot;
+                    warehouse[rx][ry] = Cell::Empty;
+                    robot_pos = (nx as usize, ny as usize);
+                }
+            }
+        }
+    });
+    
+    Ok(calculate_total_gps(&warehouse).to_string())  
 }
 
 #[cfg(test)]
@@ -296,91 +153,6 @@ mod tests {
         assert_eq!("2028", process(input)?);
         Ok(())
     }
-
-    #[test]
-    fn test_box_chain_push() {
-let input = "##########\n#...@OOO.#\n#........#\n##########\n\n>>>>>";
-let expected = "##########\n#....@OOO#\n#........#\n##########";
-        
-        let (_, mut game_state) = parse_input(input).unwrap();
-        for movement in game_state.movements {
-            game_state.warehouse.try_move(movement);
-        }
-        assert_eq!(game_state.warehouse.display().trim(), expected.trim());
-    }
-
-    #[test]
-    fn test_box_chain_push_3() {
-let input = "##########
-#OOO..@..#
-#........#
-##########
-
-<<<";
-let expected = "##########
-#OOO@....#
-#........#
-##########";
-        
-        let (_, mut game_state) = parse_input(input).unwrap();
-        for movement in game_state.movements {
-            game_state.warehouse.try_move(movement);
-        }
-        assert_eq!(game_state.warehouse.display().trim(), expected.trim());
-    }
-
-//     #[test]
-//     fn test_box_chain_push_vertical() {
-// let expected = "##########\n#....O...#\n#....O...#\n#....@...#\n#........#\n##########\n\n^^";
-// let input = "##########\n#........#\n#....O...#\n#....O...#\n#....@...#\n##########";
-        
-//         let (_, mut game_state) = parse_input(input).unwrap();
-//         for movement in game_state.movements {
-//             game_state.warehouse.try_move(movement);
-//         }
-//         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
-//     }
-
-//     #[test]
-//     fn test_box_chain_push_2() {
-// let input = "##########
-// #..O..O.O#
-// #......O.#
-// #.OO..O.O#
-// #..O@..O.#
-// #O#..O...#
-// #O..O..O.#
-// #.OO.O.OO#
-// #....O...#
-// ##########
-
-// <vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
-// vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
-// ><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
-// <<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
-// ^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
-// ^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
-// >^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
-// <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
-// ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
-// v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
-// let expected = "##########
-// #.O.O.OOO#
-// #........#
-// #OO......#
-// #OO@.....#
-// #O#.....O#
-// #O.....OO#
-// #O.....OO#
-// #OO....OO#
-// ##########";
-        
-//         let (_, mut game_state) = parse_input(input).unwrap();
-//         for movement in game_state.movements {
-//             game_state.warehouse.try_move(movement);
-//         }
-//         assert_eq!(game_state.warehouse.display().trim(), expected.trim());
-//     }
 
     #[test]
     fn test_process_large() -> miette::Result<()> {

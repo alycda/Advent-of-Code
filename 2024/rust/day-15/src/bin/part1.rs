@@ -18,5 +18,3 @@ fn main() -> miette::Result<()> {
     println!("{}", result);
     Ok(())
 }
-
-// ! 1397716
