@@ -60,7 +60,7 @@ impl Solution for Day6 {
     type Output = usize;
     type Item = IVec2;
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
         let mut walls = HashSet::new();
         let mut start_pos = None;
         let mut max_x = 0;

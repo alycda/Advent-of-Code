@@ -1,6 +1,6 @@
 
 use ornaments::{Part, Solution};
-use day_01::*;
+use day_01::Day1 as Day;
 
 fn main() {
     // Run registered benchmarks.
@@ -9,10 +9,10 @@ fn main() {
 
 #[divan::bench]
 fn part1() {
-    Day1::parse(divan::black_box(include_str!("../input1.txt",))).solve(Part::One).unwrap();
+    Day::parse(divan::black_box(include_str!("../input.txt",))).solve(Part::One).unwrap();
 }
 
 #[divan::bench]
 fn part2() {
-    Day1::parse(divan::black_box(include_str!("../input1.txt",))).solve(Part::Two).unwrap();
+    Day::parse(divan::black_box(include_str!("../input.txt",))).solve(Part::Two).unwrap();
 }

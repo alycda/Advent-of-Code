@@ -216,7 +216,7 @@ pub trait Solution {
     type Item;
     // type Item = (); associated type defaults are unstable
 
-    fn parse(input: &'static str) -> Self;
+    fn parse(input: &'_ str) -> Self;
 
     /// generally intended to parse a single line, not the full input
     /// https://tfpk.github.io/nominomicon/introduction.html

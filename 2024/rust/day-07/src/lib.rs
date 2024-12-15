@@ -78,7 +78,7 @@ impl<E: Evaluator + Default> Solution for Day7<E> {
     type Output = usize;
     type Item = Vec<Expression>;
 
-    fn parse(input: &'static str) -> Self 
+    fn parse(input: &str) -> Self 
     where 
         Self: Sized 
     {

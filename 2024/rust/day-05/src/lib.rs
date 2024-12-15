@@ -38,7 +38,12 @@ impl Solution for Day5 {
     // not sure if this is correct
     type Item = &'static str;
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
+        let input = input.to_string();
+        // leak the string to make it static
+        let input: &'static str = Box::leak(input.into_boxed_str());
+
+        //                                     v `input` escapes the associated function body here; argument requires that `'1` must outlive `'static`
         let (rules_str, updates) = input.split("\n\n").collect_tuple().unwrap();
 
         let rules = rules_str.lines()

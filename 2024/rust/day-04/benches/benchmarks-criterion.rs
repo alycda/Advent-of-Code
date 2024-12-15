@@ -1,21 +1,28 @@
 use criterion::{
     criterion_group, criterion_main, Criterion,
 };
-use day_04::*;
+use ornaments::{Part, Solution};
+use day_04::{CrossPattern, Day4 as Day, XmasPattern};
 
 fn criterion_benchmark_part1(c: &mut Criterion) {
-    let input = include_str!("../input1.txt");
+    let input = include_str!("../input.txt");
 
     let mut group = c.benchmark_group("day_04::part1");
-    group.bench_with_input("part1", input, |b, input| {
-        b.iter(|| part1::process(input))
-    });
+    group.bench_with_input("part1", input, |b, input| b.iter(|| Day::<XmasPattern>::parse(input).solve(Part::One)));
 
     group.finish();
 }
 
+fn criterion_benchmark_part2(c: &mut Criterion) {
+    let input = include_str!("../input.txt");
+
+    let mut group = c.benchmark_group("day_04::part2");
+    group.bench_with_input("part2", input, |b, input| b.iter(|| Day::<CrossPattern>::parse(input).solve(Part::Two)));
+    group.finish();
+}
+
 // fn criterion_benchmark_part2(c: &mut Criterion) {
-//     let input = include_str!("../input2.txt");
+//     let input = include_str!("../input.txt");
 
 //     let mut group = c.benchmark_group("day_04::part2");
 //     group.bench_with_input("part2", input, |b, input| {
@@ -39,6 +46,6 @@ fn criterion_benchmark_part1(c: &mut Criterion) {
 criterion_group!(
     benches,
     criterion_benchmark_part1,
-    // criterion_benchmark_part2
+    criterion_benchmark_part2
 );
 criterion_main!(benches);

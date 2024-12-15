@@ -88,7 +88,7 @@ impl<P: Pattern> Solution for Day4<P> {
     type Output = usize;
     type Item = HashSet<IVec2>;
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
         let grid = Self::to_grid(input);
         let set = P::find_starting_positions(&grid);
         

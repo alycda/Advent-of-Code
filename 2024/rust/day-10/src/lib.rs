@@ -78,7 +78,7 @@ impl Solution for Day10 {
     type Output = usize;
     type Item = ();
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
         let mut heights = HashMap::new();
         let grid = Day10::to_grid(input);
         // let grid = Day10::to_grid(input, Some(|c: char| c.to_digit(10).map(|d| d as usize)));

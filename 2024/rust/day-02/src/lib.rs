@@ -62,7 +62,7 @@ impl Solution for Day2 {
     type Output = usize;
     type Item = Vec<Vec<i32>>;
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
         let sequences = input.lines()
             .filter_map(|line| {
                 let nums: Vec<i32> = line.split_whitespace()

@@ -18,7 +18,7 @@ impl Solution for Day8 {
     type Output = usize;
     type Item = IVec2;
 
-    fn parse(input: &'static str) -> Self {
+    fn parse(input: &str) -> Self {
         let mut max_x = 0;
         let mut max_y = 0;
 

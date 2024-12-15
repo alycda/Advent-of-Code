@@ -1,4 +1,5 @@
-use day_04::*;
+use ornaments::{Part, Solution};
+use day_04::{CrossPattern, Day4 as Day, XmasPattern};
 
 fn main() {
     // Run registered benchmarks.
@@ -7,32 +8,10 @@ fn main() {
 
 #[divan::bench]
 fn part1() {
-    part1::process(divan::black_box(include_str!(
-        "../input1.txt",
-    )))
-    .unwrap();
+    Day::<XmasPattern>::parse(divan::black_box(include_str!("../input.txt",))).solve(Part::One).unwrap();
 }
 
 #[divan::bench]
 fn part2() {
-    part2::process(divan::black_box(include_str!(
-        "../input2.txt",
-    )))
-    .unwrap();
+    Day::<CrossPattern>::parse(divan::black_box(include_str!("../input.txt",))).solve(Part::Two).unwrap();
 }
-
-// #[divan::bench]
-// fn part2_aho_corasick() {
-//     part2_aho_corasick::process(divan::black_box(
-//         include_str!("../input2.txt",),
-//     ))
-//     .unwrap();
-// }
-
-// #[divan::bench]
-// fn part2_nom() {
-//     part2_nom::process(divan::black_box(include_str!(
-//         "../input2.txt",
-//     )))
-//     .unwrap();
-// }
