@@ -163,40 +163,40 @@ impl Warehouse {
         let delta = movement.to_position();
         let next_pos = self.robot.0 + delta;
         
-        // Basic validation
-        if !self.is_valid_move(next_pos) {
+        // Check if next position is within bounds and not a wall
+        if next_pos.y < 0 || next_pos.y >= self.grid.len() as i32 
+            || next_pos.x < 0 || next_pos.x >= self.grid[0].len() as i32
+            || self.grid[next_pos.y as usize][next_pos.x as usize] == Cell::Wall {
             return;
         }
     
         // If empty, simple robot move
-        if !self.boxes.contains(&next_pos) {
+        if self.grid[next_pos.y as usize][next_pos.x as usize] == Cell::Empty {
             self.robot = Robot(next_pos);
             return;
         }
     
         // Found a box - scan to end of chain
         let mut check_pos = next_pos;
-        while self.boxes.contains(&check_pos) {
+        while self.grid[check_pos.y as usize][check_pos.x as usize] == Cell::Box {
             check_pos = check_pos + delta;
-            if !self.is_valid_move(check_pos) {
-                return;  // Hit wall
+            if check_pos.y < 0 || check_pos.y >= self.grid.len() as i32
+                || check_pos.x < 0 || check_pos.x >= self.grid[0].len() as i32
+                || self.grid[check_pos.y as usize][check_pos.x as usize] == Cell::Wall {
+                return; // Hit wall or boundary
             }
         }
     
         // Move only the first box we encountered to the end position
-        if let Some(box_idx) = self.boxes.iter().position(|&p| p == next_pos) {
-            self.boxes[box_idx] = check_pos;
-        }
+        self.grid[next_pos.y as usize][next_pos.x as usize] = Cell::Empty;
+        self.grid[check_pos.y as usize][check_pos.x as usize] = Cell::Box;
     
         // Move robot to where first box was
         self.robot = Robot(next_pos);
     }
 
-    // compute GPS coordinate for a position
     fn gps_coordinate(&self, pos: IVec2) -> u32 {
-        let (rows, _) = self.dimensions();
-        // Remember to include the walls in the count
-        ((pos.y) * 100 + pos.x) as u32
+        (pos.y * 100 + pos.x) as u32
     }
 
     // Calculate sum of all box GPS coordinates
@@ -209,21 +209,19 @@ impl Warehouse {
     // for debugging
     fn display(&self) -> String {
         let mut display = self.grid.clone();
-        // Clear previous positions
-        for row in display.iter_mut() {
-            for cell in row.iter_mut() {
-                if *cell == Cell::Robot || *cell == Cell::Box {
+        
+        for (y, row) in display.iter_mut().enumerate() {
+            for (x, cell) in row.iter_mut().enumerate() {
+                if IVec2::new(x as i32, y as i32) == self.robot.0 {
+                    *cell = Cell::Robot;
+                } else if self.boxes.contains(&IVec2::new(x as i32, y as i32)) {
+                    *cell = Cell::Box;
+                } else if *cell == Cell::Robot || *cell == Cell::Box {
                     *cell = Cell::Empty;
                 }
             }
         }
-        
-        // Place boxes and robot
-        for &pos in &self.boxes {
-            display[pos.y as usize][pos.x as usize] = Cell::Box;
-        }
-        display[self.robot.y as usize][self.robot.x as usize] = Cell::Robot;
-
+    
         display.iter()
             .map(|row| row.iter()
                 .map(|cell| match cell {
@@ -265,8 +263,10 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         );
     }
 
-    let output = &game_state.warehouse.total_gps_score();
-    Ok(output.to_string())
+    Ok(game_state.warehouse.total_gps_score().to_string())
+
+    // let output = &game_state.warehouse.total_gps_score();
+    // Ok(output.to_string())
 }
 
 #[cfg(test)]
