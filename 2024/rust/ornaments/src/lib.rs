@@ -214,6 +214,7 @@ pub trait Solution {
     type Output: std::fmt::Display;  
     /// used for the nom parser function
     type Item;
+    // type Item = (); associated type defaults are unstable
 
     fn parse(input: &'static str) -> Self;
 
