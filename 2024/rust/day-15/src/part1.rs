@@ -57,14 +57,6 @@ impl Direction {
     }
 }
 
-// impl IVec2 {
-//     fn apply_delta(&self, delta: (isize, isize)) -> Option<IVec2> {
-//         let new_row = self.row.checked_add_signed(delta.0)?;
-//         let new_col = self.col.checked_add_signed(delta.1)?;
-//         Some(IVec2 { row: new_row, col: new_col })
-//     }
-// }
-
 fn movement(input: &str) -> IResult<&str, Direction> {
     alt((
         char('^').map(|_| Direction::Up),
@@ -170,31 +162,29 @@ impl Warehouse {
     fn try_move(&mut self, movement: Direction) {
         let delta = movement.to_position();
         
-        // Calculate potential new robot position
+        // First, check if the next position is even valid
         let next_robot_pos = match self.robot.apply_delta(delta) {
-            Some(pos) if self.is_valid_move(pos) => Robot(pos),
-            _ => return, // Invalid move or out of bounds
+            Some(pos) if self.is_valid_move(pos) => pos,
+            _ => return, // Can't move there
         };
-
-        // Check if there's a box at the new position
-        if let Some(box_idx) = self.boxes.iter().position(|&p| p == *next_robot_pos) {
-            // Calculate where the box would move
-            let next_box_pos = match next_robot_pos.apply_delta(delta) {
-                Some(pos) if self.is_valid_move(pos) => pos,
-                _ => return, // Box can't be pushed
-            };
-
-            // Check if there's another box in the way
-            if self.boxes.iter().any(|&p| p == next_box_pos) {
+    
+        // Now check if there's a box at the target position
+        if let Some(box_idx) = self.boxes.iter().position(|&p| p == next_robot_pos) {
+            // There's a box - check if we can push it
+            let next_box_pos = next_robot_pos + delta;
+            
+            // If we can't move the box there (wall or another box), the whole move fails
+            if !self.is_valid_move(next_box_pos) || 
+               self.boxes.iter().any(|&p| p == next_box_pos) {
                 return;
             }
-
-            // Move is valid - update box position
+    
+            // We can push the box
             self.boxes[box_idx] = next_box_pos;
         }
-
-        // Move robot
-        self.robot = next_robot_pos;
+    
+        // If we got here, either there was no box or we successfully pushed it
+        self.robot = Robot(next_robot_pos);
     }
 
     // compute GPS coordinate for a position
@@ -255,27 +245,22 @@ fn parse_input(input: &str) -> IResult<&str, GameState> {
     }))
 }
 
-// fn parse_input(input: &str) -> Result<GameState, AocError> {
-//     let (_, game_state) = parse_input(input); //.finish()?;
-
-//     Ok(game_state)
-// }
-
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (_, mut game_state) = parse_input(input).unwrap(); //.map_err(|e| AocError::NomParsing(e.to_string()))?;
+    let (_, mut game_state) = parse_input(input).unwrap();
 
-    dbg!(&game_state);
-
-    for movement in game_state.movements {
-        game_state.warehouse.try_move(movement);
+    println!("Initial state:\n{}\n", game_state.warehouse.display());
+    
+    for (i, movement) in game_state.movements.iter().enumerate() {
+        game_state.warehouse.try_move(*movement);
+        println!("After move {}: {:?}\n{}\n", 
+            i + 1, 
+            movement, 
+            game_state.warehouse.display()
+        );
     }
-    // dbg!(game_state.warehouse.total_gps_score());
-
-    // let (_, game_state) = parse_input(input).map_err(|e| AocError::ParseError(e.to_string()))?;
 
     let output = &game_state.warehouse.total_gps_score();
-
     Ok(output.to_string())
 }
 
