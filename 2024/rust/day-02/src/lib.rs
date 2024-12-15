@@ -3,6 +3,14 @@ use ornaments::{Solution, AocError};
 #[derive(Debug)]
 pub struct Sequence(Vec<i32>);
 
+impl std::ops::Deref for Sequence {
+    type Target = Vec<i32>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl Sequence {
     fn is_safe(&self) -> bool {
         if self.0.len() < 2 { 
@@ -39,8 +47,14 @@ impl Sequence {
     }
 }
 
-pub struct Day2 {
-    sequences: Vec<Sequence>
+pub struct Day2(Vec<Sequence>);
+
+impl std::ops::Deref for Day2 {
+    type Target = Vec<Sequence>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl Solution for Day2 {
@@ -61,17 +75,17 @@ impl Solution for Day2 {
             })
             .collect();
 
-        Self { sequences }
+        Self(sequences)
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
-        Ok(self.sequences.iter()
+        Ok(self.iter()
             .filter(|seq| seq.is_safe())
             .count())
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        let (safe, notsafe): (Vec<_>, Vec<_>) = self.sequences.iter()
+        let (safe, notsafe): (Vec<_>, Vec<_>) = self.iter()
             .partition(|seq| seq.is_safe());
 
         let dampened = notsafe.iter()

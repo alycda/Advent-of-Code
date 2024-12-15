@@ -212,10 +212,12 @@ impl std::ops::Deref for PhantomGrid {
 pub trait Solution {
     /// Ensures the output can be converted to a string
     type Output: std::fmt::Display;  
+    /// used for the nom parser function
     type Item;
 
     fn parse(input: &'static str) -> Self;
 
+    /// generally intended to parse a single line, not the full input
     /// https://tfpk.github.io/nominomicon/introduction.html
     fn nom_parser(_input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> where Self: Sized {
         todo!()

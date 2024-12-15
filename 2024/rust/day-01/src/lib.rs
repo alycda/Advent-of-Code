@@ -1,8 +1,8 @@
 // use std::collections::HashMap;
 
-// use nom::{
-//     character::complete::{self, line_ending, space1}, error::Error, multi::separated_list1, sequence::separated_pair, IResult
-// };
+use nom::{
+    character::complete::{self, line_ending, space1}, error::Error, multi::separated_list1, sequence::separated_pair, IResult
+};
 
 use ornaments::{Solution, AocError};
 
@@ -19,7 +19,7 @@ pub struct Day1(Vec<i32>, Vec<i32>);
 
 impl Solution for Day1 {
     type Output = i32;
-    type Item = (i32, i32);
+    type Item = Vec<(i32, i32)>;
 
     fn parse(input: &str) -> Self {
         let (left, right) = input.lines()
@@ -35,16 +35,16 @@ impl Solution for Day1 {
         Self(left, right)
     }
 
-    // fn nom_parser(input: &str) -> IResult<&str, Self, Error<&str>> {
-    //     separated_list1(
-    //         line_ending,
-    //         separated_pair(
-    //             complete::i32,
-    //             space1,
-    //             complete::i32,
-    //         ),
-    //     )(input)
-    // }
+    fn nom_parser(input: &str) -> IResult<&str, Self::Item, Error<&str>> {
+        separated_list1(
+            line_ending::<&str, Error<&str>>,
+            separated_pair(
+                complete::i32,
+                space1,
+                complete::i32,
+            ),
+        )(input)
+    }
 
     // fn parse_nom(input: &str) -> Self {
     //     let (_, pairs) = separated_list1(
@@ -177,6 +177,13 @@ mod tests {
         assert_eq!("11", Day1::parse(input).solve(Part::One)?);
         Ok(())
     }
+
+    #[test]
+    fn nom_parser() {
+        let input = "3   4";
+        let result = Day1::nom_parser(input);
+        assert_eq!(Ok(("", vec![(3, 4)])), result);
+    }
     
     // #[test]
     // fn test_day1_part1_nom() -> miette::Result<()> {
@@ -186,7 +193,30 @@ mod tests {
     // 1   3
     // 3   9
     // 3   3";
-    //     assert_eq!("11", Day1::parse_nom(input).solve(Part::One).unwrap());
+    //     let (left, right) = input.lines()
+    //         .map(|line| Day1::nom_parser(line).unwrap().1)
+    //         .inspect(|a|{
+    //             dbg!(a);
+    //         })
+    //         .collect();
+
+    //     // let thing = Day1(left, right);
+            
+    //     // left.sort();
+    //     // right.sort();
+
+    //     // let output = left
+    //     //     .iter()
+    //     //     .zip(right.iter())
+    //     //     .map(|(l, r)| (l - r).abs())
+    //     //     .sum::<Day1::Output>();
+
+
+    //     // let (_, pairs) = Day1::nom_parser(input).unwrap();
+
+    //     // assert_eq!("11", Day1::nom_parser(input).solve(Part::One)?);
+    //     assert_eq!("11", Day1(left, right).solve(Part::One)?);
+    //     Ok(())
     // }
     
     #[test]
