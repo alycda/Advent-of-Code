@@ -40,10 +40,6 @@ impl Grid {
         self.0 + 1
     }
 
-    fn get_rows(&self) -> usize {
-        self.1
-    }
-
     fn to_position(&self, idx: usize) -> IVec2 {
         let cols = self.get_cols();
         let col = idx % cols;
@@ -130,13 +126,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     while let Some(current) = queue.pop() {
         // If cost exceeds minimum, skip this path
         if current.cost > min_cost {
-            // visited.clear();
             continue;
         }
 
         let state_key = (current.position, current.direction);
 
-    
         // Check if we've seen this state
         match state_costs.get(&state_key) {
             Some((prev_cost, _)) if current.cost > *prev_cost => continue,
@@ -151,52 +145,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 state_costs.insert(state_key, (current.cost, vec![current.clone()]));
             }
         }
-        
-        // // If we reached the end, return the cost
-        // if current.position == end {
-        //     // // return Ok(current.cost.to_string());
-        //     // min_cost = current.cost;
-        //     // break;
-        //     if current.cost < min_cost {
-        //         // Found a better path, clear previous optimal tiles
-        //         min_cost = current.cost;
-        //         optimal_tiles.clear();
-        //         // optimal_tiles.extend(visited.iter().map(|(pos, _)| *pos));
-        //     } else if current.cost == min_cost {
-        //         // This is an optimal path, record its tiles
-        //         // optimal_tiles.insert(current.position);
-        //         // optimal_tiles.extend(visited.iter().map(|(pos, _)| *pos));
 
-        //         reconstruct_paths(
-        //             &(end, current.direction), 
-        //             &state_costs,
-        //             &mut path_visited,
-        //             &mut optimal_tiles
-        //         );
-        //     }
-        // }
-
-        // if current.position == end {
-        //     if current.cost < min_cost {
-        //         min_cost = current.cost;
-        //         optimal_tiles.clear();
-        //         path_visited.clear(); // Also clear path_visited
-        //         reconstruct_paths(
-        //             &state_key,
-        //             &state_costs,
-        //             &mut path_visited,
-        //             &mut optimal_tiles
-        //         );
-        //     } else if current.cost == min_cost {
-        //         reconstruct_paths(
-        //             &state_key,
-        //             &state_costs,
-        //             &mut path_visited,
-        //             &mut optimal_tiles
-        //         );
-        //     }
-        // }
-
+        // If we reached the end, reconstruct the paths to return the cost
         if current.position == end {
             if current.cost < min_cost {
                 min_cost = current.cost;
@@ -227,14 +177,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         // Generate next possible moves:
         
         // 1. Try moving forward
-        // let next_pos = current.position + current.direction.to_position();
-        // if !walls.contains(&next_pos) {
-        //     queue.push(Day16 {
-        //         cost: current.cost + 1,
-        //         position: next_pos,
-        //         direction: current.direction,
-        //     });
-        // }
         let next_pos = current.position + current.direction.to_position();
         if !walls.contains(&next_pos) {
             queue.push(Day16 {
@@ -271,34 +213,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     Ok(optimal_tiles.len().to_string())
 }
-
-// fn reconstruct_paths(
-//     state: &(IVec2, Direction),
-//     state_costs: &HashMap<(IVec2, Direction), (usize, Vec<Day16>)>,
-//     visited: &mut HashSet<(IVec2, Direction)>,
-//     optimal_tiles: &mut HashSet<IVec2>
-// ) {
-//     if visited.contains(state) {
-//         return;
-//     }
-//     visited.insert(*state);
-    
-//     // Add this position to optimal tiles
-//     optimal_tiles.insert(state.0);  // state.0 is the IVec2 position
-    
-//     // Get all predecessors for this state
-//     if let Some((_, predecessors)) = state_costs.get(state) {
-//         for pred in predecessors {
-//             // Recurse for each predecessor
-//             reconstruct_paths(
-//                 &(pred.position, pred.direction),
-//                 state_costs,
-//                 visited,
-//                 optimal_tiles
-//             );
-//         }
-//     }
-// }
 
 fn reconstruct_paths(
     state: &(IVec2, Direction),
