@@ -13,7 +13,7 @@ fn main() -> miette::Result<()> {
     #[cfg(not(feature = "dhat-heap"))]
     tracing_subscriber::fmt::init();
 
-    let file = include_str!("../../input1.txt");
+    let file = include_str!("../../input.txt");
     let result = process(file).context("process part 1")?;
     println!("{}", result);
     Ok(())
