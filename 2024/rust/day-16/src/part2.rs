@@ -100,9 +100,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let walls = input.match_indices("#")
         .map(|(idx, _)| grid.to_position(idx))
         .collect::<HashSet<_>>();
-    let mut start = grid.to_position(input.find("S").unwrap());
-    let mut end = grid.to_position(input.find("E").unwrap());
-    let mut direction = Direction::Right;
+    let start = grid.to_position(input.find("S").unwrap());
+    let end = grid.to_position(input.find("E").unwrap());
 
     // dbg!(start, end);
     // dbg!(start, end, walls);
@@ -126,6 +125,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     while let Some(current) = queue.pop() {
         // If cost exceeds minimum, skip this path
         if current.cost > min_cost {
+            visited.clear();
             continue;
         }
         
@@ -139,8 +139,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 min_cost = current.cost;
                 optimal_tiles.clear();
                 optimal_tiles.extend(visited.iter().map(|(pos, _)| *pos));
-            }
-            if current.cost == min_cost {
+            } else if current.cost == min_cost {
                 // This is an optimal path, record its tiles
                 // optimal_tiles.insert(current.position);
                 optimal_tiles.extend(visited.iter().map(|(pos, _)| *pos));
@@ -184,6 +183,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     // dbg!(visited.len());
     // dbg!(queue);
+
+    // panic!("halt");
 
     Ok(optimal_tiles.len().to_string())
 }
