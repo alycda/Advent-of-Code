@@ -1,18 +1,23 @@
-use std::collections::HashSet;
-
-use glam::IVec2;
 use nom::{
     bytes::complete::tag, character::complete::{i32 as parse_i32, space0}, sequence::{preceded, separated_pair, tuple}, IResult
 };
+use ornaments::{PhantomGrid, Position, Velocity, AocError};
 
-use crate::AocError;
+pub struct Day14(PhantomGrid);
 
-#[derive(Debug, Clone)]
-struct Position(IVec2);
+impl std::ops::Deref for Day14 {
+    type Target = PhantomGrid;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
-
-#[derive(Debug, Clone)]
-struct Velocity(IVec2);
+impl std::ops::DerefMut for Day14 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Robot {
@@ -28,7 +33,7 @@ fn parse_position(input: &str) -> IResult<&str, Position> {
         separated_pair(parse_i32, tag(","), parse_i32)
     )(input)?;
     
-    Ok((input, Position(IVec2::new(coords.0, coords.1))))
+    Ok((input, Position::new(coords.0, coords.1)))
 }
 
 fn parse_velocity(input: &str) -> IResult<&str, Velocity> {
@@ -37,7 +42,7 @@ fn parse_velocity(input: &str) -> IResult<&str, Velocity> {
         separated_pair(parse_i32, tag(","), parse_i32)
     )(input)?;
     
-    Ok((input, Velocity(IVec2::new(coords.0, coords.1))))
+    Ok((input, Velocity::new(coords.0, coords.1)))
 }
 
 fn parse_robot(input: &str) -> IResult<&str, Robot> {
@@ -50,46 +55,29 @@ fn parse_robot(input: &str) -> IResult<&str, Robot> {
     Ok((input, Robot { position, velocity }))
 }
 
-#[derive(Debug)]
-/// only stores the interesting positions and minmax bounds
-pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
-
-impl PhantomGrid {
-    // Creates new grid with given dimensions
-    pub fn new(width: i32, height: i32) -> Self {
-        Self(
-            HashSet::new(),
-            (IVec2::ZERO, IVec2::new(width - 1, height - 1))
-        )
-    }
+impl Day14 {
 
     // Simulates one step for all robots
     pub fn step(&mut self, robots: &mut Vec<Robot>) {
         // Update all positions
         for robot in robots.iter_mut() {
-            let new_pos = self.wrap_position(robot.position.0 + robot.velocity.0);
-            robot.position.0 = new_pos;
+            let new_pos = self.wrap_position(robot.position + robot.velocity);
+            robot.position = new_pos;
         }
 
         // Update grid state
-        self.0.clear();
+        self.clear();
         for robot in robots.iter() {
-            self.0.insert(robot.position.0);
+            self.insert(robot.position);
         }
     }
 
-    pub fn in_bounds(&self, pos: IVec2) -> bool {
-        pos.x >= 0 && pos.y >= 0 
-            && pos.x <= self.1.1.x 
-            && pos.y <= self.1.1.y
-    }
-
-    pub fn wrap_position(&self, pos: IVec2) -> IVec2 {
+    pub fn wrap_position(&self, pos: Position) -> Position {
         // Adding width/height + 1 to handle negative positions
         let width = self.1.1.x + 1;
         let height = self.1.1.y + 1;
         
-        IVec2::new(
+        Position::new(
             (pos.x % width + width) % width,
             (pos.y % height + height) % height
         )
@@ -101,7 +89,7 @@ impl PhantomGrid {
         
         robots.iter()
             .filter(|robot| {
-                let pos = robot.position.0;
+                let pos = robot.position;
                 // Skip middle lines
                 if pos.x == mid_x || pos.y == mid_y {
                     return false;
@@ -119,16 +107,8 @@ impl PhantomGrid {
     }
 }
 
-impl std::ops::Deref for PhantomGrid {
-    type Target = HashSet<IVec2>;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 #[tracing::instrument]
-pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocError> {
+pub fn process(input: &str, dimensions: Position) -> miette::Result<String, AocError> {
     let mut robots = input.lines()
         .map(|line| {
             let (_, robot) = parse_robot(line).unwrap();
@@ -143,7 +123,7 @@ pub fn process(input: &str, dimensions: IVec2) -> miette::Result<String, AocErro
     // println!("Initial state:");
     // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
-    let mut grid = PhantomGrid::new(dimensions.x, dimensions.y);
+    let mut grid = Day14(PhantomGrid::new(dimensions.x, dimensions.y));
 
     for i in 0..100 {
         grid.step(&mut robots);
@@ -203,7 +183,7 @@ p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
 p=9,5 v=-3,-3";
-        let grid_size = IVec2::new(11, 7);
+        let grid_size = Position::new(11, 7);
 
         assert_eq!("12", process(input, grid_size)?);
         Ok(())
@@ -216,7 +196,7 @@ fn visualize_robots(robots: &[Robot], width: i32, height: i32) -> String {
     for y in 0..height {
         for x in 0..width {
             let count = robots.iter()
-                .filter(|r| r.position.0.x == x && r.position.0.y == y)
+                .filter(|r| r.position.x == x && r.position.y == y)
                 .count();
             
             output.push(if count == 0 {
@@ -233,35 +213,11 @@ fn visualize_robots(robots: &[Robot], width: i32, height: i32) -> String {
     output
 }
 
-impl std::ops::Deref for Position {
-    type Target = IVec2;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::Deref for Velocity {
-    type Target = IVec2;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-// impl std::ops::Deref for Robot {
-//     type Target = Position;
-    
-//     fn deref(&self) -> &Self::Target {
-//         &self.position
-//     }
-// }
-
 impl std::fmt::Display for Robot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "p={},{} v={},{}", 
-            self.position.0.x, self.position.0.y,
-            self.velocity.0.x, self.velocity.0.y)
+            self.position.x, self.position.y,
+            self.velocity.x, self.velocity.y)
     }
 }
 

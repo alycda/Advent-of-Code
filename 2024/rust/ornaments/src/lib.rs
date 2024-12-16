@@ -2,6 +2,7 @@ use std::{collections::{HashMap, HashSet}, hash::Hash};
 use tracing::{debug, instrument};
 
 pub type Position = glam::IVec2;
+pub type Velocity = glam::IVec2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
@@ -255,6 +256,14 @@ impl<T> std::ops::Deref for Grid<T> {
 pub struct PhantomGrid(pub UniquePositions, pub (Position, Position));
 
 impl PhantomGrid {
+    // Creates new grid with given dimensions
+    pub fn new(width: i32, height: i32) -> Self {
+        Self(
+            HashSet::new(),
+            (Position::ZERO, Position::new(width - 1, height - 1))
+        )
+    }
+
     pub fn in_bounds(&self, pos: Position) -> bool {
         pos.x >= 0 && pos.y >= 0 
             && pos.x <= self.1.1.x 
@@ -267,6 +276,12 @@ impl std::ops::Deref for PhantomGrid {
     
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl std::ops::DerefMut for PhantomGrid {
+    fn deref_mut(&mut self) -> &mut UniquePositions {
+        &mut self.0
     }
 }
 
