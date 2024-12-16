@@ -104,7 +104,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut end = grid.to_position(input.find("E").unwrap());
     let mut direction = Direction::Right;
 
-    dbg!(start, end);
+    // dbg!(start, end);
     // dbg!(start, end, walls);
 
     let initial_state = Day16 {
