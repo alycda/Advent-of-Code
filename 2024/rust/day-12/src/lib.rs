@@ -54,7 +54,7 @@ mod tests {
     use ornaments::Part;
 
     #[test]
-    fn test_process() -> miette::Result<()> {
+    fn test_part1() -> miette::Result<()> {
         let input = "RRRRIICCFF
 RRRRIICCCF
 VVRRRCCFFF
@@ -66,6 +66,22 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE";
         assert_eq!("1930", Day12::parse(input).solve(Part::One)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2() -> miette::Result<()> {
+        let input = "RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE";
+        assert_eq!("1206", Day12::parse(input).solve(Part::Two)?);
         Ok(())
     }
 }

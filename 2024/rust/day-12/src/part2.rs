@@ -102,16 +102,6 @@ fn in_bounds(pos: IVec2, grid: &Vec<Vec<char>>) -> bool {
     pos.x < grid[0].len() as i32
 }
 
-struct TwoDGrid(Vec<Vec<char>>);
-
-impl TwoDGrid {
-    pub fn new(input: &str) -> Self {
-        Self(input.lines()
-            .map(|line| line.chars().collect())
-            .collect())
-    }
-}
-
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let grid: Vec<Vec<char>> = input.lines()
         .map(|line| line.chars().collect())
