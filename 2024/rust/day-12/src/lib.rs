@@ -3,7 +3,6 @@ use ornaments::{AocError, Solution, UniquePositions};
 
 pub mod custom_error;
 
-pub mod part1;
 pub mod part2;
 
 fn get_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
