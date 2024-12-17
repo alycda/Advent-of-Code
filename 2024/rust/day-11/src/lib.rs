@@ -4,24 +4,22 @@ use ornaments::{AocError, Solution};
 
 #[derive(Debug, Clone)]
 pub struct Day11(HashMap<usize, usize>);
-// pub struct Day11(String);
 
 impl std::ops::Deref for Day11 {
     type Target = HashMap<usize, usize>;
-    // type Target = String;
     
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Iterator for Day11 {
-    type Item = (usize, usize);
+// impl Iterator for Day11 {
+//     type Item = (usize, usize);
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.iter().next().map(|(k, v)| (*k, *v))
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.0.iter().next().map(|(k, v)| (*k, *v))
+//     }
+// }
 
 pub fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
     let mut new_stones: HashMap<usize, usize> = HashMap::new();
@@ -98,7 +96,7 @@ impl Day11 {
     // }
 
     /// DO NOT make this a method, it will cause exponential runtime
-    fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
+    fn blink(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
         let mut new_stones: HashMap<usize, usize> = HashMap::new();
     
         for (stone, count) in stones {
@@ -124,15 +122,6 @@ impl Solution for Day11 {
     type Item = String;
 
     fn parse(input: &str) -> Self {
-        // let stones: HashMap<usize, usize> = input
-        //     .split_whitespace()
-        //     // .filter_map(|s| { s.parse::<usize>().ok() })
-        //     .map(|s| s.parse::<usize>().unwrap())
-        //     .fold(HashMap::new(), |mut acc, stone| {
-        //         *acc.entry(stone).or_default() += 1;
-        //         acc
-        //     });
-
         let stones: HashMap<usize, usize> = input
             .split_whitespace()
             .map(|s| s.parse::<usize>().unwrap())
@@ -142,10 +131,6 @@ impl Solution for Day11 {
             });
 
         Self(stones)
-
-        // Self(input.to_owned())
-
-        
     }
 
     // fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
@@ -168,8 +153,9 @@ impl Solution for Day11 {
         }
 
         // self = &mut Day11(stones);
+        *self = Day11(stones);
         
-        Ok(stones.values().sum::<usize>())
+        Ok(self.values().sum::<usize>())
 
         // let mut stones = self.clone();
 
