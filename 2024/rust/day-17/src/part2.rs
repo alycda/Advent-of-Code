@@ -152,64 +152,271 @@ impl MachineState {
         }
         a
     }
+}
 
-    // fn verify_output(initial_a: i64, program: &[u8]) -> bool {
-    //     let mut state = MachineState {
-    //         register_a: initial_a,
-    //         register_b: 0,
-    //         register_c: 0,
-    //         program: program.to_vec(),
-    //     };
+fn find_initial_a(program: &[u8], next_val: i64, index: i32) -> i64 {
+    if index < 0 {
+        return next_val;
+    }
+    
+    // Try 8 possible values for current position
+    for a_val in (next_val * 8)..((next_val * 8) + 8) {
+        let mut state = MachineState {
+            register_a: a_val,
+            register_b: 0,
+            register_c: 0,
+            program: program.to_vec(),
+        };
         
-    //     let output = state.execute();
-    //     // if initial_a % 1_000_000 == 0 {
-    //     //     println!("Testing A={}, output={:?}, expected={:?}", initial_a, output, program);
-    //     // }
-        
-    //     output == program
-    // }
-
-    // fn find_lowest_a(program: &[u8]) -> i64 {
-    //     let mut a = 1;
-    //     while !Self::verify_output(a, program) {
-    //         if a % 1_000_000 == 0 {
-    //             // println!("Trying {}", a);
-    //         }
-    //         a += 1;
-    //     }
-    //     a
-    // }
+        let output = state.execute();
+        if !output.is_empty() && output[0] == program[index as usize] {
+            let final_val = find_initial_a(program, a_val, index - 1);
+            if final_val >= 0 {
+                return final_val;
+            }
+        }
+    }
+    
+    -1
 }
 
 fn calculate_initial_a() -> i64 {    
     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
-    
-    // Start with value that will output last number (0)
-    let mut a = 3i64;  // This will output 0 as last value
-    
-    // Work backwards through the program, each time multiplying by 8
-    // and adding the next required output
-    for &target in program.iter().rev().skip(1) {
-        a = a * 8 + target as i64;
-    }
-    
-    // One final multiply by 8 
-    a * 8
+    find_initial_a(&program, 0, (program.len() - 1) as i32)
 }
 
+// fn find_a(a: i64, p: &[u8], depth: usize) -> i64 {
+//     if p.is_empty() {
+//         return a;
+//     }
+    
+//     // Collect all possible values first
+//     let mut possibilities = Vec::new();
+    
+//     for bc_init in 0..8 {
+//         let mut bc = bc_init as i64;
+//         let ta = (a << 3) | bc_init as i64;
+//         bc ^= 1_i64;
+//         let c = (ta >> bc) as i64;
+//         bc ^= 5_i64;
+//         bc ^= c;
+        
+//         if (bc & 7) as u8 == p[0] {
+//             possibilities.push((bc_init, ta));
+//         }
+//     }
+    
+//     // Try all possibilities
+//     for (_, ta) in possibilities {
+//         let aa = find_a(ta, &p[1..], depth + 1);
+//         if aa > 0 {
+//             return aa;
+//         }
+//     }
+    
+//     -1
+// }
+
 // fn calculate_initial_a() -> i64 {    
-//     let start = 89057473207128_i64;
-//     let end = 974823479571216_i64;
-//     let increment = 2097152; // 2^21
+//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
+//     let mut reversed = program.clone();
+//     reversed.reverse();
+    
+//     find_a(0, &reversed, 0)
+// }
+
+// fn find_a(a: i64, p: &[u8], depth: usize) -> i64 {
+//     if p.is_empty() {
+//         println!("Found complete solution: {}", a);
+//         return a;
+//     }
+    
+//     if depth < 5 {  // Increased debug depth
+//         println!("Depth {}: target={}, current_a={:#x}", depth, p[0], a);
+//     }
+    
+//     for bc_init in 0..8 {
+//         let mut bc = bc_init as i64;
+//         let ta = (a << 3) | bc;
+        
+//         // Debug the transformation steps
+//         if depth < 5 {
+//             println!("  try bc={}: ta={:#x}", bc_init, ta);
+//         }
+        
+//         bc ^= 1_i64;
+//         let c = (ta >> bc) as i64;
+//         bc ^= 5_i64;
+//         bc ^= c;
+        
+//         if (bc & 7) as u8 == p[0] {
+//             if depth < 5 {
+//                 println!("  Found potential: bc={}, next_a={:#x}", bc_init, ta);
+//             }
+//             let aa = find_a(ta, &p[1..], depth + 1);
+//             if aa > 0 {
+//                 return aa;
+//             }
+//         }
+//     }
+    
+//     -1
+// }
+
+// fn calculate_initial_a() -> i64 {    
+//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
+//     let mut reversed = program.clone();
+//     reversed.reverse();
+    
+//     // Let's try with a non-zero starting value
+//     for start in 0..8 {
+//         println!("\nTrying with start value: {}", start);
+//         let result = find_a(start, &reversed, 0);
+//         if result > 0 {
+//             return result;
+//         }
+//     }
+    
+//     -1
+// }
+
+// fn find_a(a: i64, p: &[u8], depth: usize) -> i64 {
+//     if p.is_empty() {
+//         println!("Found leaf solution: {}", a);
+//         return a;
+//     }
+    
+//     if depth < 3 {  // Only print first few levels to avoid spam
+//         println!("Depth {}: trying to generate {:?} with a={}", depth, p[0], a);
+//     }
+    
+//     // Try all possible values 0-7 that could have generated this output
+//     for bc_init in 0..8 {
+//         let mut bc = bc_init as i64;
+//         let ta = (a << 3) | bc;
+//         bc ^= 1_i64;
+//         let c = (ta >> bc) as i64;
+//         bc ^= 5_i64;
+//         bc ^= c;
+        
+//         // Check if this would generate our target output
+//         if (bc & 7) as u8 == p[0] {
+//             if depth < 3 {
+//                 println!("Depth {}: Found match with bc_init={}", depth, bc_init);
+//             }
+//             // Recursively try the rest of the program
+//             let aa = find_a(ta, &p[1..], depth + 1);
+//             if aa > 0 {
+//                 return aa;
+//             }
+//         }
+//     }
+    
+//     if depth < 3 {
+//         println!("Depth {}: No solution found", depth);
+//     }
+//     -1
+// }
+
+// fn calculate_initial_a() -> i64 {    
+//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
+//     let mut reversed = program.clone();
+//     reversed.reverse();
+    
+//     println!("Starting search with reversed program: {:?}", reversed);
+//     let result = find_a(0, &reversed, 0);
+//     println!("Search finished with result: {}", result);
+//     result
+// }
+
+// fn find_a(a: i64, p: &[u8]) -> i64 {
+//     if p.is_empty() {
+//         return a;
+//     }
+    
+//     // Try all possible values 0-7 that could have generated this output
+//     for bc_init in 0..8 {
+//         let mut bc = bc_init as i64;
+//         let ta = (a << 3) | bc;
+//         bc ^= 1_i64;
+//         let c = (ta >> bc) as i64;
+//         bc ^= 5_i64;
+//         bc ^= c;
+        
+//         // Check if this would generate our target output
+//         if (bc & 7) as u8 == p[0] {
+//             // Recursively try the rest of the program
+//             let aa = find_a(ta, &p[1..]);
+//             if aa > 0 {
+//                 return aa;
+//             }
+//         }
+//     }
+    
+//     -1
+// }
+
+// fn calculate_initial_a() -> i64 {    
+//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
+//     let mut reversed = program.clone();
+//     reversed.reverse();
+    
+//     find_a(0, &reversed)
+// }
+
+// fn find_a(a: i64, p: &[u8]) -> i64 {
+//     if p.is_empty() {
+//         return a;
+//     }
+    
+//     // Try all possible values 0-7 that could have generated this output
+//     for bc in 0..8 {
+//         let mut bc = bc;
+//         let ta = (a << 3) | bc;
+//         bc ^= 1;
+//         let c = (ta >> bc) as u8;
+//         bc ^= 5;
+//         bc ^= c;
+        
+//         // Check if this would generate our target output
+//         if bc & 7 == p[0] {
+//             // Recursively try the rest of the program
+//             let aa = find_a(ta, &p[1..]);
+//             if aa > 0 {
+//                 return aa;
+//             }
+//         }
+//     }
+    
+//     -1
+// }
+
+// fn calculate_initial_a() -> i64 {    
+//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
+//     let mut reversed = program.clone();
+//     reversed.reverse();
+    
+//     find_a(0, &reversed)
+// }
+
+// fn calculate_initial_a() -> i64 {    
+//     // Program we need to output
 //     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
     
-//     let mut a = start + (increment - (start % increment));
+//     // Convert to base-8 since we're working with mod 8 operations
+//     let octal = format!("{:o}", 89057473207128_i64);
+//     println!("Starting octal: {}", octal);
     
-//     while a <= end {
-//         // // Print progress every ~billion iterations
-//         // if a % 1_000_000_000_000 == 0 {
-//         //     println!("Testing {}", a);
-//         // }
+//     let increment = 2097152; // 2^21
+//     let mut a = 89057473207128_i64;
+//     // Align to increment
+//     a += increment - (a % increment);
+    
+//     // Only test values that align with our output pattern
+//     while a < 974823479571216_i64 {
+//         if a % 1_000_000_000_000 == 0 {
+//             println!("Testing: {}", a);
+//         }
         
 //         let mut state = MachineState {
 //             register_a: a,
@@ -218,319 +425,36 @@ fn calculate_initial_a() -> i64 {
 //             program: program.clone(),
 //         };
         
-//         if state.execute() == program {
-//             return a;
+//         let output = state.execute();
+        
+//         // Check first few values as a quick filter
+//         if output.len() >= 3 && output[0] == 2 && output[1] == 4 && output[2] == 1 {
+//             if output == program {
+//                 return a;
+//             }
 //         }
         
 //         a += increment;
 //     }
     
-//     panic!("No solution found in range");
-// }
-
-// fn test_value(a: i64, program: &[u8]) -> std::cmp::Ordering {
-//     let mut state = MachineState {
-//         register_a: a,
-//         register_b: 0,
-//         register_c: 0,
-//         program: program.to_vec(),
-//     };
-    
-//     let output = state.execute();
-//     // Debug print every millionth try
-//     if a % 1_000_000_000 == 0 {
-//         println!("Testing a={}, output={:?}", a, output);
-//     }
-//     match output.len().cmp(&program.len()) {
-//         std::cmp::Ordering::Equal => output.as_slice().cmp(program),
-//         other => other
-//     }
+//     panic!("No solution found");
 // }
 
 // fn calculate_initial_a() -> i64 {    
-//     let increment = 2097152; // 2^21
-//     let mut low = 89057473207128_i64;
-//     // Ensure low is aligned
-//     low += increment - (low % increment);
-    
-//     let mut high = 974823479571216_i64;
-//     // Ensure high is aligned
-//     high -= high % increment;
-    
 //     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
     
-//     println!("Searching from {} to {}", low, high);
+//     // Start with value that will output last number (0)
+//     let mut a = 3i64;  // This will output 0 as last value
     
-//     while low <= high {
-//         let mid = low + ((high - low) / increment / 2) * increment;
-        
-//         match test_value(mid, &program) {
-//             std::cmp::Ordering::Equal => return mid,
-//             std::cmp::Ordering::Less => {
-//                 if low == mid {
-//                     low = mid + increment;
-//                 } else {
-//                     low = mid;
-//                 }
-//             },
-//             std::cmp::Ordering::Greater => {
-//                 if high == mid {
-//                     high = mid - increment;
-//                 } else {
-//                     high = mid;
-//                 }
-//             },
-//         }
-//     }
-    
-//     panic!("No solution found in range");
-// }
-
-// fn test_value(a: i64, program: &[u8]) -> std::cmp::Ordering {
-//     let mut state = MachineState {
-//         register_a: a,
-//         register_b: 0,
-//         register_c: 0,
-//         program: program.to_vec(),
-//     };
-    
-//     let output = state.execute();
-//     // Convert output and program to slices for comparison
-//     match output.len().cmp(&program.len()) {
-//         std::cmp::Ordering::Equal => output.as_slice().cmp(program),
-//         other => other
-//     }
-// }
-
-// fn calculate_initial_a() -> i64 {    
-//     let mut low = 89057473207128_i64;
-//     let mut high = 974823479571216_i64;
-//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
-    
-//     while low <= high {
-//         let mid = low + (high - low) / 2;
-        
-//         match test_value(mid, &program) {
-//             std::cmp::Ordering::Equal => return mid,
-//             std::cmp::Ordering::Less => low = mid + 2097152,
-//             std::cmp::Ordering::Greater => high = mid - 2097152,
-//         }
-//     }
-    
-//     panic!("No solution found in range");
-// }
-
-// fn test_value(a: i64, program: &[u8]) -> std::cmp::Ordering {
-//     let mut state = MachineState {
-//         register_a: a,
-//         register_b: 0,
-//         register_c: 0,
-//         program: program.to_vec(),
-//     };
-    
-//     let output = state.execute();
-//     // Compare output with program bytes
-//     match output.len().cmp(&program.len()) {
-//         std::cmp::Ordering::Equal => output.cmp(program),
-//         other => other
-//     }
-// }
-
-// fn calculate_initial_a() -> i64 {    
-//     let mut low = 89057473207128_i64;
-//     let mut high = 974823479571216_i64;
-//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
-    
-//     while low <= high {
-//         let mid = low + (high - low) / 2;
-        
-//         match test_value(mid, &program) {
-//             std::cmp::Ordering::Equal => return mid,
-//             std::cmp::Ordering::Less => low = mid + 2097152, // Maintain alignment with increment
-//             std::cmp::Ordering::Greater => high = mid - 2097152,
-//         }
-//     }
-    
-//     panic!("No solution found in range");
-// }
-
-// fn calculate_initial_a() -> i64 {    
-//     let start_value = 35282534841844_i64; // Based on VM analysis
-//     let increment = 2097152; // 2^21
-//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
-    
-//     let mut a = start_value;
-    
-//     loop {
-//         let mut state = MachineState {
-//             register_a: a,
-//             register_b: 0,
-//             register_c: 0,
-//             program: program.clone(),
-//         };
-        
-//         if state.execute() == program {
-//             return a;
-//         }
-        
-//         a += increment;
-//     }
-// }
-
-// fn calculate_initial_a() -> i128 {    
-//     // Each output needs to generate sequence elements when divided by appropriate powers
-//     // Since program ends with ,3,0 we know final operations must produce 3,0
-    
-//     // Load your exact program bytes for testing
-//     let program = vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0];
-    
-//     // Start with a value that will generate final 3,0 sequence
-//     let mut a = 3i128;
-    
-//     // Work backwards through desired outputs, adjusting value
+//     // Work backwards through the program, each time multiplying by 8
+//     // and adding the next required output
 //     for &target in program.iter().rev().skip(1) {
-//         a = a * 8 + target as i128;
+//         a = a * 8 + target as i64;
 //     }
     
-//     // Final *8 to get initial value
-//     a *= 8;
-    
-//     a
+//     // One final multiply by 8 
+//     a * 8
 // }
-
-// fn calculate_initial_a() -> i128 {    
-//     // Work with i128 to handle larger numbers
-//     let power: i128 = 8_i128.pow(9); // 8^9 for program length 16/2
-//     let mut ast: i128 = 1;
-    
-//     loop {
-//         // The program numbers themselves form an octal number
-//         let octal_part = i128::from_str_radix("241775170341553", 8).unwrap();
-//         let a = ast * power + octal_part;
-        
-//         // Test if this value works
-//         let mut state = MachineState {
-//             register_a: a as i64,
-//             register_b: 0,
-//             register_c: 0,
-//             program: vec![2,4,1,7,7,5,1,7,0,3,4,1,5,5,3,0],
-//         };
-        
-//         if state.execute() == state.program {
-//             return a;
-//         }
-        
-//         ast += 1;
-//     }
-// }
-
-// fn calculate_initial_a(program: &[u8]) -> i64 {    
-//     // Work backwards from known constraints
-//     let base = 8_i64.pow(program.len() as u32 / 2);  // Based on program length
-//     let mut attempt = 0;
-    
-//     // Convert program to octal equivalent since we're working with mod 8
-//     let target_value = i64::from_str_radix(
-//         &program.iter()
-//             .map(|x| x.to_string())
-//             .collect::<Vec<_>>()
-//             .join(""), 
-//         8
-//     ).unwrap();
-    
-//     while attempt * base + target_value < 0 {
-//         attempt += 1;
-//     }
-    
-//     attempt * base + target_value
-// }
-
-// fn calculate_initial_a() -> i128 {    
-//     let power: i128 = 8_i128.pow(9); // 8^9
-//     let mut ast: i128 = 1;
-    
-//     loop {
-//         // Convert from octal 66752888 to decimal
-//         let octal_part = i128::from_str_radix("66752888", 8).unwrap();
-//         let a = ast * power + octal_part;
-        
-//         // Test if this value works
-//         let mut state = MachineState {
-//             register_a: a as i64,
-//             register_b: 0,
-//             register_c: 0,
-//             program: vec![0,3,5,4,3,0],
-//         };
-        
-//         if state.execute() == state.program {
-//             return a.try_into().unwrap();
-//         }
-        
-//         ast += 1;
-//     }
-//  }
-
-// fn calculate_initial_a(desired_outputs: &[u8]) -> i64 {
-//     // Start with 3 since we need the sequence to end with a 3 that becomes 0
-//     let mut a = 3;
-//     println!("Starting with a=3 (needed to end sequence)");
-
-//     // Each previous value needs to:
-//     // 1. Generate correct remainder when divided by 8
-//     // 2. Divide down to our next target
-//     for &desired in desired_outputs.iter().rev().skip(1) {
-//         // Multiply current by 8 and add whatever remainder we need
-//         // to get our desired output for this step
-//         let next_a = (a * 8) + desired as i64;
-//         println!("Need {} to get output {} and divide to {}", next_a, desired, a);
-//         a = next_a;
-//     }
-    
-//     // Final multiply by 8 for initial value
-//     let final_a = a * 8;
-//     println!("Final value: {}", final_a);
-    
-//     final_a
-// }
-
-// fn calculate_initial_a(desired_outputs: &[u8]) -> i64 {
-//     // Work backwards from the end
-//     let mut a = 0_i64;
-    
-//     // We need the last non-zero value to be 3 
-//     // (since it needs to output 0 and then stop)
-//     a = 3;
-    
-//     // Work backwards through our desired outputs
-//     for &output in desired_outputs.iter().rev().skip(1) {
-//         a = a * 8 + output as i64;
-//         println!("Building up A: {}", a);
-//     }
-    
-//     // Final multiply by 8 to get our initial value
-//     a = a * 8;
-    
-//     println!("Final A: {}", a);
-//     a
-//  }
- 
- // Test function
-//  fn verify_sequence() {
-//     let desired = [0, 3, 5, 4, 3, 0];
-//     let a = calculate_initial_a(&desired);
-    
-//     // Verify this generates our sequence
-//     let mut state = MachineState {
-//         register_a: a,
-//         register_b: 0,
-//         register_c: 0,
-//         program: desired.to_vec(),
-//     };
-    
-//     let output = state.execute();
-//     assert_eq!(output, desired);
-//     println!("Verified: {} generates {:?}", a, output);
-//  }
 
 #[derive(Debug, Clone, Copy)]
 enum Opcode {
@@ -570,9 +494,8 @@ struct Instruction {
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    // let instructions = vec![];
 
-    let machine = MachineState::from_str(input).unwrap();
+    // let machine = MachineState::from_str(input).unwrap();
 
     // dbg!(&machine);
 
@@ -590,6 +513,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     // Ok(calculate_initial_a(&machine.program).to_string())
 
     // Ok(MachineState::find_lowest_a(&machine.program).to_string())
+
+    // Ok(calculate_initial_a().to_string())
 
     Ok(calculate_initial_a().to_string())
 }
