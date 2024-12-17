@@ -1,3 +1,5 @@
+use std::i64;
+
 use crate::AocError;
 
 #[derive(Debug)]
@@ -141,59 +143,31 @@ impl MachineState {
     }
 
     fn find_lowest_a(program: &[u8]) -> i64 {
-        let mut low = 100_000;  // start closer to our known value
-        let mut high = 150_000; // And end after it
+        let mut low = 1;
+        let mut high = i64::MAX;
         
-        println!("Program we're trying to match: {:?}", program);
-        
-        let test_output = MachineState::verify_output(117440, program);
-        println!("Known value 117440 produces correct output: {}", test_output);
-        
-        // see what output we get from 117440
-        let mut state = MachineState {
-            register_a: 117440,
-            register_b: 0,
-            register_c: 0,
-            program: program.to_vec(),
-        };
-        let output = state.execute();
-        println!("Output from 117440: {:?}", output);
+        println!("Starting search between {} and {}", low, high);
         
         while low < high {
             let mid = low + (high - low) / 2;
             
-            let mut state = MachineState {
-                register_a: mid,
-                register_b: 0,
-                register_c: 0,
-                program: program.to_vec(),
-            };
-            let output = state.execute();
-            
             if mid % 10000 == 0 {
-                println!("Trying {}, output: {:?}", mid, output);
+                println!("Trying {}", mid);
             }
             
-            if output == program {
+            if Self::verify_output(mid, program) {
+                println!("Found working value: {}", mid);
                 high = mid;
             } else {
                 low = mid + 1;
             }
         }
         
-        let mut final_state = MachineState {
-            register_a: low,
-            register_b: 0,
-            register_c: 0,
-            program: program.to_vec(),
-        };
-        let final_output = final_state.execute();
-        println!("Final attempt with {}: {:?}", low, final_output);
-        
-        if MachineState::verify_output(low, program) {
+        if Self::verify_output(low, program) {
+            println!("Found lowest working value: {}", low);
             low
         } else {
-            panic!("No solution found in range. Last output: {:?}", final_output);
+            panic!("No solution found in range. Please check a wider range.");
         }
     }
 }
