@@ -21,26 +21,6 @@ impl std::ops::Deref for Day11 {
 //     }
 // }
 
-pub fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
-    let mut new_stones: HashMap<usize, usize> = HashMap::new();
-    
-    for (stone, count) in stones {
-        let length = stone.to_string().len();
-        
-        if stone == 0 {
-            *new_stones.entry(1).or_default() += count;
-        } else if length % 2 == 0 {
-            let divisor = 10_usize.pow((length / 2) as u32);
-            *new_stones.entry(stone / divisor).or_default() += count;
-            *new_stones.entry(stone % divisor).or_default() += count;
-        } else {
-            *new_stones.entry(stone * 2024).or_default() += count;
-        }
-    }
-    
-    new_stones
-}
-
 impl Day11 {
     /// recursion
     pub fn blink_again(input: &str, times: usize) -> String {
@@ -74,26 +54,6 @@ impl Day11 {
 
         Day11::blink_again(&new_input, times - 1)
     }
-
-    // fn blink(&mut self) -> Self {
-    //     let mut new_stones: HashMap<usize, usize> = HashMap::new();
-
-    //     for (stone, count) in self {
-    //         let length = stone.to_string().len();
-            
-    //         if stone == 0 {
-    //             *new_stones.entry(1).or_default() += count;
-    //         } else if length % 2 == 0 {
-    //             let divisor = 10_usize.pow((length / 2) as u32);
-    //             *new_stones.entry(stone / divisor).or_default() += count;
-    //             *new_stones.entry(stone % divisor).or_default() += count;
-    //         } else {
-    //             *new_stones.entry(stone * 2024).or_default() += count;
-    //         }
-    //     }
-
-    //     Self(new_stones)
-    // }
 
     /// DO NOT make this a method, it will cause exponential runtime
     fn blink(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
@@ -147,25 +107,14 @@ impl Solution for Day11 {
         let mut stones = self.0.clone();
 
         for _ in 0..75 {
-            stones = run(stones);
+            // stones = run(stones);
             // *self = self.run();
-            // stones = Day11::run(stones);
+            stones = Day11::blink(stones);
         }
 
-        // self = &mut Day11(stones);
         *self = Day11(stones);
         
         Ok(self.values().sum::<usize>())
-
-        // let mut stones = self.clone();
-
-        // for _ in 0..75 {
-        //     stones = self.blink().clone();
-        // }
-        
-        // // dbg!(&stones);
-
-        // Ok(stones.values().sum::<usize>())
     }
 }
 
@@ -202,17 +151,17 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_part2() -> miette::Result<()> {
-    //     let input = "125 17";
-    //     assert_eq!("0", Day11::parse(input).solve(Part::Two)?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_part2a() -> miette::Result<()> {
+        let input = "125 17";
+        assert_eq!("65601038650482", Day11::parse(input).solve(Part::Two)?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_part2() -> miette::Result<()> {
-    //     let input = "3935565 31753 437818 7697 5 38 0 123";
-    //     assert_eq!("244782991106220", Day11::parse(input).solve(Part::Two)?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_part2b() -> miette::Result<()> {
+        let input = "3935565 31753 437818 7697 5 38 0 123";
+        assert_eq!("244782991106220", Day11::parse(input).solve(Part::Two)?);
+        Ok(())
+    }
 }
