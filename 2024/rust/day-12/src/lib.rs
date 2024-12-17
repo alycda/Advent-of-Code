@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
 use glam::IVec2;
-use ornaments::{AocError, Grid, Solution, UniquePositions, DIRECTIONS};
+use ornaments::{AocError, Grid, Position, Solution, UniquePositions, DIRECTIONS};
 
 #[deprecated(note = "use `Grid::flood_fill(&self)` instead")]
-fn flood_fill(grid: &Grid<char>, start: glam::IVec2, visited: &mut std::collections::HashSet<IVec2>) -> std::collections::HashSet<IVec2> {
-    let mut region = std::collections::HashSet::new();
+fn flood_fill(grid: &Grid<char>, start: Position, visited: &mut UniquePositions) -> UniquePositions {
+    let mut region = HashSet::new();
     let mut stack = vec![start];
     let target_char = grid[start.y as usize][start.x as usize];
     

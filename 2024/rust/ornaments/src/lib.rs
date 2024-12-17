@@ -215,7 +215,7 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         todo!()
     }
 
-    pub fn flood_fill(&self, start: Position, visited: &mut HashSet<Position>) -> HashSet<Position> {
+    pub fn flood_fill(&self, start: Position, visited: &mut UniquePositions) -> UniquePositions {
         let mut region = HashSet::new();
         let mut stack = vec![start];
         let target = self.get_at_unbounded(start);
