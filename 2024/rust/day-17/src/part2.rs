@@ -123,6 +123,25 @@ impl MachineState {
         outputs
     }
 
+    // fn verify_output(initial_a: i64, program: &[u8]) -> bool {
+    //     let mut state = MachineState {
+    //         register_a: initial_a,
+    //         register_b: 0,
+    //         register_c: 0,
+    //         program: program.to_vec(),
+    //     };
+        
+    //     let output = state.execute();
+        
+    //     // Debug when we're near the known working value
+    //     if (initial_a - 117440).abs() < 10 {
+    //         println!("Testing A={}, output={:?}, program={:?}", 
+    //                 initial_a, output, program);
+    //     }
+        
+    //     output == program
+    // }
+
     fn verify_output(initial_a: i64, program: &[u8]) -> bool {
         let mut state = MachineState {
             register_a: initial_a,
@@ -132,43 +151,22 @@ impl MachineState {
         };
         
         let output = state.execute();
-        
-        // Debug when we're near the known working value
-        if (initial_a - 117440).abs() < 10 {
-            println!("Testing A={}, output={:?}, program={:?}", 
-                    initial_a, output, program);
-        }
+        // if initial_a % 1_000_000 == 0 {
+        //     println!("Testing A={}, output={:?}, expected={:?}", initial_a, output, program);
+        // }
         
         output == program
     }
 
     fn find_lowest_a(program: &[u8]) -> i64 {
-        let mut low = 1;
-        let mut high = i64::MAX;
-        
-        println!("Starting search between {} and {}", low, high);
-        
-        while low < high {
-            let mid = low + (high - low) / 2;
-            
-            if mid % 10000 == 0 {
-                println!("Trying {}", mid);
+        let mut a = 1;
+        while !Self::verify_output(a, program) {
+            if a % 1_000_000 == 0 {
+                // println!("Trying {}", a);
             }
-            
-            if Self::verify_output(mid, program) {
-                println!("Found working value: {}", mid);
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
+            a += 1;
         }
-        
-        if Self::verify_output(low, program) {
-            println!("Found lowest working value: {}", low);
-            low
-        } else {
-            panic!("No solution found in range. Please check a wider range.");
-        }
+        a
     }
 }
 
@@ -241,18 +239,18 @@ Register C: 0
 Program: 0,3,5,4,3,0";
         let machine = MachineState::from_str(input).unwrap();
 
-        assert_eq!(117440, MachineState::find_lowest_a(&machine.program));
+        assert_eq!(117_440, MachineState::find_lowest_a(&machine.program));
         Ok(())
     }
 
-//     #[test]
-//     fn test_process() -> miette::Result<()> {
-//         let input = "Register A: 2024
-// Register B: 0
-// Register C: 0
+    #[test]
+    fn test_process() -> miette::Result<()> {
+        let input = "Register A: 2024
+Register B: 0
+Register C: 0
 
-// Program: 0,3,5,4,3,0";
-//         assert_eq!("117440", process(input)?);
-//         Ok(())
-//     }
+Program: 0,3,5,4,3,0";
+        assert_eq!("117440", process(input)?);
+        Ok(())
+    }
 }
