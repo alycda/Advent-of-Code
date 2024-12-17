@@ -1,27 +1,10 @@
 use std::collections::HashSet;
 
 use glam::IVec2;
-use ornaments::{AocError, Grid, Solution, UniquePositions};
-
-#[deprecated(note = "use `Grid::get_orthogonal_neighbors(&self)` instead")]
-fn get_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
-    let mut neighbors = Vec::new();
-    let rows = grid.len() as i32;
-    let cols = grid[0].len() as i32;
-    
-    // Check all four directions
-    for delta in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
-        let new_pos = IVec2::new(pos.x + delta.0, pos.y + delta.1);
-        if new_pos.x >= 0 && new_pos.x < cols && 
-           new_pos.y >= 0 && new_pos.y < rows {
-            neighbors.push(new_pos);
-        }
-    }
-    neighbors
-}
+use ornaments::{AocError, Grid, Solution, UniquePositions, DIRECTIONS};
 
 #[deprecated(note = "use `Grid::flood_fill(&self)` instead")]
-fn flood_fill(grid: &Vec<Vec<char>>, start: glam::IVec2, visited: &mut std::collections::HashSet<IVec2>) -> std::collections::HashSet<IVec2> {
+fn flood_fill(grid: &Grid<char>, start: glam::IVec2, visited: &mut std::collections::HashSet<IVec2>) -> std::collections::HashSet<IVec2> {
     let mut region = std::collections::HashSet::new();
     let mut stack = vec![start];
     let target_char = grid[start.y as usize][start.x as usize];
@@ -32,7 +15,7 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: glam::IVec2, visited: &mut std::coll
         }
         visited.insert(pos);
         
-        for neighbor in get_neighbors(pos, grid) {
+        for neighbor in Grid::get_orthogonal_neighbors(grid, pos) {
             let neighbor_char = grid[neighbor.y as usize][neighbor.x as usize];
             if neighbor_char == target_char && !region.contains(&neighbor) {
                 stack.push(neighbor);
@@ -43,19 +26,8 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: glam::IVec2, visited: &mut std::coll
     region
 }
 
-#[deprecated(note = "use `ornaments::Directions` instead")]
-const DIRECTIONS: [IVec2; 4] = [IVec2::Y, IVec2::NEG_Y, IVec2::X, IVec2::NEG_X];
-
-#[deprecated(note = "use `Grid::in_bounds(&self)` instead")]
-fn in_bounds(pos: IVec2, grid: &Vec<Vec<char>>) -> bool {
-    pos.x >= 0 && 
-    pos.y >= 0 && 
-    pos.y < grid.len() as i32 && 
-    pos.x < grid[0].len() as i32
-}
-
 #[deprecated]
-fn explore(start: IVec2, grid: &Vec<Vec<char>>, seen: &mut HashSet<IVec2>) -> (usize, usize) {
+fn explore(start: IVec2, grid: &Grid<char>, seen: &mut HashSet<IVec2>) -> (usize, usize) {
     let target_char = grid[start.y as usize][start.x as usize];
     let mut stack = vec![start];
     let mut region = HashSet::new();
@@ -70,13 +42,11 @@ fn explore(start: IVec2, grid: &Vec<Vec<char>>, seen: &mut HashSet<IVec2>) -> (u
         seen.insert(pos);
         area += 1;
 
-        // for &(dx, dy) in DIRECTIONS.iter() {
         for &neighbor in DIRECTIONS.iter() {
 
-            // let new_pos = IVec2::new(pos.x + dx, pos.y + dy);
             let new_pos = pos + neighbor;
             
-            if in_bounds(new_pos, grid) && 
+            if Grid::in_bounds(&grid, new_pos) && 
                grid[new_pos.y as usize][new_pos.x as usize] == target_char {
                 if !region.contains(&new_pos) {
                     stack.push(new_pos);
@@ -89,13 +59,11 @@ fn explore(start: IVec2, grid: &Vec<Vec<char>>, seen: &mut HashSet<IVec2>) -> (u
 
     // Second pass: count unique sides
     let mut side_count = 0;
-    // for &(dx, dy) in DIRECTIONS.iter() {
     for &neighbor in DIRECTIONS.iter() {
         let mut potential_side = HashSet::new();
         
         // Find potential sides in this direction
         for &pos in &region {
-            // let peek = IVec2::new(pos.x + dx, pos.y + dy);
             let peek = pos + neighbor;
             if !region.contains(&peek) {
                 potential_side.insert(peek);

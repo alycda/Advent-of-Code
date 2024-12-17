@@ -134,7 +134,7 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         self.get_at(neighbor)
     }
 
-    fn in_bounds(&self, pos: Position) -> bool {
+    pub fn in_bounds(&self, pos: Position) -> bool {
         pos.x >= 0 && pos.y >= 0 && pos.x < self.get_width() as i32 && pos.y < self.get_height() as i32
     }
 
@@ -142,8 +142,8 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         let mut neighbors = Vec::new();
         
         // Same deltas as the working version
-        for delta in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
-            let new_pos = Position::new(pos.x + delta.0, pos.y + delta.1);
+        for delta in DIRECTIONS.iter() {
+            let new_pos = pos + *delta;
             
             // Boundary check matching the working version
             if new_pos.x >= 0 && new_pos.x < self.get_width() as i32 && 
