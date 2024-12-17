@@ -12,6 +12,14 @@ impl std::ops::Deref for Day11 {
     }
 }
 
+impl Iterator for Day11 {
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.iter().next().map(|(k, v)| (*k, *v))
+    }
+}
+
 impl Day11 {
     /// recursion
     pub fn blink_again(input: &str, times: usize) -> String {
@@ -49,10 +57,10 @@ impl Day11 {
     fn blink(&mut self) -> Self {
         let mut new_stones: HashMap<usize, usize> = HashMap::new();
 
-        for (stone, count) in self.iter() {
+        for (stone, count) in self {
             let length = stone.to_string().len();
             
-            if *stone == 0 {
+            if stone == 0 {
                 *new_stones.entry(1).or_default() += count;
             } else if length % 2 == 0 {
                 let divisor = 10_usize.pow((length / 2) as u32);
@@ -74,6 +82,7 @@ impl Solution for Day11 {
     fn parse(input: &str) -> Self {
         let stones: HashMap<usize, usize> = input
             .split_whitespace()
+            // .filter_map(|s| { s.parse::<usize>().ok() })
             .map(|s| s.parse::<usize>().unwrap())
             .fold(HashMap::new(), |mut acc, stone| {
                 *acc.entry(stone).or_default() += 1;
@@ -100,6 +109,8 @@ impl Solution for Day11 {
             stones = self.blink().clone();
         }
         
+        // dbg!(&stones);
+
         Ok(stones.values().sum::<usize>())
     }
 }
@@ -118,6 +129,7 @@ mod tests {
     #[case(("125 17", 4), "512 72 2024 2 0 2 4 2867 6032")]
     #[case(("125 17", 5), "1036288 7 2 20 24 4048 1 4048 8096 28 67 60 32")]
     #[case(("125 17", 6), "2097446912 14168 4048 2 0 2 4 40 48 2024 40 48 80 96 2 8 6 7 6 0 3 2")]
+    // #[case(("125 17", 75), "...")]
     fn test_cases(#[case] input: (&str, usize), #[case] expected: &str) {
         assert_eq!(expected, Day11::blink_again(input.0, input.1));
     }
@@ -135,4 +147,18 @@ mod tests {
         assert_eq!("55312", Day11::blink_again(input, 25).split_whitespace().count().to_string());
         Ok(())
     }
+
+    // #[test]
+    // fn test_part2() -> miette::Result<()> {
+    //     let input = "125 17";
+    //     assert_eq!("0", Day11::parse(input).solve(Part::Two)?);
+    //     Ok(())
+    // }
+
+    // #[test]
+    // fn test_part2() -> miette::Result<()> {
+    //     let input = "3935565 31753 437818 7697 5 38 0 123";
+    //     assert_eq!("244782991106220", Day11::parse(input).solve(Part::Two)?);
+    //     Ok(())
+    // }
 }
