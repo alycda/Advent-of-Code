@@ -93,22 +93,25 @@ impl Solution for Day11 {
         Self(stones)
     }
 
-    // fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
-    //     // Ok(Day11::blink_again(self, 25).split_whitespace().count())
+    fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
+        // Ok(Day11::blink_again(self, 25).split_whitespace().count())
 
-    //     for _ in 0..25 {
-    //         self.0 = self.blink().0;
-    //     }
+        for _ in 0..25 {
+            self.0 = Day11::blink(self.0.clone());
+        }
+        // let mut stones = self.0.clone();
 
-    //     Ok(self.values().sum::<usize>())
-    // }
+        // for _ in 0..25 {
+        //     stones = Day11::blink(stones);
+        // }
+
+        Ok(self.values().sum::<usize>())
+    }
 
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
         let mut stones = self.0.clone();
 
         for _ in 0..75 {
-            // stones = run(stones);
-            // *self = self.run();
             stones = Day11::blink(stones);
         }
 
