@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use glam::IVec2;
 use ornaments::{AocError, Grid, Solution, UniquePositions};
 
+#[deprecated(note = "use `Grid::get_orthogonal_neighbors(&self)` instead")]
 fn get_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
     let mut neighbors = Vec::new();
     let rows = grid.len() as i32;
@@ -19,6 +20,7 @@ fn get_neighbors(pos: IVec2, grid: &Vec<Vec<char>>) -> Vec<IVec2> {
     neighbors
 }
 
+#[deprecated(note = "use `Grid::flood_fill(&self)` instead")]
 fn flood_fill(grid: &Vec<Vec<char>>, start: glam::IVec2, visited: &mut std::collections::HashSet<IVec2>) -> std::collections::HashSet<IVec2> {
     let mut region = std::collections::HashSet::new();
     let mut stack = vec![start];
@@ -41,8 +43,10 @@ fn flood_fill(grid: &Vec<Vec<char>>, start: glam::IVec2, visited: &mut std::coll
     region
 }
 
+#[deprecated(note = "use `ornaments::Directions` instead")]
 const DIRECTIONS: [IVec2; 4] = [IVec2::Y, IVec2::NEG_Y, IVec2::X, IVec2::NEG_X];
 
+#[deprecated(note = "use `Grid::in_bounds(&self)` instead")]
 fn in_bounds(pos: IVec2, grid: &Vec<Vec<char>>) -> bool {
     pos.x >= 0 && 
     pos.y >= 0 && 
@@ -50,6 +54,7 @@ fn in_bounds(pos: IVec2, grid: &Vec<Vec<char>>) -> bool {
     pos.x < grid[0].len() as i32
 }
 
+#[deprecated]
 fn explore(start: IVec2, grid: &Vec<Vec<char>>, seen: &mut HashSet<IVec2>) -> (usize, usize) {
     let target_char = grid[start.y as usize][start.x as usize];
     let mut stack = vec![start];
