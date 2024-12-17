@@ -138,57 +138,74 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         pos.x >= 0 && pos.y >= 0 && pos.x < self.get_width() as i32 && pos.y < self.get_height() as i32
     }
 
-    pub fn get_orthogonal_neighbors(&self, from: Position) -> HashMap<Direction, (Position, T)> {
-        let mut neighbors: HashMap<Direction, (Position, T)> = HashMap::new();
-
-        // for direction in DIRECTIONS.iter() {
-        //     let neighbor = from + *direction;
-        //     let value = self.get_at(neighbor);
-
-        //     if let Some(value) = value {
-        //         neighbors.insert(
-        //             match direction {
-        //                 IVec2 { x: 0, y: 1 } => Direction::Down,
-        //                 IVec2 { x: 0, y: -1 } => Direction::Up,
-        //                 IVec2 { x: 1, y: 0 } => Direction::Right,
-        //                 IVec2 { x: -1, y: 0 } => Direction::Left,
-        //                 _ => unreachable!()
-        //             },
-        //             (neighbor, value)
-        //         );
-        //     }
-        // }
-
-        // Look up (decrease Y)
-        if from.y > 0 {
-            let neighbor = from + Direction::Up.to_offset();
-            // neighbors.insert(Direction::Up, (neighbor, self.get_at(neighbor).unwrap()));
-            neighbors.insert(Direction::Up, (neighbor, self.get_at_unbounded(neighbor)));
+    pub fn get_orthogonal_neighbors(&self, pos: Position) -> Vec<Position> {
+        let mut neighbors = Vec::new();
+        
+        // Same deltas as the working version
+        for delta in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
+            let new_pos = Position::new(pos.x + delta.0, pos.y + delta.1);
+            
+            // Boundary check matching the working version
+            if new_pos.x >= 0 && new_pos.x < self.get_width() as i32 && 
+               new_pos.y >= 0 && new_pos.y < self.get_height() as i32 {
+                neighbors.push(new_pos);
+            }
         }
-
-        // Look down (increase Y)
-        if from.y + 1 < self.get_height() as i32 {
-            let neighbor = from + Direction::Down.to_offset();
-            // neighbors.insert(Direction::Down, (neighbor, self.get_at(neighbor).unwrap()));
-            neighbors.insert(Direction::Down, (neighbor, self.get_at_unbounded(neighbor)));
-        }
-
-        // Look left (decrease X)
-        if from.x > 0 {
-            let neighbor = from + Direction::Left.to_offset();
-            // neighbors.insert(Direction::Left, (neighbor, self.get_at(neighbor).unwrap()));
-            neighbors.insert(Direction::Left, (neighbor, self.get_at_unbounded(neighbor)));
-        }
-
-        // Look right (increase X)
-        if from.x + 1 < self.get_width() as i32 {
-            let neighbor = from + Direction::Right.to_offset();
-            // neighbors.insert(Direction::Right, (neighbor, self.get_at(neighbor).unwrap()));
-            neighbors.insert(Direction::Right, (neighbor, self.get_at_unbounded(neighbor)));
-        }
-
+        
         neighbors
     }
+
+    // pub fn get_orthogonal_neighbors(&self, from: Position) -> HashMap<Direction, (Position, T)> {
+    //     let mut neighbors: HashMap<Direction, (Position, T)> = HashMap::new();
+
+    //     // for direction in DIRECTIONS.iter() {
+    //     //     let neighbor = from + *direction;
+    //     //     let value = self.get_at(neighbor);
+
+    //     //     if let Some(value) = value {
+    //     //         neighbors.insert(
+    //     //             match direction {
+    //     //                 IVec2 { x: 0, y: 1 } => Direction::Down,
+    //     //                 IVec2 { x: 0, y: -1 } => Direction::Up,
+    //     //                 IVec2 { x: 1, y: 0 } => Direction::Right,
+    //     //                 IVec2 { x: -1, y: 0 } => Direction::Left,
+    //     //                 _ => unreachable!()
+    //     //             },
+    //     //             (neighbor, value)
+    //     //         );
+    //     //     }
+    //     // }
+
+    //     // Look up (decrease Y)
+    //     if from.y > 0 {
+    //         let neighbor = from + Direction::Up.to_offset();
+    //         // neighbors.insert(Direction::Up, (neighbor, self.get_at(neighbor).unwrap()));
+    //         neighbors.insert(Direction::Up, (neighbor, self.get_at_unbounded(neighbor)));
+    //     }
+
+    //     // Look down (increase Y)
+    //     if from.y + 1 < self.get_height() as i32 {
+    //         let neighbor = from + Direction::Down.to_offset();
+    //         // neighbors.insert(Direction::Down, (neighbor, self.get_at(neighbor).unwrap()));
+    //         neighbors.insert(Direction::Down, (neighbor, self.get_at_unbounded(neighbor)));
+    //     }
+
+    //     // Look left (decrease X)
+    //     if from.x > 0 {
+    //         let neighbor = from + Direction::Left.to_offset();
+    //         // neighbors.insert(Direction::Left, (neighbor, self.get_at(neighbor).unwrap()));
+    //         neighbors.insert(Direction::Left, (neighbor, self.get_at_unbounded(neighbor)));
+    //     }
+
+    //     // Look right (increase X)
+    //     if from.x + 1 < self.get_width() as i32 {
+    //         let neighbor = from + Direction::Right.to_offset();
+    //         // neighbors.insert(Direction::Right, (neighbor, self.get_at(neighbor).unwrap()));
+    //         neighbors.insert(Direction::Right, (neighbor, self.get_at_unbounded(neighbor)));
+    //     }
+
+    //     neighbors
+    // }
 
     fn _get_diagonal_neghbors(&self, _from: Position) -> Vec<(Position, T)> {
         todo!()
@@ -210,37 +227,82 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
             visited.insert(pos);
             
             for neighbor in self.get_orthogonal_neighbors(pos) {
-                // let neighbor_target = self.get_at_unbounded(neighbor);
-                // let neighbor_target = neighbor.1;
-
-                // if target == neighbor.1 && !region.contains(&neighbor.0) {
-                //     stack.push(neighbor.0);
+                // let (neighbor_pos, neighbor_char) = neighbor;
+                // if *neighbor_char == target && !region.contains(neighbor_pos) {
+                //     stack.push(*neighbor_pos);
                 // }
+                let neighbor_char = self.get_at_unbounded(pos);
+                if neighbor_char == target && !region.contains(&neighbor) {
+                    stack.push(neighbor);
+                }
             }
         }
         
         region
     }
 
-    /// assumes Set of Positions that are adjacent/touching...
-    pub fn count_region_edges(&self, region: UniquePositions) -> usize {
-        let mut edges = 0;
+    // pub fn flood_fill(&self, start: Position, visited: &mut HashSet<Position>) -> HashSet<Position> {
+    //     let mut region = HashSet::new();
+    //     let mut stack = vec![start];
+    //     let target = self.get_at_unbounded(start);
+        
+    //     while let Some(pos) = stack.pop() {
+    //         if !region.insert(pos) {
+    //             continue;
+    //         }
+    //         visited.insert(pos);
+            
+    //         for neighbor in self.get_orthogonal_neighbors(pos) {
+    //             // let neighbor_target = self.get_at_unbounded(neighbor);
+    //             // let neighbor_target = neighbor.1;
 
-        for pos in &region {
-            for neighbor in self.get_orthogonal_neighbors(*pos) {                
-                // If neighbor is outside region, it's an edge
-                if !region.contains(&neighbor.1.0) {
+    //             // if target == neighbor.1 && !region.contains(&neighbor.0) {
+    //             //     stack.push(neighbor.0);
+    //             // }
+    //         }
+    //     }
+        
+    //     region
+    // }
+
+    pub fn count_region_edges(&self, region: &UniquePositions) -> usize {
+        let mut edges = 0;
+    
+        for pos in region {
+            for neighbor in self.get_orthogonal_neighbors(*pos) {
+                // Direct comparison now possible
+                if !region.contains(&neighbor) {
                     edges += 1;
                 }
             }
             
-            // Count border edges
+            // Border checks remain the same
             if pos.x == 0 || pos.x == (self.get_width() - 1) as i32 { edges += 1; }
             if pos.y == 0 || pos.y == (self.get_height() - 1) as i32 { edges += 1; }
         }
         
         edges
     }
+
+    // /// assumes Set of Positions that are adjacent/touching...
+    // pub fn count_region_edges(&self, region: &UniquePositions) -> usize {
+    //     let mut edges = 0;
+
+    //     for pos in region {
+    //         for neighbor in self.get_orthogonal_neighbors(*pos) {                
+    //             // If neighbor is outside region, it's an edge
+    //             if !region.contains(&neighbor.1.0) {
+    //                 edges += 1;
+    //             }
+    //         }
+            
+    //         // Count border edges
+    //         if pos.x == 0 || pos.x == (self.get_width() - 1) as i32 { edges += 1; }
+    //         if pos.y == 0 || pos.y == (self.get_height() - 1) as i32 { edges += 1; }
+    //     }
+        
+    //     edges
+    // }
 }
 
 impl<T> std::ops::Deref for Grid<T> {
