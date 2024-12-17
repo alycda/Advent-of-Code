@@ -2,27 +2,28 @@ use std::collections::HashMap;
 
 use ornaments::{AocError, Solution};
 
-// pub struct Day11(HashMap<usize, usize>);
-pub struct Day11(String);
+#[derive(Debug, Clone)]
+pub struct Day11(HashMap<usize, usize>);
+// pub struct Day11(String);
 
 impl std::ops::Deref for Day11 {
-    // type Target = HashMap<usize, usize>;
-    type Target = String;
+    type Target = HashMap<usize, usize>;
+    // type Target = String;
     
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-// impl Iterator for Day11 {
-//     type Item = (usize, usize);
+impl Iterator for Day11 {
+    type Item = (usize, usize);
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.0.iter().next().map(|(k, v)| (*k, *v))
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.iter().next().map(|(k, v)| (*k, *v))
+    }
+}
 
-fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
+pub fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
     let mut new_stones: HashMap<usize, usize> = HashMap::new();
     
     for (stone, count) in stones {
@@ -95,6 +96,27 @@ impl Day11 {
 
     //     Self(new_stones)
     // }
+
+    /// DO NOT make this a method, it will cause exponential runtime
+    fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
+        let mut new_stones: HashMap<usize, usize> = HashMap::new();
+    
+        for (stone, count) in stones {
+            let length = stone.to_string().len();
+            
+            if stone == 0 {
+                *new_stones.entry(1).or_default() += count;
+            } else if length % 2 == 0 {
+                let divisor = 10_usize.pow((length / 2) as u32);
+                *new_stones.entry(stone / divisor).or_default() += count;
+                *new_stones.entry(stone % divisor).or_default() += count;
+            } else {
+                *new_stones.entry(stone * 2024).or_default() += count;
+            }
+        }
+        
+        new_stones
+    }
 }
 
 impl Solution for Day11 {
@@ -111,9 +133,19 @@ impl Solution for Day11 {
         //         acc
         //     });
 
-        // Self(stones)
+        let stones: HashMap<usize, usize> = input
+            .split_whitespace()
+            .map(|s| s.parse::<usize>().unwrap())
+            .fold(HashMap::new(), |mut acc, stone| {
+                *acc.entry(stone).or_default() += 1;
+                acc
+            });
 
-        Self(input.to_owned())
+        Self(stones)
+
+        // Self(input.to_owned())
+
+        
     }
 
     // fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
@@ -127,17 +159,15 @@ impl Solution for Day11 {
     // }
 
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
-        let mut stones: HashMap<usize, usize> = self
-            .split_whitespace()
-            .map(|s| s.parse::<usize>().unwrap())
-            .fold(HashMap::new(), |mut acc, stone| {
-                *acc.entry(stone).or_default() += 1;
-                acc
-            });
+        let mut stones = self.0.clone();
 
         for _ in 0..75 {
             stones = run(stones);
+            // *self = self.run();
+            // stones = Day11::run(stones);
         }
+
+        // self = &mut Day11(stones);
         
         Ok(stones.values().sum::<usize>())
 
