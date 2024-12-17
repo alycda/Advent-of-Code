@@ -135,33 +135,33 @@ impl Solution for Day12 {
         Self(grid)
     }
 
-    // fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
-    //     let mut visited = UniquePositions::new();
-    //     let mut regions = Vec::new();
+    fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
+        let mut visited = UniquePositions::new();
+        let mut regions = Vec::new();
 
-    //     self.walk(|pos| {
-    //         if !visited.contains(&pos) {
-    //             // let region = grid.flood_fill(pos, &mut visited);
+        self.walk(|pos| {
+            if !visited.contains(&pos) {
+                // let region = grid.flood_fill(pos, &mut visited);
 
-    //             let region = flood_fill(&self, pos, &mut visited);
-    //             let target = self.get_at_unbounded(pos);
+                let region = flood_fill(&self, pos, &mut visited);
+                let target = self.get_at_unbounded(pos);
 
-    //             // dbg!(target);
+                // dbg!(target);
 
-    //             let count = region.len();
+                let count = region.len();
 
-    //             // dbg!(count);
-    //             let edges = self.count_region_edges(&region);
-    //             regions.push((target, count, edges));
-    //         }
-    //     });
+                // dbg!(count);
+                let edges = self.count_region_edges(&region);
+                regions.push((target, count, edges));
+            }
+        });
 
-    //     let total: usize = self.iter()
-    //         .map(|(_, count, edges)| count * edges)
-    //         .sum();
+        let total: usize = regions.iter()
+            .map(|(_, count, edges)| count * edges)
+            .sum();
         
-    //     Ok(total)
-    // }
+        Ok(total)
+    }
 
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
         let mut seen = HashSet::new();
