@@ -1,0 +1,36 @@
+[package]
+name = "day-17"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.85"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ornaments.workspace = true
+itertools.workspace = true
+nom.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+miette.workspace = true
+thiserror.workspace = true
+aho-corasick = "1.1.2"
+dhat.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+divan.workspace = true
+rstest.workspace = true
+
+[[bench]]
+name = "day-17-bench"
+path = "benches/benchmarks.rs"
+harness = false
+
+[[bench]]
+name = "day-17-bench-criterion"
+path = "benches/benchmarks-criterion.rs"
+harness = false
+
+[features]
+dhat-heap = []

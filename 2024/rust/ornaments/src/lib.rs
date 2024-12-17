@@ -354,6 +354,7 @@ pub trait Solution {
     type Item;
     // type Item = (); associated type defaults are unstable
 
+    /// TODO: fn parse(input: &'_ str) -> miette::Result<Self, AocError> where Self: Sized;
     fn parse(input: &'_ str) -> Self;
 
     /// generally intended to parse a single line, not the full input
