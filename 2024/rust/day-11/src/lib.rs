@@ -2,22 +2,44 @@ use std::collections::HashMap;
 
 use ornaments::{AocError, Solution};
 
-pub struct Day11(HashMap<usize, usize>);
+// pub struct Day11(HashMap<usize, usize>);
+pub struct Day11(String);
 
 impl std::ops::Deref for Day11 {
-    type Target = HashMap<usize, usize>;
+    // type Target = HashMap<usize, usize>;
+    type Target = String;
     
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Iterator for Day11 {
-    type Item = (usize, usize);
+// impl Iterator for Day11 {
+//     type Item = (usize, usize);
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.iter().next().map(|(k, v)| (*k, *v))
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.0.iter().next().map(|(k, v)| (*k, *v))
+//     }
+// }
+
+fn run(stones: HashMap<usize, usize>) -> HashMap<usize, usize> {
+    let mut new_stones: HashMap<usize, usize> = HashMap::new();
+    
+    for (stone, count) in stones {
+        let length = stone.to_string().len();
+        
+        if stone == 0 {
+            *new_stones.entry(1).or_default() += count;
+        } else if length % 2 == 0 {
+            let divisor = 10_usize.pow((length / 2) as u32);
+            *new_stones.entry(stone / divisor).or_default() += count;
+            *new_stones.entry(stone % divisor).or_default() += count;
+        } else {
+            *new_stones.entry(stone * 2024).or_default() += count;
+        }
     }
+    
+    new_stones
 }
 
 impl Day11 {
@@ -54,25 +76,25 @@ impl Day11 {
         Day11::blink_again(&new_input, times - 1)
     }
 
-    fn blink(&mut self) -> Self {
-        let mut new_stones: HashMap<usize, usize> = HashMap::new();
+    // fn blink(&mut self) -> Self {
+    //     let mut new_stones: HashMap<usize, usize> = HashMap::new();
 
-        for (stone, count) in self {
-            let length = stone.to_string().len();
+    //     for (stone, count) in self {
+    //         let length = stone.to_string().len();
             
-            if stone == 0 {
-                *new_stones.entry(1).or_default() += count;
-            } else if length % 2 == 0 {
-                let divisor = 10_usize.pow((length / 2) as u32);
-                *new_stones.entry(stone / divisor).or_default() += count;
-                *new_stones.entry(stone % divisor).or_default() += count;
-            } else {
-                *new_stones.entry(stone * 2024).or_default() += count;
-            }
-        }
+    //         if stone == 0 {
+    //             *new_stones.entry(1).or_default() += count;
+    //         } else if length % 2 == 0 {
+    //             let divisor = 10_usize.pow((length / 2) as u32);
+    //             *new_stones.entry(stone / divisor).or_default() += count;
+    //             *new_stones.entry(stone % divisor).or_default() += count;
+    //         } else {
+    //             *new_stones.entry(stone * 2024).or_default() += count;
+    //         }
+    //     }
 
-        Self(new_stones)
-    }
+    //     Self(new_stones)
+    // }
 }
 
 impl Solution for Day11 {
@@ -80,38 +102,54 @@ impl Solution for Day11 {
     type Item = String;
 
     fn parse(input: &str) -> Self {
-        let stones: HashMap<usize, usize> = input
+        // let stones: HashMap<usize, usize> = input
+        //     .split_whitespace()
+        //     // .filter_map(|s| { s.parse::<usize>().ok() })
+        //     .map(|s| s.parse::<usize>().unwrap())
+        //     .fold(HashMap::new(), |mut acc, stone| {
+        //         *acc.entry(stone).or_default() += 1;
+        //         acc
+        //     });
+
+        // Self(stones)
+
+        Self(input.to_owned())
+    }
+
+    // fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
+    //     // Ok(Day11::blink_again(self, 25).split_whitespace().count())
+
+    //     for _ in 0..25 {
+    //         self.0 = self.blink().0;
+    //     }
+
+    //     Ok(self.values().sum::<usize>())
+    // }
+
+    fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
+        let mut stones: HashMap<usize, usize> = self
             .split_whitespace()
-            // .filter_map(|s| { s.parse::<usize>().ok() })
             .map(|s| s.parse::<usize>().unwrap())
             .fold(HashMap::new(), |mut acc, stone| {
                 *acc.entry(stone).or_default() += 1;
                 acc
             });
 
-        Self(stones)
-    }
-
-    fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
-        // Ok(Day11::blink_again(self, 25).split_whitespace().count())
-
-        for _ in 0..25 {
-            self.0 = self.blink().0;
-        }
-
-        Ok(self.values().sum::<usize>())
-    }
-
-    fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
-        let mut stones = self.clone();
-
         for _ in 0..75 {
-            stones = self.blink().clone();
+            stones = run(stones);
         }
         
-        // dbg!(&stones);
-
         Ok(stones.values().sum::<usize>())
+
+        // let mut stones = self.clone();
+
+        // for _ in 0..75 {
+        //     stones = self.blink().clone();
+        // }
+        
+        // // dbg!(&stones);
+
+        // Ok(stones.values().sum::<usize>())
     }
 }
 
