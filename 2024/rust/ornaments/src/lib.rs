@@ -211,7 +211,7 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         todo!()
     }
 
-    fn get_all_neighbors(&self, _from: Position) -> Vec<(Position, T)> {
+    fn _get_all_neighbors(&self, _from: Position) -> Vec<(Position, T)> {
         todo!()
     }
 
