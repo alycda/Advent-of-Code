@@ -4,9 +4,10 @@ use nom::{
 use glam::IVec2;
 
 use miette::Diagnostic;
+use ornaments::{Position, Solution};
 use thiserror::Error;
 
-// pub use crate::Day13 as Day;
+pub use crate::Day13 as Day;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum AocError {
@@ -15,11 +16,78 @@ pub enum AocError {
     IoError(#[from] std::io::Error),
 }
 
+/// A, B, Prize
+pub struct Day13(Vec<(Button, Button, Position)>);
+
+impl std::ops::Deref for Day {
+    type Target = Vec<(Button, Button, Position)>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+// impl Day {
+    fn solve_button_presses(button_a: &Button, button_b: &Button, target: &Position) -> Option<(i32, i32)> {
+        let denominator = button_a.x * button_b.y - button_a.y * button_b.x;
+        
+        // Using Cramer's rule
+        let a = (button_b.y * target.x - button_b.x * target.y) / denominator;
+        let b = (-button_a.y * target.x + button_a.x * target.y) / denominator;
+        
+        // Check if we got integer solutions
+        if a * denominator == (button_b.y * target.x - button_b.x * target.y) && 
+           b * denominator == (-button_a.y * target.x + button_a.x * target.y) {
+            Some((a, b))
+        } else {
+            None
+        }
+    }
+// }
+
+impl Solution for Day {
+    type Output = i32;
+    type Item = ();
+
+    fn parse(input: &str) -> Self {
+        let games = input.split("\n\n")
+            .map(|mini_game| {
+                let mut game = mini_game.lines();
+
+                // 3 tokens
+                let (_, a) = parse_button(game.next().unwrap()).unwrap();
+                let a = Button(a);
+
+                // 1 token
+                let (_, b) = parse_button(game.next().unwrap()).unwrap();
+                let b = Button(b);
+
+                // prize
+                let (_, prize) = parse_prize(game.next().unwrap()).unwrap();
+
+                (a, b, prize)
+            }).collect::<Vec<_>>();
+
+        Self(games)
+    }
+
+    fn part1(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
+        let total: i32 = self.iter()
+            .filter_map(|(button_a, button_b, prize_location)| {
+                solve_button_presses(button_a, button_b, prize_location)
+            }).map(|(a, b)| {
+                (a * 3) + b
+            }).sum();
+
+        Ok(total)
+    }
+}
+
 #[derive(Debug)]
-struct Button(IVec2);
+pub struct Button(Position);
 
 impl std::ops::Deref for Button {
-    type Target = IVec2;
+    type Target = Position;
     
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -74,5 +142,39 @@ pub fn parse_prize(input: &str) -> IResult<&str, IVec2> {
     )(input)
 }
 
-pub mod part1;
 pub mod part2;
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ornaments::Part;
+
+    #[test]
+    fn test_part1() -> miette::Result<()> {
+        let input = "Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400
+
+Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176
+
+Button A: X+17, Y+86
+Button B: X+84, Y+37
+Prize: X=7870, Y=6450
+
+Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279";
+        assert_eq!("480", Day::parse(input).solve(Part::One)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2() -> miette::Result<()> {
+        let input = "E";
+        assert_eq!("0", Day::parse(input).solve(Part::Two)?);
+        Ok(())
+    }
+}
