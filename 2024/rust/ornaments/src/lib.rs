@@ -58,7 +58,7 @@ pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut Ve
         // println!("At position {:?} with cost {}", position, cost);
 
         if position == end {
-            println!("Found path with cost {}", cost);
+            // println!("Found path with cost {}", cost);
             return cost;
         }
 

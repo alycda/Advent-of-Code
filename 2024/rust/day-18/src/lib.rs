@@ -18,8 +18,8 @@ impl<P> std::ops::Deref for Day18<P> {
     }
 }
 
-pub struct Part1 { solution: u32 }
-pub struct Part2 { solution: Position }
+pub struct Part1;
+pub struct Part2;
 
 impl Solution for Day18<Part1> {
     type Output = u32;
@@ -59,77 +59,24 @@ impl Solution for Day18<Part2> {
     type Output = String;
     type Item = Position;
 
-    /// this is PURE ABUSE of an iterator for the sake of the challenge/ learning why NOT to do this (and understanding what each iterator fn is really meant for)
+    // not quite full abuse of an iterator, but close. THIS IS NOT GREAT CODE, it was a learning experience (with scan)
     fn parse(input: &str) -> Self {
-        // State mutation outside iterator, should probably use .scan() instead
-        let mut obstacles = UniquePositions::new();
-
-        // let obstacles: UniquePositions = input.lines()
-        //     // .map_while(|line| {
-        //     .skip_while(|line| {
-        //         let parts = line.split(',').collect::<Vec<_>>();
-        //         let pos = Position::new(
-        //             parts[0].parse::<i32>().unwrap(),
-        //             parts[1].parse::<i32>().unwrap()
-        //         );
-
-        //         // Add this obstacle
-        //         obstacles.insert(pos);
-        //         let grid = PhantomGrid(obstacles.clone(), (Position::ZERO, BOUNDS));
-        //         let path_length = grid.bfs();
-
-        //         // if path_length == u32::MAX {
-        //         //     None
-        //         // } else {
-        //         //     Some(pos)
-        //         // }
-
-        //         path_length == u32::MAX
-        //     }).collect();
-
-        let mut blocker = None; // More external state mutation
-        let obstacles_remaining: UniquePositions = input.lines()
-            // Abuse #1: Using skip_while for side effects
-            .skip_while(|line| {
+        let blocker = input.lines()
+            .scan(UniquePositions::new(), |obstacles, line| {
                 let parts = line.split(',').collect::<Vec<_>>();
                 let pos = Position::new(
                     parts[0].parse::<i32>().unwrap(),
                     parts[1].parse::<i32>().unwrap()
                 );
-                
-                // Abuse #2: Mutating external state in predicate
+
                 obstacles.insert(pos);
                 let grid = PhantomGrid(obstacles.clone(), (Position::ZERO, BOUNDS));
-                
-                if grid.bfs() == u32::MAX {
-                    // Abuse #3: Using predicate for side effect storage
-                    blocker = Some(pos);
-
-                    // Abuse #4: Using boolean return for flow control rather than filtering
-                    false  // Stop skipping here
-                } else {
-                    true   // Keep skipping
-                }
+                Some((pos, grid.bfs() == u32::MAX))
             })
-            // Abuse #5: Processing remaining items we don't actually need (because the original data structure is a HashSet and I didn't want to break apart Day18 "just because")
-            .map(|line| {
-                let parts = line.split(',').collect::<Vec<_>>();
-                Position::new(
-                    parts[0].parse::<i32>().unwrap(),
-                    parts[1].parse::<i32>().unwrap()
-                )
-            })
-            // Abuse #6: Collecting items we immediately discard (so that the iterator will run)
-            .collect();
+            .find(|(_, is_blocked)| *is_blocked)
+            .map(|(pos, _)| pos);
 
-        if let Some(pos) = blocker {
-            // Abuse #7: Clearing state we just built up
-            obstacles.clear();
-            // We have our blocking position
-            obstacles.insert(dbg!(pos));
-        }
-
-        Self(PhantomGrid(obstacles, (Position::ZERO, BOUNDS)), PhantomData)
+        Self(PhantomGrid(UniquePositions::from([blocker.unwrap()]), (Position::ZERO, BOUNDS)), PhantomData)
     }
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
