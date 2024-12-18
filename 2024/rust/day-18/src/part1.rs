@@ -1,9 +1,3 @@
-use std::collections::{HashSet, VecDeque};
-
-use glam::IVec2;
-
-use crate::AocError;
-
 #[derive(Debug)]
 /// only stores the interesting positions and minmax bounds
 pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
@@ -31,91 +25,149 @@ impl PhantomGrid {
     }
 }
 
-const DIRECTIONS: [IVec2; 4] = [IVec2::Y, IVec2::NEG_Y, IVec2::X, IVec2::NEG_X];
+use std::collections::{HashSet, VecDeque};
+use glam::IVec2;
 
-fn get_all_neighbors(pos: IVec2, grid: &PhantomGrid) -> Vec<IVec2> {
-    DIRECTIONS.iter()
-        .map(|&delta| pos + delta)
-        .filter(|&new_pos| {
-            new_pos.x >= 0 && 
-            new_pos.x <= grid.1.1.x && 
-            new_pos.y >= 0 && 
-            new_pos.y <= grid.1.1.y && 
-            !grid.0.contains(&new_pos)
-        })
-        .collect()
+const ORTHOGONAL: [IVec2; 4] = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y];
+
+// fn bfs(grid: &PhantomGrid, todo: &mut VecDeque<(IVec2, u32)>, id: usize) -> u32 {
+//     todo.clear();
+//     let mut seen = HashSet::new();
+    
+//     todo.push_back((IVec2::ZERO, 0));
+//     seen.insert(IVec2::ZERO);
+
+//     while let Some((position, cost)) = todo.pop_front() {
+//         #[cfg(debug_assertions)]
+//         if position == IVec2::new(6, 6) {
+//             return cost;
+//         }
+
+//         #[cfg(not(debug_assertions))]
+//         if position == IVec2::new(70, 70) {
+//             return cost;
+//         }
+
+//         for offset in ORTHOGONAL {
+//             let next = position + offset;
+//             if next.x >= 0 && next.x <= 6 && 
+//                next.y >= 0 && next.y <= 6 && 
+//                !grid.0.contains(&next) && 
+//                !seen.contains(&next) {
+//                 todo.push_back((next, cost + 1));
+//                 seen.insert(next);
+//             }
+//         }
+//     }
+
+//     u32::MAX
+// }
+
+fn bfs(grid: &PhantomGrid, todo: &mut VecDeque<(IVec2, u32)>, id: usize) -> u32 {
+    todo.clear();
+    let mut seen = HashSet::new();
+    
+    todo.push_back((IVec2::ZERO, 0));
+    seen.insert(IVec2::ZERO);
+
+    println!("Starting BFS with obstacles: {:?}", grid.0);
+
+    while let Some((position, cost)) = todo.pop_front() {
+        println!("At position {:?} with cost {}", position, cost);
+        
+        #[cfg(debug_assertions)]
+        let a = 6;
+
+        #[cfg(not(debug_assertions))]
+        let a = 70;
+
+        if position == IVec2::new(a, a) {
+            println!("Found path with cost {}", cost);
+            return cost;
+        }
+
+        for offset in ORTHOGONAL {
+            let next = position + offset;
+            if next.x >= 0 && next.x <= a && 
+               next.y >= 0 && next.y <= a && 
+               !grid.0.contains(&next) && 
+               !seen.contains(&next) {
+                println!("Adding next position: {:?}", next);
+                todo.push_back((next, cost + 1));
+                seen.insert(next);
+            }
+        }
+    }
+
+    println!("No path found!");
+    u32::MAX
 }
 
-#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
     #[cfg(debug_assertions)]
     let space = IVec2::new(6, 6);
-    let position = IVec2::new(0, 0);
+    #[cfg(debug_assertions)]
+    let take_how_many = 12;
 
-    // Parse obstacles into HashSet
-    let obstacles = input.lines().map(|line| {
-        let parts = line.split(',').collect::<Vec<_>>();
-        IVec2::new(
-            parts[0].parse::<i32>().unwrap(),
-            parts[1].parse::<i32>().unwrap()
-        )
-    }).collect::<HashSet<_>>();
+    #[cfg(not(debug_assertions))]
+    let space = IVec2::new(70, 70);
+    
+    #[cfg(not(debug_assertions))]
+    let take_how_many = 1024;
+
+    let obstacles = input.lines()
+        .take(take_how_many)
+        .map(|line| {
+            let parts = line.split(',').collect::<Vec<_>>();
+            IVec2::new(
+                parts[0].parse::<i32>().unwrap(),
+                parts[1].parse::<i32>().unwrap()
+            )
+        })
+        .collect::<HashSet<_>>();
 
     let grid = PhantomGrid(obstacles, (IVec2::ZERO, space));
+    let mut todo = VecDeque::new();
     
-    // Track visited positions and their steps
-    let mut visited = HashSet::new();
+    let shortest_path = bfs(&grid, &mut todo, 0);
+    
+    // Now find all positions at shortest_path distance
+    let mut all_positions = HashSet::new();
     let mut queue = VecDeque::new();
-    let mut shortest_path = None;
+    let mut visited = HashSet::new();
 
-    queue.push_back((position, 0)); // (position, steps taken)
-    visited.insert(position);
+    queue.push_back((IVec2::ZERO, 0));
+    visited.insert(IVec2::ZERO);
 
     while let Some((pos, steps)) = queue.pop_front() {
-        if pos == space {
-            shortest_path = Some(steps);
+        if steps == shortest_path {
+            all_positions.insert(pos);
+            continue;
+        }
+        
+        if steps > shortest_path {
             break;
         }
 
-        for next in get_all_neighbors(pos, &grid) {
-            if !visited.contains(&next) {
-                visited.insert(next);
+        for offset in ORTHOGONAL {
+            let next = pos + offset;
+            if next.x >= 0 && next.x <= 6 && 
+               next.y >= 0 && next.y <= 6 && 
+               !grid.0.contains(&next) && 
+               !visited.contains(&next) {
                 queue.push_back((next, steps + 1));
+                visited.insert(next);
             }
         }
     }
 
-    if let Some(steps) = shortest_path {
-        // Find all positions that take exactly 'steps' moves to reach
-        visited.clear();
-        queue.clear();
-        queue.push_back((position, 0));
-        visited.insert(position);
-        let mut positions_at_target = HashSet::new();
+    #[cfg(debug_assertions)]
+    grid.print(Some(&all_positions));
 
-        while let Some((pos, current_steps)) = queue.pop_front() {
-            if current_steps == steps {
-                positions_at_target.insert(pos);
-                continue;
-            }
-            
-            if current_steps > steps {
-                break;
-            }
+    // dbg!(all_positions.len());
+    // panic!("halt");
 
-            for next in get_all_neighbors(pos, &grid) {
-                if !visited.contains(&next) {
-                    visited.insert(next);
-                    queue.push_back((next, current_steps + 1));
-                }
-            }
-        }
-
-        grid.print(Some(&positions_at_target));
-        Ok(positions_at_target.len().to_string())
-    } else {
-        Ok("0".to_string())
-    }
+    Ok(shortest_path.to_string())
 }
 
 #[cfg(test)]
