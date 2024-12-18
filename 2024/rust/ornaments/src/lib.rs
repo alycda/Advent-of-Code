@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, hash::Hash};
+use std::{collections::{HashMap, HashSet, VecDeque}, hash::Hash};
 use tracing::{debug, instrument};
 
 pub type Position = glam::IVec2;
@@ -40,6 +40,45 @@ impl Direction {
 pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
 /// Up, NE, Right, SE, Down, SW, Left, NW
 pub const ALL_DIRECTIONS: [Position; 8] = [Position::NEG_Y, Position::ONE, Position::X, Position::new(1, -1), Position::Y,  Position::new(-1, -1), Position::NEG_X, Position::new(-1, 1)];
+
+/// Breadth-first search
+/// 
+/// or https://docs.rs/petgraph/latest/petgraph/visit/struct.Bfs.html
+pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut VecDeque<(Position, u32)>) -> u32 {
+    path_cost.clear();
+
+    let mut seen: UniquePositions = HashSet::new();
+
+    path_cost.push_back((start, 0));
+    seen.insert(start);
+
+    // println!("Starting BFS with obstacles: {:?}", grid.0);
+
+    while let Some((position, cost)) = path_cost.pop_front() {
+        // println!("At position {:?} with cost {}", position, cost);
+
+        if position == end {
+            println!("Found path with cost {}", cost);
+            return cost;
+        }
+
+        for neighbor in DIRECTIONS {
+            let next = position + neighbor;
+            if next.x >= 0 && next.x <= end.x && 
+               next.y >= 0 && next.y <= end.y && 
+               !grid.0.contains(&next) && 
+               !seen.contains(&next) {
+                // println!("Adding next position: {:?}", next);
+
+                path_cost.push_back((next, cost + 1));
+                seen.insert(next);
+            }
+        }
+    }
+
+    // println!("No path found!");
+    u32::MAX
+}
 
 /// stores all chars, not recommended for NUMBERS (u8 vs char)
 #[derive(Debug)]
@@ -215,6 +254,7 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         todo!()
     }
 
+    /// Depth-first search
     pub fn flood_fill(&self, start: Position, visited: &mut UniquePositions) -> UniquePositions {
         let mut region = HashSet::new();
         let mut stack = vec![start];
@@ -313,7 +353,7 @@ impl<T> std::ops::Deref for Grid<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// only stores the interesting positions and minmax bounds
 pub struct PhantomGrid(pub UniquePositions, pub (Position, Position));
 
@@ -326,10 +366,20 @@ impl PhantomGrid {
         )
     }
 
+    pub fn get_bounds(&self) -> (Position, Position) {
+        self.1
+    }
+
     pub fn in_bounds(&self, pos: Position) -> bool {
         pos.x >= 0 && pos.y >= 0 
             && pos.x <= self.1.1.x 
             && pos.y <= self.1.1.y
+    }
+
+    pub fn bfs(&self) -> u32 {
+        let mut todo: VecDeque<(Position, u32)> = VecDeque::new();
+
+        bfs(self.clone(), Position::ZERO, self.get_bounds().1, &mut todo)
     }
 }
 
