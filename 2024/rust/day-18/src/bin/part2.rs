@@ -1,7 +1,7 @@
 use ornaments::Solution;
 use miette::Context;
 
-use day_18::Day18 as Day;
+use day_18::{Day18 as Day, Part2};
 
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]
@@ -19,7 +19,7 @@ fn main() -> miette::Result<()> {
     panic!("You must run in release mode to get the correct answer");
 
     let file = include_str!("../../input.txt");
-    let result = Day::parse(file).solve(ornaments::Part::Two).context("process part 2")?;
+    let result = Day::<Part2>::parse(file).solve(ornaments::Part::Two).context("process part 2")?;
 
     println!("{}", result);
     Ok(())

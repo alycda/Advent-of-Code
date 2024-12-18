@@ -381,6 +381,27 @@ impl PhantomGrid {
 
         bfs(self.clone(), Position::ZERO, self.get_bounds().1, &mut todo)
     }
+
+    // pub fn print(&self, steps: Option<&HashSet<Position>>) {
+    //     let obstacles = &self.0;
+    //     let bounds = self.1;
+
+    //     // let (obstacles, bounds) = self;
+    //     let (min, max) = bounds;
+    //     for y in min.y..=max.y {
+    //         for x in min.x..=max.x {
+    //             let pos = Position::new(x, y);
+    //             if obstacles.contains(&pos) {
+    //                 print!("#");
+    //             } else if steps.is_some() && steps.as_ref().unwrap().contains(&pos) {
+    //                 print!("0");
+    //             } else {
+    //                 print!(".");
+    //             }
+    //         }
+    //         println!();
+    //     }
+    // }
 }
 
 impl std::ops::Deref for PhantomGrid {
