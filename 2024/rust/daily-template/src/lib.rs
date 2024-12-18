@@ -3,6 +3,8 @@ use ornaments::{AocError, Solution};
 pub mod part1;
 pub mod part2;
 
+pub use crate::DayX as Day;
+
 pub struct DayX;
 
 impl DayX {}

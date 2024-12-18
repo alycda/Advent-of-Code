@@ -2,11 +2,13 @@ use std::marker::PhantomData;
 
 use ornaments::{AocError, PhantomGrid, Position, Solution, UniquePositions};
 
+pub use crate::Day18 as Day;
+
 #[cfg(debug_assertions)]
-const BOUNDS: Position = Position::new(6, 6);
+const BOUNDS: Position = Position::splat(6);
 
 #[cfg(not(debug_assertions))]
-const BOUNDS: Position = Position::new(70, 70);
+const BOUNDS: Position = Position::splat(70);
 
 pub struct Day18<P>(PhantomGrid, PhantomData<P>);
 

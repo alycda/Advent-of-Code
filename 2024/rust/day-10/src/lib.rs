@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use ornaments::{Position, Solution, UniquePositions, DIRECTIONS};
 
+pub use crate::Day10 as Day;
+
 /// Position, height
 pub struct Day10(HashMap<Position, u32>);
 

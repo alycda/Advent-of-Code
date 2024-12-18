@@ -6,6 +6,8 @@ use glam::IVec2;
 use miette::Diagnostic;
 use thiserror::Error;
 
+// pub use crate::Day13 as Day;
+
 #[derive(Error, Diagnostic, Debug)]
 pub enum AocError {
     #[error(transparent)]

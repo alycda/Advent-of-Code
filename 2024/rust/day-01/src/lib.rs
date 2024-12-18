@@ -7,6 +7,7 @@ use nom::{
 use ornaments::{Solution, AocError};
 
 // pub use self::Day1;
+pub use crate::Day1 as Day;
 
 #[derive(Debug, Clone)]
 pub struct Day1(Vec<i32>, Vec<i32>);
@@ -42,20 +43,6 @@ impl Solution for Day1 {
             ),
         )(input)
     }
-
-    // fn parse_nom(input: &str) -> Self {
-    //     let (_, pairs) = separated_list1(
-    //         line_ending,
-    //         separated_pair(
-    //             complete::i32,
-    //             space1,
-    //             complete::i32,
-    //         ),
-    //     )(input).unwrap();
-        
-    //     let (left, right) = pairs.into_iter().unzip();
-    //     Self(left, right)
-    // }
     
     fn part1(&mut self) -> Result<Self::Output, AocError> {
         // let Day1(ref mut left, ref mut right) = *self;

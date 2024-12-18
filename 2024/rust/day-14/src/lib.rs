@@ -6,6 +6,8 @@ use nom::{
 use ornaments::{PhantomGrid, Position, Velocity};
 // use thiserror::Error;
 
+pub use crate::Day14 as Day;
+
 pub mod part1;
 pub mod part2;
 

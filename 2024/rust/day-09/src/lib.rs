@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use ornaments::Solution;
 
+pub use crate::Day9 as Day;
+
 pub struct Disk(HashMap<usize, usize>);
 
 impl Disk {

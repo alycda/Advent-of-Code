@@ -1,6 +1,8 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
+// pub use crate::Day15 as Day;
+
 #[derive(Error, Diagnostic, Debug)]
 pub enum AocError {
     #[error(transparent)]

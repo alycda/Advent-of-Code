@@ -1,5 +1,7 @@
 use ornaments::{AocError, Grid, Position, Solution, UniquePositions, ALL_DIRECTIONS};
 
+pub use crate::Day4 as Day;
+
 pub trait Pattern: Default {
     fn matches(&self, grid: &Grid<char>, pos: Position) -> bool;
     fn find_starting_positions(grid: &Grid<char>) -> UniquePositions;

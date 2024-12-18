@@ -4,6 +4,8 @@ use itertools::Itertools;
 
 use ornaments::{AocError, Solution};
 
+pub use crate::Day5 as Day;
+
 pub struct Day5 {
     rules: HashMap<&'static str, HashSet<&'static str>>,
     updates: &'static str,

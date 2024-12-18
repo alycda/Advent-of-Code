@@ -4,6 +4,8 @@ use nom::{
 
 use ornaments::{Solution, AocError};
 
+pub use crate::Day3 as Day;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Product(usize, usize);
 

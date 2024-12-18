@@ -1,5 +1,7 @@
 use ornaments::{AocError, Solution};
 
+pub use crate::MachineState as Day;
+
 #[derive(Debug)]
 pub struct MachineState {
     register_a: i64,

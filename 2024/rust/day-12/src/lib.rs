@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use glam::IVec2;
 use ornaments::{AocError, Grid, Position, Solution, UniquePositions, DIRECTIONS};
 
+pub use crate::Day12 as Day;
+
 #[deprecated(note = "use `Grid::flood_fill(&self)` instead")]
 fn flood_fill(grid: &Grid<char>, start: Position, visited: &mut UniquePositions) -> UniquePositions {
     let mut region = HashSet::new();

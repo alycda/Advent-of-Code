@@ -1,7 +1,7 @@
 use ornaments::Solution;
 use miette::Context;
 
-use day_10::Day10 as Day;
+use day_10::Day;
 
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]

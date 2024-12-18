@@ -1,7 +1,7 @@
 use ornaments::Solution;
 use miette::Context;
 
-use day_09::Day9;
+use day_09::Day;
 
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]
@@ -16,7 +16,7 @@ fn main() -> miette::Result<()> {
     tracing_subscriber::fmt::init();
 
     let file = include_str!("../../input.txt");
-    let result = Day9::parse(file).solve(ornaments::Part::Two).context("process part 1")?;
+    let result = Day::parse(file).solve(ornaments::Part::Two).context("process part 1")?;
 
     println!("{}", result);
     Ok(())

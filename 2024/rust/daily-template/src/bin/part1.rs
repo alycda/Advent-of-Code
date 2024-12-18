@@ -1,6 +1,8 @@
 use {{crate_name}}::part1::process;
 use miette::Context;
 
+// use {{crate_name}}::Day;
+
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;

@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet};
 use glam::IVec2;
 use ornaments::{AocError, Solution};
 
+pub use crate::Day8 as Day;
+
 /// , grid max size
 pub struct Day8(HashMap<char, Vec<IVec2>>, IVec2);
 

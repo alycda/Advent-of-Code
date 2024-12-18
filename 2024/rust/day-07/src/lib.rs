@@ -13,6 +13,8 @@
 
 use ornaments::{AocError, Solution};
 
+pub use crate::Day7 as Day;
+
 // Core types and traits
 #[derive(Debug)]
 pub struct Expression {

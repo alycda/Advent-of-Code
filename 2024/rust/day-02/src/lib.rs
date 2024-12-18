@@ -1,6 +1,8 @@
 use nom::{character::complete::{self, line_ending, space1}, multi::separated_list1};
 use ornaments::{Solution, AocError};
 
+pub use crate::Day2 as Day;
+
 #[derive(Debug, PartialEq)]
 pub struct Sequence(Vec<i32>);
 

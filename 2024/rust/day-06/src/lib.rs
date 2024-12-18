@@ -1,5 +1,7 @@
 use ornaments::{AocError, Backtracks, Direction, PhantomGrid, Position, Solution, UniquePositions};
 
+pub use crate::Day6 as Day;
+
 #[derive(Debug)]
 // pub struct Day6(PhantomGrid, IVec2);
 pub struct Day6 {

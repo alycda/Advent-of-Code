@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use ornaments::{AocError, Solution};
 
+pub use crate::Day11 as Day;
+
 #[derive(Debug, Clone)]
 pub struct Day11(HashMap<usize, usize>);
 
