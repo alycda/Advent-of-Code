@@ -1,5 +1,12 @@
 {
     "rust-analyzer.linkedProjects": [
         "${workspaceFolder}/2024/rust/Cargo.toml"
-    ]
+    ],
+    "terminal.integrated.defaultProfile.linux": "nu",
+    "terminal.integrated.profiles.linux": {
+        "nu": {
+            // "path": "/home/codespace/.cargo/bin/nu"
+            "path": "/usr/local/cargo/bin/nu",
+        }
+    }
 }
