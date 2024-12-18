@@ -28,7 +28,7 @@ impl std::ops::Deref for Day {
 }
 
 // impl Day {
-    fn solve_button_presses(button_a: &Button, button_b: &Button, target: &Position) -> Option<(i32, i32)> {
+    fn solve_button_presses_part1(button_a: &Button, button_b: &Button, target: &Position) -> Option<(i32, i32)> {
         let denominator = button_a.x * button_b.y - button_a.y * button_b.x;
         
         // Using Cramer's rule
@@ -43,10 +43,34 @@ impl std::ops::Deref for Day {
             None
         }
     }
+
+    fn solve_button_presses_part2(button_a: &Button, button_b: &Button, target: &Position, offset: i64) -> Option<(i64, i64)> {
+        // Convert to i64 for large number calculations
+        let a_x = button_a.x as i64;
+        let a_y = button_a.y as i64;
+        let b_x = button_b.x as i64;
+        let b_y = button_b.y as i64;
+        let t_x = target.x as i64 + offset;
+        let t_y = target.y as i64 + offset;
+        
+        let denominator = a_x * b_y - a_y * b_x;
+        
+        // Using Cramer's rule with i64
+        let a = (b_y * t_x - b_x * t_y) / denominator;
+        let b = (-a_y * t_x + a_x * t_y) / denominator;
+        
+        // Check if we got integer solutions
+        if a * denominator == (b_y * t_x - b_x * t_y) && 
+           b * denominator == (-a_y * t_x + a_x * t_y) {
+            Some((a, b))
+        } else {
+            None
+        }
+    }
 // }
 
 impl Solution for Day {
-    type Output = i32;
+    type Output = i64;
     type Item = ();
 
     fn parse(input: &str) -> Self {
@@ -74,7 +98,18 @@ impl Solution for Day {
     fn part1(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
         let total: i32 = self.iter()
             .filter_map(|(button_a, button_b, prize_location)| {
-                solve_button_presses(button_a, button_b, prize_location)
+                solve_button_presses_part1(button_a, button_b, prize_location)
+            }).map(|(a, b)| {
+                (a * 3) + b
+            }).sum();
+
+        Ok(total as i64)
+    }
+
+    fn part2(&mut self) -> miette::Result<Self::Output, ornaments::AocError> {
+        let total: i64 = self.iter()
+            .filter_map(|(button_a, button_b, prize_location)| {
+                solve_button_presses_part2(button_a, button_b, prize_location, 10_000_000_000_000)
             }).map(|(a, b)| {
                 (a * 3) + b
             }).sum();
@@ -142,9 +177,6 @@ pub fn parse_prize(input: &str) -> IResult<&str, IVec2> {
     )(input)
 }
 
-pub mod part2;
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,8 +205,22 @@ Prize: X=18641, Y=10279";
 
     #[test]
     fn test_part2() -> miette::Result<()> {
-        let input = "E";
-        assert_eq!("0", Day::parse(input).solve(Part::Two)?);
+        let input = "Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400
+
+Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176
+
+Button A: X+17, Y+86
+Button B: X+84, Y+37
+Prize: X=7870, Y=6450
+
+Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279";
+        assert_eq!("875318608908", Day::parse(input).solve(Part::Two)?);
         Ok(())
     }
 }
