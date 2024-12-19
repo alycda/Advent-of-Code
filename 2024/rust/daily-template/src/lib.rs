@@ -20,14 +20,14 @@ mod tests {
     #[test]
     fn test_part1() -> miette::Result<()> {
         let input = "";
-        assert_eq!("0", DayX::parse(input).solve(Part::One)?);
+        assert_eq!("0", Day::parse(input).solve(Part::One)?);
         Ok(())
     }
 
     #[test]
     fn test_part2() -> miette::Result<()> {
         let input = "";
-        assert_eq!("0", DayX::parse(input).solve(Part::Two)?);
+        assert_eq!("0", Day::parse(input).solve(Part::Two)?);
         Ok(())
     }
 }
