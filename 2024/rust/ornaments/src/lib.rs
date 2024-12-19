@@ -4,7 +4,7 @@ use tracing::{debug, instrument};
 pub type Position = glam::IVec2;
 pub type Velocity = glam::IVec2;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum Direction {
     /// A, North
     Up,
@@ -32,6 +32,15 @@ impl Direction {
             Direction::Right => Direction::Down,
             Direction::Down => Direction::Left,
             Direction::Left => Direction::Up,
+        }
+    }
+
+    pub fn turn_left(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Right => Direction::Up,
+            Direction::Down => Direction::Right,
+            Direction::Left => Direction::Down
         }
     }
 }
@@ -372,6 +381,18 @@ impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
         
     //     edges
     // }
+
+    pub fn to_maze(&self, to_match: T) -> PhantomGrid {
+        let mut walls = UniquePositions::new();
+
+        self.walk(|pos| {
+            if self.get_at(pos).unwrap() == to_match {
+                walls.insert(pos);
+            }
+        });
+
+        PhantomGrid(walls, (Position::ZERO, Position::new(self.get_width() as i32 - 1, self.get_height() as i32 - 1)))
+    }
 }
 
 impl<T> std::ops::Deref for Grid<T> {

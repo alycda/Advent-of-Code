@@ -1,3 +1,4 @@
+// use ornaments::Solution;
 use {{crate_name}}::part2::process;
 use miette::Context;
 
