@@ -30,40 +30,7 @@ use glam::IVec2;
 
 const ORTHOGONAL: [IVec2; 4] = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y];
 
-// fn bfs(grid: &PhantomGrid, todo: &mut VecDeque<(IVec2, u32)>, id: usize) -> u32 {
-//     todo.clear();
-//     let mut seen = HashSet::new();
-    
-//     todo.push_back((IVec2::ZERO, 0));
-//     seen.insert(IVec2::ZERO);
-
-//     while let Some((position, cost)) = todo.pop_front() {
-//         #[cfg(debug_assertions)]
-//         if position == IVec2::new(6, 6) {
-//             return cost;
-//         }
-
-//         #[cfg(not(debug_assertions))]
-//         if position == IVec2::new(70, 70) {
-//             return cost;
-//         }
-
-//         for offset in ORTHOGONAL {
-//             let next = position + offset;
-//             if next.x >= 0 && next.x <= 6 && 
-//                next.y >= 0 && next.y <= 6 && 
-//                !grid.0.contains(&next) && 
-//                !seen.contains(&next) {
-//                 todo.push_back((next, cost + 1));
-//                 seen.insert(next);
-//             }
-//         }
-//     }
-
-//     u32::MAX
-// }
-
-fn bfs(grid: &PhantomGrid, todo: &mut VecDeque<(IVec2, u32)>, id: usize) -> u32 {
+fn bfs(grid: &PhantomGrid, todo: &mut VecDeque<(IVec2, u32)>) -> u32 {
     todo.clear();
     let mut seen = HashSet::new();
     
@@ -127,60 +94,16 @@ pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
         .collect::<HashSet<_>>();
 
     let grid = PhantomGrid(obstacles, (IVec2::ZERO, space));
-    let mut todo = VecDeque::new();
+    let mut todo: VecDeque<(IVec2, u32)> = VecDeque::new();
     
-    let shortest_path = bfs(&grid, &mut todo, 0);
+    let shortest_path = bfs(&grid, &mut todo);
     
-    // Now find all positions at shortest_path distance
-    let mut all_positions = HashSet::new();
-    let mut queue = VecDeque::new();
-    let mut visited = HashSet::new();
-
-    queue.push_back((IVec2::ZERO, 0));
-    visited.insert(IVec2::ZERO);
-
-    while let Some((pos, steps)) = queue.pop_front() {
-        if steps == shortest_path {
-            all_positions.insert(pos);
-            continue;
-        }
-        
-        if steps > shortest_path {
-            break;
-        }
-
-        for offset in ORTHOGONAL {
-            let next = pos + offset;
-            if next.x >= 0 && next.x <= 6 && 
-               next.y >= 0 && next.y <= 6 && 
-               !grid.0.contains(&next) && 
-               !visited.contains(&next) {
-                queue.push_back((next, steps + 1));
-                visited.insert(next);
-            }
-        }
-    }
-
-    #[cfg(debug_assertions)]
-    grid.print(Some(&all_positions));
-
-    // dbg!(all_positions.len());
-    // panic!("halt");
-
     Ok(shortest_path.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // use rstest::rstest;
-
-    // #[rstest]
-    // #[case("", "")]
-    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
-    //     assert_eq!(process(input).unwrap(), expected);
-    // }
 
     #[test]
     fn test_process() -> miette::Result<()> {

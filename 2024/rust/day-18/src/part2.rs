@@ -111,15 +111,7 @@ pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // use rstest::rstest;
-
-    // #[rstest]
-    // #[case("", "")]
-    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
-    //     assert_eq!(process(input).unwrap(), expected);
-    // }
-
+    
     #[test]
     fn test_process() -> miette::Result<()> {
         let input = "5,4
