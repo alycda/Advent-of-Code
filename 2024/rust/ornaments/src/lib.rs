@@ -36,6 +36,35 @@ impl Direction {
     }
 }
 
+pub struct MyString(String, HashSet<String>);
+
+impl MyString {
+    /// Breadth-first search
+    pub fn bfs(&self, target: &str) -> bool {
+        let mut queue = VecDeque::new();
+        queue.push_back(self.0.to_owned());
+
+        while let Some(current) = queue.pop_front() {
+            for pattern in self.1.iter() {
+                // Using string buffer (more complex but potentially more efficient)
+                // let mut next = String::with_capacity(current.len() + pattern.len());
+                // next.push_str(&current);
+                // next.push_str(pattern);
+                let next = current.to_owned() + pattern;
+                
+                if next == target {
+                    return true;
+                }
+                if target.starts_with(&next) {
+                    queue.push_back(next);
+                }
+            }
+        }
+
+        false
+    }
+}
+
 /// Up, Right, Down, Left
 pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
 /// Up, NE, Right, SE, Down, SW, Left, NW

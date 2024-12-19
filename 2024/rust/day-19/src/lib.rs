@@ -55,7 +55,7 @@ impl Day19 {
     }
 }
 
-impl<'a> Solution for Day19 {
+impl Solution for Day19 {
     type Output = usize;
     type Item = ();
 
