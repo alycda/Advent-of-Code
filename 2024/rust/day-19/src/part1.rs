@@ -16,21 +16,24 @@ fn preprocess_patterns<'a>(patterns: &'a [&str]) -> BTreeMap<char, Vec<&'a str>>
 
 fn can_construct(target: &str, patterns: &[&str]) -> bool {
     let pattern_map = preprocess_patterns(patterns);
-    dfs_string_match(target, &pattern_map, 0)
+    dfs_string_match(target, &pattern_map)
 }
 
-fn dfs_string_match(target: &str, pattern_map: &BTreeMap<char, Vec<&str>>, pos: usize) -> bool {
-    if pos == target.len() {
+fn dfs_string_match(remaining: &str, pattern_map: &BTreeMap<char, Vec<&str>>) -> bool {
+    // Base case: successfully matched everything
+    if remaining.is_empty() {
         return true;
     }
     
-    let current_char = target.chars().nth(pos).unwrap();
+    // Get first char without iterating whole string
+    let first_char = remaining.chars().next().unwrap();
     
-    // Only try patterns that start with our current character
-    if let Some(valid_patterns) = pattern_map.get(&current_char) {
-        for pattern in valid_patterns {
-            if let Some(next_pos) = try_move(target, pos, pattern) {
-                if dfs_string_match(target, pattern_map, next_pos) {
+    // Try patterns that start with our current character
+    if let Some(valid_patterns) = pattern_map.get(&first_char) {
+        for &pattern in valid_patterns {
+            if remaining.starts_with(pattern) {
+                // Use slice instead of position tracking
+                if dfs_string_match(&remaining[pattern.len()..], pattern_map) {
                     return true;
                 }
             }
@@ -38,18 +41,6 @@ fn dfs_string_match(target: &str, pattern_map: &BTreeMap<char, Vec<&str>>, pos: 
     }
     
     false
-}
-
-fn try_move(target: &str, pos: usize, pattern: &str) -> Option<usize> {
-    if pos + pattern.len() > target.len() {
-        return None;
-    }
-
-    if target[pos..].starts_with(pattern) {
-        Some(pos + pattern.len())
-    } else {
-        None
-    }
 }
 
 // #[tracing::instrument]
