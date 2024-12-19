@@ -2,63 +2,62 @@ use itertools::Itertools;
 
 use crate::AocError;
 
-use std::collections::BTreeMap;
+use std::collections::HashSet;
 
-fn preprocess_patterns<'a>(patterns: &'a [&str]) -> BTreeMap<char, Vec<&'a str>> {
-    patterns.iter()
-        .fold(BTreeMap::new(), |mut acc, &pattern| {
-            if let Some(c) = pattern.chars().next() {
-                acc.entry(c).or_default().push(pattern);
-            }
-            acc
-        })
-}
+fn can_construct(target: &str, patterns: &HashSet<String>) -> bool {
+    let n = target.len();
+    let mut dp = vec![0; n + 1];
+    dp[0] = 1;  // Empty string can be constructed in 1 way
 
-fn can_construct(target: &str, patterns: &[&str]) -> bool {
-    let pattern_map = preprocess_patterns(patterns);
-    dfs_string_match(target, &pattern_map)
-}
-
-fn dfs_string_match(remaining: &str, pattern_map: &BTreeMap<char, Vec<&str>>) -> bool {
-    // Base case: successfully matched everything
-    if remaining.is_empty() {
-        return true;
-    }
-    
-    // Get first char without iterating whole string
-    let first_char = remaining.chars().next().unwrap();
-    
-    // Try patterns that start with our current character
-    if let Some(valid_patterns) = pattern_map.get(&first_char) {
-        for &pattern in valid_patterns {
-            if remaining.starts_with(pattern) {
-                // Use slice instead of position tracking
-                if dfs_string_match(&remaining[pattern.len()..], pattern_map) {
-                    return true;
-                }
+    for i in 1..=n {
+        for pattern in patterns {
+            let pattern_len = pattern.len();
+            if i >= pattern_len && &target[i - pattern_len..i] == pattern {
+                dp[i] += dp[i - pattern_len];
             }
         }
     }
-    
-    false
+
+    dp[n] > 0  // If there's at least one way to construct the string
 }
+
+// fn can_construct(target: &str, patterns: &[&str]) -> bool {
+//     let pattern_set: HashSet<String> = patterns.iter().map(|s| s.to_string()).collect();
+//     let n = target.len();
+//     let mut dp = vec![0; n + 1];
+//     dp[0] = 1;  // Empty string can be constructed in 1 way
+
+//     for i in 1..=n {
+//         for pattern in &pattern_set {
+//             let pattern_len = pattern.len();
+//             if i >= pattern_len && &target[i - pattern_len..i] == pattern {
+//                 dp[i] += dp[i - pattern_len];
+//             }
+//         }
+//     }
+
+//     dp[n] > 0  // If there's at least one way to construct the string
+// }
 
 // #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (a, lines) = input.split("\n\n").collect_tuple().unwrap();
+    let (patterns_str, lines) = input.split("\n\n").collect_tuple().unwrap();
 
-    // dbg!(a, lines);
+    let patterns: HashSet<String> = patterns_str
+        .split(',') 
+        .map(|s| s.trim().to_string())
+        .collect();
 
-    let mut parts = a.split(", ").collect::<Vec<_>>();
+    let output = lines
+        .lines()
+        .map(|s| s.trim().to_string())
+        .filter(|line| can_construct(&line, &patterns))
+        .count();
 
-    parts.sort();
-
-    // dbg!(&parts);
-
-    let output = lines.lines().filter(|line| {
-        // dbg!(line);
-        can_construct(&line, &parts)
-    }).count();
+    // let output = lines.lines().filter(|line| {
+    //     // dbg!(line);
+    //     can_construct(&line, &parts)
+    // }).count();
 
     Ok(output.to_string())
 }
