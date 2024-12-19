@@ -4,10 +4,10 @@ use crate::AocError;
 
 use std::collections::HashSet;
 
-fn can_construct(target: &str, patterns: &HashSet<String>) -> bool {
+fn count_ways(patterns: &HashSet<String>, target: &str) -> usize {
     let n = target.len();
     let mut dp = vec![0; n + 1];
-    dp[0] = 1;  // Empty string can be constructed in 1 way
+    dp[0] = 1;
 
     for i in 1..=n {
         for pattern in patterns {
@@ -18,28 +18,9 @@ fn can_construct(target: &str, patterns: &HashSet<String>) -> bool {
         }
     }
 
-    dp[n] > 0  // If there's at least one way to construct the string
+    dp[n]
 }
 
-// fn can_construct(target: &str, patterns: &[&str]) -> bool {
-//     let pattern_set: HashSet<String> = patterns.iter().map(|s| s.to_string()).collect();
-//     let n = target.len();
-//     let mut dp = vec![0; n + 1];
-//     dp[0] = 1;  // Empty string can be constructed in 1 way
-
-//     for i in 1..=n {
-//         for pattern in &pattern_set {
-//             let pattern_len = pattern.len();
-//             if i >= pattern_len && &target[i - pattern_len..i] == pattern {
-//                 dp[i] += dp[i - pattern_len];
-//             }
-//         }
-//     }
-
-//     dp[n] > 0  // If there's at least one way to construct the string
-// }
-
-// #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let (patterns_str, lines) = input.split("\n\n").collect_tuple().unwrap();
 
@@ -51,13 +32,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let output = lines
         .lines()
         .map(|s| s.trim().to_string())
-        .filter(|line| can_construct(&line, &patterns))
+        .filter(|line| count_ways(&patterns, line) > 0)
         .count();
-
-    // let output = lines.lines().filter(|line| {
-    //     // dbg!(line);
-    //     can_construct(&line, &parts)
-    // }).count();
 
     Ok(output.to_string())
 }
