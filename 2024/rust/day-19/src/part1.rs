@@ -2,45 +2,49 @@ use itertools::Itertools;
 
 use crate::AocError;
 
-fn can_construct(target: &str, patterns: &[&str]) -> bool {
-    dfs_string_match(target, patterns, 0)
+use std::collections::BTreeMap;
+
+fn preprocess_patterns<'a>(patterns: &'a [&str]) -> BTreeMap<char, Vec<&'a str>> {
+    patterns.iter()
+        .fold(BTreeMap::new(), |mut acc, &pattern| {
+            if let Some(c) = pattern.chars().next() {
+                acc.entry(c).or_default().push(pattern);
+            }
+            acc
+        })
 }
 
-fn dfs_string_match(target: &str, patterns: &[&str], pos: usize) -> bool {
-    // Base case - successfully reached end of string
+fn can_construct(target: &str, patterns: &[&str]) -> bool {
+    let pattern_map = preprocess_patterns(patterns);
+    dfs_string_match(target, &pattern_map, 0)
+}
+
+fn dfs_string_match(target: &str, pattern_map: &BTreeMap<char, Vec<&str>>, pos: usize) -> bool {
     if pos == target.len() {
         return true;
     }
     
-    // Base case - went past end
-    if pos > target.len() {
-        return false;
-    }
-
     let current_char = target.chars().nth(pos).unwrap();
-
-    // Try each pattern that could match at current position
-    for pattern in patterns {
-        if pattern.starts_with(current_char) {
+    
+    // Only try patterns that start with our current character
+    if let Some(valid_patterns) = pattern_map.get(&current_char) {
+        for pattern in valid_patterns {
             if let Some(next_pos) = try_move(target, pos, pattern) {
-                if dfs_string_match(target, patterns, next_pos) {
+                if dfs_string_match(target, pattern_map, next_pos) {
                     return true;
                 }
-                // Backtracking happens automatically here when false
             }
         }
     }
-
+    
     false
 }
 
 fn try_move(target: &str, pos: usize, pattern: &str) -> Option<usize> {
-    // Check if pattern would fit in remaining string
     if pos + pattern.len() > target.len() {
         return None;
     }
 
-    // Check if pattern fully matches at this position
     if target[pos..].starts_with(pattern) {
         Some(pos + pattern.len())
     } else {
