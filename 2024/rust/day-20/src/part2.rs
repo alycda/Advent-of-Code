@@ -48,29 +48,43 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
 
     let mut count = 0;
     for (&pos, &steps) in &track {
-        // Check in a larger area now
         for dy in -20..=20 {
             for dx in -20..=20 {
                 let offset = IVec2::new(dx, dy);
                 let manhattan_dist = offset.x.abs() + offset.y.abs();
                 
-                // Only consider jumps up to 20 steps
                 if manhattan_dist > 20 {
                     continue;
                 }
                 
-                let two_away = pos + offset;
+                let target = pos + offset;
                 
                 // Check if target position is valid and in track
-                if two_away.x >= 0 && two_away.x < cols as i32 && 
-                   two_away.y >= 0 && two_away.y < rows as i32 && 
-                   track.contains_key(&two_away) {
-                    // New distance calculation includes actual jump distance
-                    let new_path = steps + manhattan_dist + track[&two_away];
-                    let original = track[&end];
+                if target.x >= 0 && target.x < cols as i32 && 
+                   target.y >= 0 && target.y < rows as i32 && 
+                   track.contains_key(&target) {
                     
-                    if original - new_path >= target_ps as i32 {
-                        count += 1;
+                    // Check if path between pos and target has walls
+                    let mut has_wall = false;
+                    // Interpolate points along the path
+                    for i in 1..manhattan_dist {
+                        let check = pos + (offset * i) / manhattan_dist;
+                        if check.x >= 0 && check.x < cols as i32 && 
+                           check.y >= 0 && check.y < rows as i32 {
+                            if lines[check.y as usize].chars().nth(check.x as usize).unwrap() == '#' {
+                                has_wall = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if !has_wall {
+                        let new_path = steps + manhattan_dist + track[&target];
+                        let original = track[&end];
+                        
+                        if original - new_path >= target_ps as i32 {
+                            count += 1;
+                        }
                     }
                 }
             }

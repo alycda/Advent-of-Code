@@ -110,11 +110,6 @@ impl<T> Something<T> {
     }
 }
 
-fn bfs() {
-
-}
-
-
 // #[tracing::instrument]
 pub fn process(input: &str, target_ps: i32) -> miette::Result<String, crate::AocError> {
     let grid = Grid(input.lines()
