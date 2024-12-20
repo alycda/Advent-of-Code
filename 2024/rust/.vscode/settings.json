@@ -13,5 +13,6 @@
     // "editor.scrollbar.vertical": "hidden",
     "workbench.sideBar.location": "right",
     "editor.minimap.enabled": false,
-    "editor.wordWrap": "on"
+    "editor.wordWrap": "on",
+    "terminal.integrated.fontFamily": "CaskaydiaCoveNFM-ExtraLight, monospace"
 }
