@@ -60,31 +60,47 @@ impl Solution for Day {
         // there is only one path and this is the length (including E, but not S)
         // dbg!(path.0.len() + 1);
 
+        // we must insert start and end position or we will be off by 2^y
         path.insert(start);
         path.insert(end);
 
-        // Create distance map using BFS
-        let distances: HashMap<Position, i32> = {
-            let mut distances = HashMap::new();
-            let mut queue = std::collections::VecDeque::new();
+        // // Create distance map using BFS
+        // let distances: HashMap<Position, i32> = {
+        //     let mut distances = HashMap::new();
+        //     let mut queue = std::collections::VecDeque::new();
             
-            // Start BFS from start position
-            queue.push_back((start, 0));
-            distances.insert(start, 0);
+        //     // Start BFS from start position
+        //     queue.push_back((start, 0));
+        //     distances.insert(start, 0);
             
-            while let Some((current, dist)) = queue.pop_front() {
-                for dir in DIRECTIONS {
-                    let next = current + dir;
-                    // Only explore positions that are in our valid path set
-                    if path.contains(&next) && !distances.contains_key(&next) {
-                        distances.insert(next, dist + 1);
-                        queue.push_back((next, dist + 1));
-                    }
-                }
-            }
+        //     while let Some((current, dist)) = queue.pop_front() {
+        //         for dir in DIRECTIONS {
+        //             let next = current + dir;
+        //             // Only explore positions that are in our valid path set
+        //             if path.contains(&next) && !distances.contains_key(&next) {
+        //                 distances.insert(next, dist + 1);
+        //                 queue.push_back((next, dist + 1));
+        //             }
+        //         }
+        //     }
             
-            distances
+        //     distances
+        // };
+
+        // let path_positions: std::collections::HashSet<Position> = grid.to_maze('.').0;
+
+        // Successors function now only considers positions in our known path
+        let successors = |pos: &Position| {
+            DIRECTIONS.iter()
+                .map(|&dir| pos + dir)
+                .filter(|next| path.contains(next))
+                .collect::<Vec<_>>()
         };
+
+        let distances: HashMap<Position, i32> = pathfinding::prelude::bfs_reach(start, successors)
+            .enumerate()
+            .map(|(steps, pos)| (pos, steps as i32))
+            .collect();
 
         Self(distances)
     }

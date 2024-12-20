@@ -7,6 +7,7 @@ rust-version = "1.85"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+pathfinding.workspace = true
 ornaments.workspace = true
 itertools.workspace = true
 nom.workspace = true
