@@ -47,45 +47,39 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
     }
 
     let mut count = 0;
-    for (&pos, &steps) in &track {
-        for dy in -20..=20 {
-            for dx in -20..=20 {
-                let offset = IVec2::new(dx, dy);
-                let manhattan_dist = offset.x.abs() + offset.y.abs();
+    for (&pos, &start_steps) in &track {
+        // For each point we reached, do a mini-BFS up to 20 steps
+        let mut seen = HashSet::new();
+        let mut queue = VecDeque::new();
+        queue.push_back((pos, 0));
+        seen.insert(pos);
+    
+        while let Some((cur_pos, cheat_steps)) = queue.pop_front() {
+            if cheat_steps >= 20 {
+                continue;
+            }
+    
+            // Try all directions
+            for dir in DIRECTIONS {
+                let next = cur_pos + dir;
                 
-                if manhattan_dist > 20 {
-                    continue;
-                }
-                
-                let target = pos + offset;
-                
-                // Check if target position is valid and in track
-                if target.x >= 0 && target.x < cols as i32 && 
-                   target.y >= 0 && target.y < rows as i32 && 
-                   track.contains_key(&target) {
+                if next.x >= 0 && next.x < cols as i32 && 
+                   next.y >= 0 && next.y < rows as i32 && 
+                   !seen.contains(&next) {
+                       
+                    seen.insert(next);
                     
-                    // Check if path between pos and target has walls
-                    let mut has_wall = false;
-                    // Interpolate points along the path
-                    for i in 1..manhattan_dist {
-                        let check = pos + (offset * i) / manhattan_dist;
-                        if check.x >= 0 && check.x < cols as i32 && 
-                           check.y >= 0 && check.y < rows as i32 {
-                            if lines[check.y as usize].chars().nth(check.x as usize).unwrap() == '#' {
-                                has_wall = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if !has_wall {
-                        let new_path = steps + manhattan_dist + track[&target];
+                    // If this point is in our original track
+                    if let Some(&end_steps) = track.get(&next) {
+                        let new_path = start_steps + cheat_steps + 1 + end_steps;
                         let original = track[&end];
                         
                         if original - new_path >= target_ps as i32 {
                             count += 1;
                         }
                     }
+                    
+                    queue.push_back((next, cheat_steps + 1));
                 }
             }
         }
