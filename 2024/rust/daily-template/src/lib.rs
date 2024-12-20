@@ -7,9 +7,9 @@ pub use crate::DayX as Day;
 
 pub struct DayX;
 
-impl DayX {}
+impl Day {}
 
-impl Solution for DayX {}
+impl Solution for Day {}
 
 #[cfg(test)]
 mod tests {
