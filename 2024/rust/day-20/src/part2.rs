@@ -1,86 +1,49 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
-use crate::AocError;
-
-use glam::*;
-
-pub type Position = glam::IVec2;
-
-/// Up, Right, Down, Left
-pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
+use crate::{AocError, Position, DIRECTIONS};
 
 // #[tracing::instrument]
 pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError> {
-    let lines: Vec<&str> = input.lines().collect();
-    let rows = lines.len();
-    let cols = lines[0].len();
-
-    // Find start and end (same as part 1)
-    let mut start = IVec2::ZERO;
-    let mut end = IVec2::ZERO;
-    for (i, line) in lines.iter().enumerate() {
-        if let Some(j) = line.find('S') {
-            start = IVec2::new(j as i32, i as i32);
-        }
-        if let Some(j) = line.find('E') {
-            end = IVec2::new(j as i32, i as i32);
+    // Build map of non-wall positions and their distances
+    // let mut grid: Something::<i32> = Something::new();
+    let mut grid = HashMap::new();
+    let mut start = Position::ZERO;
+    
+    for (y, line) in input.lines().enumerate() {
+        for (x, c) in line.chars().enumerate() {
+            if c != '#' {
+                grid.insert(Position::new(x as i32, y as i32), c);
+                if c == 'S' {
+                    start = Position::new(x as i32, y as i32);
+                }
+            }
         }
     }
 
-    // Track distances using BFS (same as part 1)
-    let mut track = HashMap::new();
-    let mut queue = VecDeque::new();
-    queue.push_back((start, 0));
-    track.insert(start, 0);
+    // Calculate distances from start using BFS
+    let mut dist = HashMap::new();
+    let mut todo = VecDeque::new();
+    dist.insert(start, 0);
+    todo.push_back(start);
 
-    while let Some((pos, steps)) = queue.pop_front() {
+    while let Some(pos) = todo.pop_front() {
         for dir in DIRECTIONS {
             let next = pos + dir;
-            if next.x >= 0 && next.x < cols as i32 && 
-               next.y >= 0 && next.y < rows as i32 &&
-               !track.contains_key(&next) &&
-               lines[next.y as usize].chars().nth(next.x as usize).unwrap() != '#' {
-                track.insert(next, steps + 1);
-                queue.push_back((next, steps + 1));
+            if grid.contains_key(&next) && !dist.contains_key(&next) {
+                dist.insert(next, dist[&pos] + 1);
+                todo.push_back(next);
             }
         }
     }
 
+    // Count paths that save enough time
     let mut count = 0;
-    for (&pos, &start_steps) in &track {
-        // For each point we reached, do a mini-BFS up to 20 steps
-        let mut seen = HashSet::new();
-        let mut queue = VecDeque::new();
-        queue.push_back((pos, 0));
-        seen.insert(pos);
-    
-        while let Some((cur_pos, cheat_steps)) = queue.pop_front() {
-            if cheat_steps >= 20 {
-                continue;
-            }
-    
-            // Try all directions
-            for dir in DIRECTIONS {
-                let next = cur_pos + dir;
-                
-                if next.x >= 0 && next.x < cols as i32 && 
-                   next.y >= 0 && next.y < rows as i32 && 
-                   !seen.contains(&next) {
-                       
-                    seen.insert(next);
-                    
-                    // If this point is in our original track
-                    if let Some(&end_steps) = track.get(&next) {
-                        let new_path = start_steps + cheat_steps + 1 + end_steps;
-                        let original = track[&end];
-                        
-                        if original - new_path >= target_ps as i32 {
-                            count += 1;
-                        }
-                    }
-                    
-                    queue.push_back((next, cheat_steps + 1));
-                }
+    for (&p, &p_dist) in &dist {
+        for (&q, &q_dist) in &dist {
+            let d = (p.x - q.x).abs() + (p.y - q.y).abs();
+            // For part 2: d < 21 instead of d == 2
+            if d < 21 && p_dist - q_dist - d >= target_ps as i32 {
+                count += 1;
             }
         }
     }
