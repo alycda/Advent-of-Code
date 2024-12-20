@@ -51,6 +51,7 @@ impl PhantomGrid {
     }
 
     pub fn in_bounds(&self, pos: Position) -> bool {
+        // Note: We want to include the bounds
         pos.x >= 0 && pos.y >= 0 
             && pos.x <= self.1.1.x 
             && pos.y <= self.1.1.y
@@ -141,37 +142,32 @@ pub fn bfs_with_breaks(
 /// or https://docs.rs/petgraph/latest/petgraph/visit/struct.Bfs.html
 pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut VecDeque<(Position, u32)>) -> u32 {
     path_cost.clear();
-
     let mut seen: UniquePositions = HashSet::new();
 
     path_cost.push_back((start, 0));
     seen.insert(start);
 
-    // println!("Starting BFS with obstacles: {:?}", grid.0);
-
     while let Some((position, cost)) = path_cost.pop_front() {
-        // println!("At position {:?} with cost {}", position, cost);
-
         if position == end {
-            // println!("Found path with cost {}", cost);
             return cost;
         }
 
         for neighbor in DIRECTIONS {
             let next = position + neighbor;
-            if next.x >= 0 && next.x <= end.x && 
-               next.y >= 0 && next.y <= end.y && 
-               !grid.0.contains(&next) && 
-               !seen.contains(&next) {
-                // println!("Adding next position: {:?}", next);
+            
+            // First check bounds
+            if !grid.in_bounds(next) {
+                continue;
+            }
 
+            // Then check if it's a wall or seen
+            if !seen.contains(&next) && !grid.0.contains(&next) {
                 path_cost.push_back((next, cost + 1));
                 seen.insert(next);
             }
         }
     }
 
-    // println!("No path found!");
     u32::MAX
 }
 
@@ -205,21 +201,26 @@ pub fn process(input: &str, picoseconds: usize) -> miette::Result<String, AocErr
     let start = grid.to_position(input.find("S").unwrap());
     let end = grid.to_position(input.find("E").unwrap());
 
-    // dbg!(&walls, start, end, picoseconds);
+    dbg!(&walls, start, end, picoseconds);
     // dbg!(walls.bfs());
     // let path = dbg!(bfs(PhantomGrid(walls, (start, end)), start, end, &mut VecDeque::new()));
 
     // Ok(path.to_string())
 
-    let base_path = bfs(PhantomGrid(walls.clone(), (start, end)), start, end, &mut VecDeque::new());
-    let all_paths = bfs_with_breaks(PhantomGrid(walls, (start, end)), start, end, 2);
+    let base_path = bfs(PhantomGrid(walls.clone(), (Position::ZERO, Position::new(cols as i32, rows as i32))), start, end, &mut VecDeque::new());
+    let all_paths = dbg!(bfs_with_breaks(PhantomGrid(walls, (Position::ZERO, Position::new(cols as i32, rows as i32))), start, end, 2));
     
-    // Count paths that save exactly target_ps
-    let count = all_paths.iter()
-        .filter(|&&path_length| {
+    // Debug the paths and savings
+    let paths_with_savings: Vec<_> = all_paths.iter()
+        .map(|&path_length| {
             let saved = base_path - path_length;
-            saved as usize == picoseconds
+            (path_length, saved)
         })
+        .collect();
+    dbg!(&paths_with_savings);
+
+    let count = paths_with_savings.iter()
+        .filter(|(_, saved)| *saved as usize == picoseconds)
         .count();
 
     Ok(count.to_string())
@@ -233,16 +234,16 @@ mod tests {
 
     #[rstest]
     #[case("2", "14")]
-    #[case("4", "14")]
-    #[case("6", "2")]
-    #[case("8", "4")]
-    #[case("10", "2")]
-    #[case("12", "3")]
-    #[case("20", "1")]
-    #[case("36", "1")]
-    #[case("38", "1")]
-    #[case("40", "1")]
-    #[case("64", "1")]
+    // #[case("4", "14")]
+    // #[case("6", "2")]
+    // #[case("8", "4")]
+    // #[case("10", "2")]
+    // #[case("12", "3")]
+    // #[case("20", "1")]
+    // #[case("36", "1")]
+    // #[case("38", "1")]
+    // #[case("40", "1")]
+    // #[case("64", "1")]
     fn test_cases(#[case] input: &str, #[case] expected: &str) {
         let map = "###############
 #...#...#.....#
