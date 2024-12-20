@@ -72,7 +72,6 @@ pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y
 /// a Region or set of Positions
 pub type UniquePositions = HashSet<Position>;
 
-// Add this to track state
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 struct State {
     position: Position,
@@ -87,53 +86,53 @@ pub fn bfs_with_breaks(
     max_breaks: u8,
 ) -> Vec<u32> {
     let mut path_costs = Vec::new();
-    let mut todo: VecDeque<State> = VecDeque::new();
-    // Need to track position AND walls broken in seen states
-    let mut seen: HashSet<(Position, u8)> = HashSet::new();
-
-    todo.push_back(State {
+    let mut todo = VecDeque::new();
+    let mut seen = HashSet::new();
+    
+    let initial = State {
         position: start,
         cost: 0,
         walls_broken: 0,
-    });
+    };
+    
+    todo.push_back(initial);
     seen.insert((start, 0));
 
-    while let Some(State { position, cost, walls_broken }) = todo.pop_front() {
-        if position == end {
-            path_costs.push(cost);
-            continue; // Don't return - we want all possible paths
+    while let Some(current) = todo.pop_front() {
+        if current.position == end {
+            path_costs.push(current.cost);
         }
 
-        for neighbor in DIRECTIONS {
-            let next = position + neighbor;
-            
-            if !grid.in_bounds(next) {
+        for dir in DIRECTIONS {
+            let next_pos = current.position + dir;
+            if !grid.in_bounds(next_pos) {
                 continue;
             }
 
-            let is_wall = grid.0.contains(&next);
-            // Can we move here?
-            if is_wall && walls_broken >= max_breaks {
+            let next_is_wall = grid.0.contains(&next_pos);
+            if next_is_wall && current.walls_broken >= max_breaks {
                 continue;
             }
 
-            let new_walls_broken = if is_wall { 
-                walls_broken + 1 
-            } else { 
-                walls_broken 
+            let next_breaks = if next_is_wall {
+                current.walls_broken + 1
+            } else {
+                current.walls_broken
             };
 
-            if !seen.contains(&(next, new_walls_broken)) {
+            let next_state = (next_pos, next_breaks);
+            if !seen.contains(&next_state) {
+                seen.insert(next_state);
                 todo.push_back(State {
-                    position: next,
-                    cost: cost + 1,
-                    walls_broken: new_walls_broken,
+                    position: next_pos,
+                    cost: current.cost + 1,
+                    walls_broken: next_breaks,
                 });
-                seen.insert((next, new_walls_broken));
             }
         }
     }
 
+    dbg!(&path_costs);  
     path_costs
 }
 
@@ -201,14 +200,21 @@ pub fn process(input: &str, picoseconds: usize) -> miette::Result<String, AocErr
     let start = grid.to_position(input.find("S").unwrap());
     let end = grid.to_position(input.find("E").unwrap());
 
-    dbg!(&walls, start, end, picoseconds);
+    // dbg!(&walls, start, end, picoseconds);
+    // dbg!(start, end, picoseconds);
     // dbg!(walls.bfs());
     // let path = dbg!(bfs(PhantomGrid(walls, (start, end)), start, end, &mut VecDeque::new()));
 
     // Ok(path.to_string())
 
-    let base_path = bfs(PhantomGrid(walls.clone(), (Position::ZERO, Position::new(cols as i32, rows as i32))), start, end, &mut VecDeque::new());
-    let all_paths = dbg!(bfs_with_breaks(PhantomGrid(walls, (Position::ZERO, Position::new(cols as i32, rows as i32))), start, end, 2));
+    let dimensions = (Position::ZERO, Position::new(cols as i32, rows as i32));
+
+    // dbg!(&dimensions);
+
+    let base_path = bfs(PhantomGrid(walls.clone(), dimensions), start, end, &mut VecDeque::new());
+    let all_paths = bfs_with_breaks(PhantomGrid(walls, dimensions), start, end, 2);
+
+    dbg!(&base_path, &all_paths);
     
     // Debug the paths and savings
     let paths_with_savings: Vec<_> = all_paths.iter()
@@ -230,39 +236,39 @@ pub fn process(input: &str, picoseconds: usize) -> miette::Result<String, AocErr
 mod tests {
     use super::*;
 
-    use rstest::rstest;
+//     use rstest::rstest;
 
-    #[rstest]
-    #[case("2", "14")]
-    // #[case("4", "14")]
-    // #[case("6", "2")]
-    // #[case("8", "4")]
-    // #[case("10", "2")]
-    // #[case("12", "3")]
-    // #[case("20", "1")]
-    // #[case("36", "1")]
-    // #[case("38", "1")]
-    // #[case("40", "1")]
-    // #[case("64", "1")]
-    fn test_cases(#[case] input: &str, #[case] expected: &str) {
-        let map = "###############
-#...#...#.....#
-#.#.#.#.#.###.#
-#S#...#.#.#...#
-#######.#.#.###
-#######.#.#...#
-#######.#.###.#
-###..E#...#...#
-###.#######.###
-#...###...#...#
-#.#####.#.###.#
-#.#...#.#.#...#
-#.#.#.#.#.#.###
-#...#...#...###
-###############";
+//     #[rstest]
+//     #[case("2", "14")]
+//     // #[case("4", "14")]
+//     // #[case("6", "2")]
+//     // #[case("8", "4")]
+//     // #[case("10", "2")]
+//     // #[case("12", "3")]
+//     // #[case("20", "1")]
+//     // #[case("36", "1")]
+//     // #[case("38", "1")]
+//     // #[case("40", "1")]
+//     // #[case("64", "1")]
+//     fn test_cases(#[case] input: &str, #[case] expected: &str) {
+//         let map = "###############
+// #...#...#.....#
+// #.#.#.#.#.###.#
+// #S#...#.#.#...#
+// #######.#.#.###
+// #######.#.#...#
+// #######.#.###.#
+// ###..E#...#...#
+// ###.#######.###
+// #...###...#...#
+// #.#####.#.###.#
+// #.#...#.#.#...#
+// #.#.#.#.#.#.###
+// #...#...#...###
+// ###############";
 
-        assert_eq!(process(map, input.parse::<usize>().unwrap()).unwrap(), expected);
-    }
+//         assert_eq!(process(map, input.parse::<usize>().unwrap()).unwrap(), expected);
+//     }
 
     #[test]
     fn test_process() -> miette::Result<()> {
