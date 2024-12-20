@@ -87,8 +87,6 @@ impl Solution for Day {
         //     distances
         // };
 
-        // let path_positions: std::collections::HashSet<Position> = grid.to_maze('.').0;
-
         // Successors function now only considers positions in our known path
         let successors = |pos: &Position| {
             DIRECTIONS.iter()
@@ -107,16 +105,24 @@ impl Solution for Day {
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
         let mut count = 0;
+
+        // for each position and it's TOTAL COST (steps)
         for (pos, steps) in &self.0 {
+            // for each neighbor
             for dir in DIRECTIONS {
+                // if this is a WALL (because it's not in our distance map)
                 let wall_pos = pos + dir;
+                // and this is on the other side of that wall
                 let two_away = pos + dir * 2;
                 
-                if !self.contains_key(&wall_pos) && 
-                self.contains_key(&two_away) && 
-                self[&two_away] - steps >= TARGET_PICOSECONDS + 2 {
-                    count += 1;
-                }
+                if !self.contains_key(&wall_pos) && // not contained in our distance map means it IS a wall
+                    self.contains_key(&two_away) && // is contained in our distance map means it's a valid position
+
+                    // compare the distance saved as a difference of the steps (TOTAL COST) between the two positions
+                    self[&two_away] - steps >= TARGET_PICOSECONDS + 2 {
+                        // we found a shortcut that saves enough time
+                        count += 1;
+                    }
             }
         }
 
