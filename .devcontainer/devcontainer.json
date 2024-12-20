@@ -27,5 +27,5 @@
       ]
     }
   },
-  "postCreateCommand": "rustup toolchain install nightly && rustup default nightly && cargo install just cargo-nextest cargo-generate flamegraph"
+  "postCreateCommand": "rustup toolchain install nightly && rustup default nightly && cargo install just cargo-nextest cargo-generate flamegraph && cargo install nu --locked && curl -sS https://starship.rs/install.sh | sh"
 }

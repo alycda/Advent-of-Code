@@ -1,8 +1,60 @@
-use std::{collections::{HashMap, HashSet, VecDeque}, hash::Hash};
+use std::{collections::{BinaryHeap, HashMap, HashSet, VecDeque}, hash::Hash};
 use tracing::{debug, instrument};
 
 pub type Position = glam::IVec2;
 pub type Velocity = glam::IVec2;
+
+// pub type Dijkstra<T> = BinaryHeap<T>;
+
+// fn dijkstra_search<T>(mut queue: Dijkstra<T>, mut distances: impl std::hash::BuildHasher) {
+//     while let Some(T) = queue.pop() {
+//         if position == end { return cost; }
+        
+//         for neighbor in get_neighbors(position) {
+//             let next = State {
+//                 cost: cost + edge_weight(position, neighbor),
+//                 position: neighbor,
+//             };
+//             queue.push(next);
+//         }
+//     }
+// }
+
+// #[derive(Eq, PartialEq, Ord, PartialOrd)]
+// struct State<P> {
+//     cost: usize,
+//     position: P,
+// }
+
+// pub type Dijkstra<P> = BinaryHeap<Reverse<State<P>>>; // Note: Reverse for min-heap
+
+// fn dijkstra_search<P, H>(
+//     mut queue: Dijkstra<P>,
+//     mut distances: H,
+//     end: P,
+//     get_neighbors: impl Fn(&P) -> Vec<P>,
+//     edge_weight: impl Fn(&P, &P) -> usize,
+// ) -> Option<usize> 
+// where 
+//     P: Eq + Hash + Clone,
+//     H: BuildHasher
+// {
+//     while let Some(Reverse(State { cost, position })) = queue.pop() {
+//         if position == end { 
+//             return Some(cost); 
+//         }
+        
+//         for neighbor in get_neighbors(&position) {
+//             let next = State {
+//                 cost: cost + edge_weight(&position, &neighbor),
+//                 position: neighbor,
+//             };
+//             queue.push(Reverse(next));
+//         }
+//     }
+//     None
+// }
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum Direction {
@@ -452,6 +504,56 @@ impl PhantomGrid {
     //         println!();
     //     }
     // }
+
+    // // Prints the grid with obstacles and optionally a path
+    // pub fn debug_print(&self, path: Option<&HashSet<Position>>) {
+    //     let (min, max) = self.1;
+    //     println!("\nGrid State ({:?} to {:?}):", min, max);
+    //     println!("  " + &(0..=max.x).map(|x| format!("{}", x%10)).collect::<Vec<_>>().join(" "));
+        
+    //     for y in 0..=max.y {
+    //         print!("{:1} ", y%10);
+    //         for x in 0..=max.x {
+    //             let pos = Position::new(x, y);
+    //             let c = if self.0.contains(&pos) {
+    //                 '█' // obstacle
+    //             } else if Some(true) == path.map(|p| p.contains(&pos)) {
+    //                 '•' // path
+    //             } else if pos == Position::ZERO {
+    //                 'S' // start
+    //             } else if pos == max {
+    //                 'E' // end
+    //             } else {
+    //                 '.' // empty
+    //             };
+    //             print!("{} ", c);
+    //         }
+    //         println!();
+    //     }
+    //     println!();
+    // }
+
+    // // Prints a step-by-step visualization of the path
+    // pub fn debug_print_path(&self, path: &[(Position, usize)]) {
+    //     println!("\nPath Steps:");
+    //     for (step, (pos, count)) in path.iter().enumerate() {
+    //         println!("Step {}: {:?} (total steps: {})", step, pos, count);
+    //         let visited = path[0..=step]
+    //             .iter()
+    //             .map(|(p, _)| *p)
+    //             .collect::<HashSet<_>>();
+    //         self.debug_print(Some(&visited));
+    //     }
+    // }
+
+    // Validates that a position is within bounds and not an obstacle
+    pub fn debug_is_valid(&self, pos: Position) -> bool {
+        let (min, max) = self.1;
+        pos.x >= min.x && pos.x <= max.x &&
+        pos.y >= min.y && pos.y <= max.y &&
+        !self.0.contains(&pos)
+    }
+
 }
 
 impl std::ops::Deref for PhantomGrid {
