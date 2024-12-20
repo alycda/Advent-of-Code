@@ -15,7 +15,7 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
     let rows = lines.len();
     let cols = lines[0].len();
 
-    // Find start and end
+    // Find start and end (same as part 1)
     let mut start = IVec2::ZERO;
     let mut end = IVec2::ZERO;
     for (i, line) in lines.iter().enumerate() {
@@ -27,7 +27,7 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
         }
     }
 
-    // Track distances using BFS
+    // Track distances using BFS (same as part 1)
     let mut track = HashMap::new();
     let mut queue = VecDeque::new();
     queue.push_back((start, 0));
@@ -48,14 +48,31 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
 
     let mut count = 0;
     for (&pos, &steps) in &track {
-        for dir in DIRECTIONS {
-            let wall_pos = pos + dir;
-            let two_away = pos + dir * 20;
-            
-            if !track.contains_key(&wall_pos) && 
-               track.contains_key(&two_away) && 
-               track[&two_away] - steps >= target_ps as i32 + 20 {
-                count += 1;
+        // Check in a larger area now
+        for dy in -20..=20 {
+            for dx in -20..=20 {
+                let offset = IVec2::new(dx, dy);
+                let manhattan_dist = offset.x.abs() + offset.y.abs();
+                
+                // Only consider jumps up to 20 steps
+                if manhattan_dist > 20 {
+                    continue;
+                }
+                
+                let two_away = pos + offset;
+                
+                // Check if target position is valid and in track
+                if two_away.x >= 0 && two_away.x < cols as i32 && 
+                   two_away.y >= 0 && two_away.y < rows as i32 && 
+                   track.contains_key(&two_away) {
+                    // New distance calculation includes actual jump distance
+                    let new_path = steps + manhattan_dist + track[&two_away];
+                    let original = track[&end];
+                    
+                    if original - new_path >= target_ps as i32 {
+                        count += 1;
+                    }
+                }
             }
         }
     }

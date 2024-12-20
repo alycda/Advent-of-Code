@@ -1,196 +1,135 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::AocError;
-
-use glam::*;
-
-
 pub type Position = glam::IVec2;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
+/// a Region or set of Positions
+pub type UniquePositions = HashSet<Position>;
+
+/// Up, Right, Down, Left
+pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
+
+/// stores all chars, not recommended for NUMBERS (u8 vs char)
+#[derive(Debug)]
+pub struct Grid<T>(Vec<Vec<T>>);
+
+impl<T> std::ops::Deref for Grid<T> {
+    type Target = Vec<Vec<T>>;
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-/// COL, ROW
-#[derive(Debug, PartialEq, Eq)]
-struct Grid(usize, usize, Vec<(IVec2, Direction)>);
-
-impl Grid {
-    fn new(cols: usize, rows: usize) -> Self {
-        Self(cols, rows, Vec::new())
+impl<T: std::fmt::Debug + Copy + PartialEq> Grid<T> {
+    pub fn get_width(&self) -> usize {
+        self[0].len()
     }
 
-    fn get_cols(&self) -> usize {
-        self.0 + 1
+    pub fn get_height(&self) -> usize {
+        self.len()
     }
 
-    fn get_rows(&self) -> usize {
-        self.1
+    pub fn to_position(&self, idx: usize) -> Position {
+        let cols = self.get_width();
+        let chars_per_row = cols + 1;
+        let col = idx % chars_per_row;
+        let row = idx / chars_per_row;
+        Position::new(col as i32, row as i32)
     }
 
-    fn to_position(&self, idx: usize) -> IVec2 {
-        let cols = self.get_cols();
-        let col = idx % cols;
-        let row = idx / cols;
-        IVec2::new(col as i32, row as i32)
+    /// Walks the grid from top-left to bottom-right
+    pub fn walk<F: FnMut(Position) -> O, O>(&self, mut see: F) {
+        for row in 0..self.get_height() {
+            for col in 0..self.get_width() {
+                let pos = Position::new(col as i32, row as i32);
+
+                see(pos);
+            }
+        }
+    }
+
+    /// Bounded by the grid's dimensions
+    pub fn get_at(&self, pos: Position) -> Option<T> {
+        if pos.x < 0 || pos.y < 0 || pos.x >= self.get_width() as i32 || pos.y >= self.get_height() as i32 {
+            return None;
+        }
+
+        Some(self[pos.y as usize][pos.x as usize])
+        // Some(self.get_at_unbounded(pos))
+    }
+
+    pub fn get_at_unbounded(&self, pos: Position) -> T {
+        self[pos.y as usize][pos.x as usize]
+    }
+
+    pub fn to_maze(&self, to_match: T) -> PhantomGrid {
+        let mut walls = UniquePositions::new();
+
+        self.walk(|pos| {
+            if self.get_at_unbounded(pos) == to_match {
+                walls.insert(pos);
+            }
+        });
+
+        PhantomGrid(walls, (Position::ZERO, Position::new(self.get_width() as i32 - 1, self.get_height() as i32 - 1)))
     }
 }
 
 #[derive(Debug, Clone)]
 /// only stores the interesting positions and minmax bounds
-pub struct PhantomGrid(pub HashSet<IVec2>, pub (IVec2, IVec2));
+pub struct PhantomGrid(pub UniquePositions, pub (Position, Position));
 
-impl PhantomGrid {
-
-    pub fn get_bounds(&self) -> (Position, Position) {
-        self.1
-    }
-
-    pub fn in_bounds(&self, pos: Position) -> bool {
-        // Note: We want to include the bounds
-        pos.x >= 0 && pos.y >= 0 
-            && pos.x <= self.1.1.x 
-            && pos.y <= self.1.1.y
-    }
-
-    pub fn bfs(&self) -> u32 {
-        let mut todo: VecDeque<(Position, u32)> = VecDeque::new();
-
-        bfs(self.clone(), Position::ZERO, self.get_bounds().1, &mut todo)
-    }
-
-}
-
-
-/// Up, Right, Down, Left
-pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
-
-/// a Region or set of Positions
-pub type UniquePositions = HashSet<Position>;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-struct State {
-    position: Position,
-    cost: u32,
-    walls_broken: u8,
-}
-
-pub fn bfs_with_breaks(
-    grid: PhantomGrid, 
-    start: Position, 
-    end: Position,
-    max_breaks: u8,
-) -> Vec<u32> {
-    let mut path_costs = Vec::new();
-    let mut todo = VecDeque::new();
-    let mut seen = HashSet::new();
+impl std::ops::Deref for PhantomGrid {
+    type Target = UniquePositions;
     
-    let initial = State {
-        position: start,
-        cost: 0,
-        walls_broken: 0,
-    };
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for PhantomGrid {
+    fn deref_mut(&mut self) -> &mut UniquePositions {
+        &mut self.0
+    }
+}
+
+/// TODO: Day 10, height/rating & Day 20
+pub struct Something<T>(HashMap<Position, T>);
+
+impl<T> std::ops::Deref for Something<T> {
+    type Target = HashMap<Position, T>;
     
-    todo.push_back(initial);
-    seen.insert((start, 0));
-
-    while let Some(current) = todo.pop_front() {
-        if current.position == end {
-            path_costs.push(current.cost);
-        }
-
-        for dir in DIRECTIONS {
-            let next_pos = current.position + dir;
-            if !grid.in_bounds(next_pos) {
-                continue;
-            }
-
-            let next_is_wall = grid.0.contains(&next_pos);
-            if next_is_wall && current.walls_broken >= max_breaks {
-                continue;
-            }
-
-            let next_breaks = if next_is_wall {
-                current.walls_broken + 1
-            } else {
-                current.walls_broken
-            };
-
-            let next_state = (next_pos, next_breaks);
-            if !seen.contains(&next_state) {
-                seen.insert(next_state);
-                todo.push_back(State {
-                    position: next_pos,
-                    cost: current.cost + 1,
-                    walls_broken: next_breaks,
-                });
-            }
-        }
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
-
-    dbg!(&path_costs);  
-    path_costs
 }
 
-/// Breadth-first search
-/// 
-/// or https://docs.rs/petgraph/latest/petgraph/visit/struct.Bfs.html
-pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut VecDeque<(Position, u32)>) -> u32 {
-    path_cost.clear();
-    let mut seen: UniquePositions = HashSet::new();
-
-    path_cost.push_back((start, 0));
-    seen.insert(start);
-
-    while let Some((position, cost)) = path_cost.pop_front() {
-        if position == end {
-            return cost;
-        }
-
-        for neighbor in DIRECTIONS {
-            let next = position + neighbor;
-            
-            // First check bounds
-            if !grid.in_bounds(next) {
-                continue;
-            }
-
-            // Then check if it's a wall or seen
-            if !seen.contains(&next) && !grid.0.contains(&next) {
-                path_cost.push_back((next, cost + 1));
-                seen.insert(next);
-            }
-        }
+impl<T> Something<T> {
+    pub fn new() -> Self {
+        Self(HashMap::new())
     }
-
-    u32::MAX
 }
+
+fn bfs() {
+
+}
+
 
 // #[tracing::instrument]
-pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError> {
-    let lines: Vec<&str> = input.lines().collect();
-    let rows = lines.len();
-    let cols = lines[0].len();
+pub fn process(input: &str, target_ps: i32) -> miette::Result<String, crate::AocError> {
+    let grid = Grid(input.lines()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect::<Vec<Vec<_>>>());
 
-    let grid = Grid::new(cols, rows);
+    let rows = grid.get_height();
+    let cols = grid.get_width();
 
-    // Find start and end
-    let mut start = IVec2::ZERO;
-    let mut end = IVec2::ZERO;
-    for (i, line) in lines.iter().enumerate() {
-        if let Some(j) = line.find('S') {
-            start = IVec2::new(j as i32, i as i32);
-        }
-        if let Some(j) = line.find('E') {
-            end = IVec2::new(j as i32, i as i32);
-        }
-    }
+    let start = grid.to_position(input.find("S").unwrap());
+    let _end = grid.to_position(input.find("E").unwrap());
+    let maze = grid.to_maze('#');
 
     // Track distances using BFS
+    // let mut track: Something::<i32> = Something::new();
     let mut track = HashMap::new();
     let mut queue = VecDeque::new();
     queue.push_back((start, 0));
@@ -201,8 +140,7 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
             let next = pos + dir;
             if next.x >= 0 && next.x < cols as i32 && 
                next.y >= 0 && next.y < rows as i32 &&
-               !track.contains_key(&next) &&
-               lines[next.y as usize].chars().nth(next.x as usize).unwrap() != '#' {
+               !track.contains_key(&next) && !maze.contains(&next) {
                 track.insert(next, steps + 1);
                 queue.push_back((next, steps + 1));
             }
@@ -217,7 +155,7 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
             
             if !track.contains_key(&wall_pos) && 
                track.contains_key(&two_away) && 
-               track[&two_away] - steps >= target_ps as i32 + 2 {
+               track[&two_away] - steps >= target_ps + 2 {
                 count += 1;
             }
         }
@@ -261,7 +199,7 @@ mod tests {
 // #...#...#...###
 // ###############";
 
-//         assert_eq!(process(map, input.parse::<usize>().unwrap()).unwrap(), expected);
+//         assert_eq!(process(map, input.parse::<i32>().unwrap()).unwrap(), expected);
 //     }
 
     #[test]
