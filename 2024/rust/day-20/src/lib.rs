@@ -53,31 +53,40 @@ impl Solution for Day {
     fn parse(input: &str) -> Self {
         let grid = Day::to_grid(input);
         let start = grid.to_position(input.find("S").unwrap());
-        let _end = grid.to_position(input.find("E").unwrap());
-        let maze = grid.to_maze('#');
+        let end = grid.to_position(input.find("E").unwrap());
+        let _maze = grid.to_maze('#');
+        let mut path = grid.to_maze('.');
 
-        let rows = grid.get_height();
-        let cols = grid.get_width();
+        // there is only one path and this is the length (including E, but not S)
+        // dbg!(path.0.len() + 1);
 
-        // let mut track = Something::<i32>();
-        let mut track = std::collections::HashMap::new();
-        let mut queue = std::collections::VecDeque::new();
-        queue.push_back((start, 0));
-        track.insert(start, 0);
+        path.insert(start);
+        path.insert(end);
 
-        while let Some((pos, steps)) = queue.pop_front() {
-            for dir in DIRECTIONS {
-                let next = pos + dir;
-                if next.x >= 0 && next.x < cols as i32 && 
-                   next.y >= 0 && next.y < rows as i32 &&
-                   !track.contains_key(&next) && !maze.contains(&next) {
-                    track.insert(next, steps + 1);
-                    queue.push_back((next, steps + 1));
+        // Create distance map using BFS
+        let distances: HashMap<Position, i32> = {
+            let mut distances = HashMap::new();
+            let mut queue = std::collections::VecDeque::new();
+            
+            // Start BFS from start position
+            queue.push_back((start, 0));
+            distances.insert(start, 0);
+            
+            while let Some((current, dist)) = queue.pop_front() {
+                for dir in DIRECTIONS {
+                    let next = current + dir;
+                    // Only explore positions that are in our valid path set
+                    if path.contains(&next) && !distances.contains_key(&next) {
+                        distances.insert(next, dist + 1);
+                        queue.push_back((next, dist + 1));
+                    }
                 }
             }
-        }
+            
+            distances
+        };
 
-        Self(track)
+        Self(distances)
     }
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
@@ -95,6 +104,7 @@ impl Solution for Day {
             }
         }
 
+        // add start and end position
         Ok(count)
     }
 
@@ -144,7 +154,21 @@ mod tests {
 
     #[test]
     fn test_part2() -> miette::Result<()> {
-        let input = "";
+        let input = "###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############";
         assert_eq!("0", Day::parse(input).solve(Part::Two)?);
         Ok(())
     }

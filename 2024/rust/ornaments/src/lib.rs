@@ -1,10 +1,9 @@
-use std::{collections::{BinaryHeap, HashMap, HashSet, VecDeque}, hash::Hash};
+use std::{collections::{HashMap, HashSet, VecDeque}, hash::Hash};
 use tracing::{debug, instrument};
 
 pub type Position = glam::IVec2;
 pub type Velocity = glam::IVec2;
 
-/// 
 pub fn manhattan_distance(a: Position, b: Position) -> i32 {
     (a.x - b.x).abs() + (a.y - b.y).abs()
 }
