@@ -1,3 +1,17 @@
+//! Day 2: Red-Nosed Reports
+//! 
+//! Validates sequences of numbers based on specific criteria and correction capabilities.
+//! 
+//! --- Part One ---
+//! 
+//! * The levels are either all increasing or all decreasing.
+//! * Any two adjacent levels differ by at least one and at most three.
+//! 
+//! --- Part Two ---
+//! 
+//! tolerate a single bad level
+//! 
+
 use nom::{character::complete::{self, line_ending, space1}, multi::separated_list1};
 use ornaments::{Solution, AocError};
 
@@ -15,11 +29,19 @@ impl std::ops::Deref for Sequence {
 }
 
 impl Sequence {
+    /// Validates if a sequence follows safety rules:
+    /// 1. Must have at least 2 numbers
+    /// 2. Numbers must be consistently increasing or decreasing
+    /// 3. Adjacent numbers must differ by 1-3 units
+    ///
+    /// # Returns
+    /// * `bool` - true if sequence follows all rules
     fn is_safe(&self) -> bool {
         if self.0.len() < 2 { 
             return false; 
         }
         
+        // Determine if sequence should be ascending or descending
         let is_ascending = self.0[0] < self.0[1];
         let mut prev = self.0[0];
         
@@ -36,6 +58,13 @@ impl Sequence {
             })
     }
 
+    /// Checks if removing one number can make the sequence safe
+    ///
+    /// Tests each possible number removal to see if any resulting
+    /// sequence satisfies safety rules
+    ///
+    /// # Returns
+    /// * `bool` - true if sequence can be made safe by removing one number
     fn can_dampen(&self) -> bool {
         let nums = &self.0;
         nums.iter().enumerate().any(|(skip_idx, _)| {
@@ -50,6 +79,7 @@ impl Sequence {
     }
 }
 
+/// Validates a sequence of numbers
 pub struct Day2(Vec<Sequence>);
 
 impl std::ops::Deref for Day2 {
@@ -64,6 +94,8 @@ impl Solution for Day2 {
     type Output = usize;
     type Item = Vec<Vec<i32>>;
 
+    /// Parses input string into sequences of numbers
+    /// Skips empty lines and invalid numbers
     fn parse(input: &str) -> Self {
         let sequences = input.lines()
             .filter_map(|line| {
@@ -81,6 +113,7 @@ impl Solution for Day2 {
         Self(sequences)
     }
 
+    /// Nom parser for more robust input parsing
     fn nom_parser(input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> {
         separated_list1(
             line_ending,
@@ -88,12 +121,16 @@ impl Solution for Day2 {
         )(input)
     }
 
+    /// Counts sequences that are naturally safe
     fn part1(&mut self) -> Result<Self::Output, AocError> {
         Ok(self.iter()
             .filter(|seq| seq.is_safe())
             .count())
     }
 
+    /// Counts sequences that are either:
+    /// 1. Naturally safe
+    /// 2. Can be made safe by removing one number
     fn part2(&mut self) -> Result<Self::Output, AocError> {
         let (safe, notsafe): (Vec<_>, Vec<_>) = self.iter()
             .partition(|seq| seq.is_safe());
