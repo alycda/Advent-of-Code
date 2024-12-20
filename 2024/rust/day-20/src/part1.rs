@@ -171,12 +171,11 @@ pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut Ve
 }
 
 // #[tracing::instrument]
-pub fn process(input: &str, picoseconds: usize) -> miette::Result<String, AocError> {
-
+pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError> {
     let mut peekable = input.lines().peekable();
     let cols = peekable.peek().unwrap().chars().count();
     let rows = peekable.count();
-
+ 
     let grid = Grid::new(cols, rows);
 
     let walls = input.lines()
@@ -199,38 +198,97 @@ pub fn process(input: &str, picoseconds: usize) -> miette::Result<String, AocErr
 
     let start = grid.to_position(input.find("S").unwrap());
     let end = grid.to_position(input.find("E").unwrap());
-
-    // dbg!(&walls, start, end, picoseconds);
-    // dbg!(start, end, picoseconds);
-    // dbg!(walls.bfs());
-    // let path = dbg!(bfs(PhantomGrid(walls, (start, end)), start, end, &mut VecDeque::new()));
-
-    // Ok(path.to_string())
-
-    let dimensions = (Position::ZERO, Position::new(cols as i32, rows as i32));
-
-    // dbg!(&dimensions);
-
-    let base_path = bfs(PhantomGrid(walls.clone(), dimensions), start, end, &mut VecDeque::new());
-    let all_paths = bfs_with_breaks(PhantomGrid(walls, dimensions), start, end, 2);
-
-    dbg!(&base_path, &all_paths);
+ 
+    // Create distance matrices initialized to u32::MAX
+    let mut start_distance = vec![vec![u32::MAX; cols]; rows];
+    let mut end_distance = vec![vec![u32::MAX; cols]; rows];
+ 
+    // Calculate distances from start
+    let mut queue = VecDeque::new();
+    queue.push_back((start, 0));
+    start_distance[start.y as usize][start.x as usize] = 0;
     
-    // Debug the paths and savings
-    let paths_with_savings: Vec<_> = all_paths.iter()
-        .map(|&path_length| {
-            let saved = base_path - path_length;
-            (path_length, saved)
-        })
-        .collect();
-    dbg!(&paths_with_savings);
-
-    let count = paths_with_savings.iter()
-        .filter(|(_, saved)| *saved as usize == picoseconds)
-        .count();
-
+    while let Some((pos, cost)) = queue.pop_front() {
+        for dir in DIRECTIONS {
+            let next = pos + dir;
+            if next.x >= 0 && next.x < cols as i32 && 
+               next.y >= 0 && next.y < rows as i32 {
+                let next_cost = cost + 1;
+                if !walls.contains(&next) && 
+                   start_distance[next.y as usize][next.x as usize] == u32::MAX {
+                    start_distance[next.y as usize][next.x as usize] = next_cost;
+                    queue.push_back((next, next_cost));
+                }
+            }
+        }
+    }
+ 
+    // Calculate distances from end (same process)
+    queue.clear();
+    queue.push_back((end, 0));
+    end_distance[end.y as usize][end.x as usize] = 0;
+ 
+    while let Some((pos, cost)) = queue.pop_front() {
+        for dir in DIRECTIONS {
+            let next = pos + dir;
+            if next.x >= 0 && next.x < cols as i32 && 
+               next.y >= 0 && next.y < rows as i32 {
+                let next_cost = cost + 1;
+                if !walls.contains(&next) && 
+                   end_distance[next.y as usize][next.x as usize] == u32::MAX {
+                    end_distance[next.y as usize][next.x as usize] = next_cost;
+                    queue.push_back((next, next_cost));
+                }
+            }
+        }
+    }
+ 
+    let orig_distance = start_distance[end.y as usize][end.x as usize];
+    let mut count = 0;
+ 
+    // Check all possible midpoints
+    for y in 0..rows {
+        for x in 0..cols {
+            let mid = IVec2::new(x as i32, y as i32);
+            if walls.contains(&mid) || start_distance[y][x] == u32::MAX {
+                continue;
+            }
+ 
+            // Check all points at manhattan distance 2
+            for dy in -2..=2 {
+                for dx in -2..=2 {
+                    let offset = IVec2::new(dx, dy);
+                    if offset.x.abs() + offset.y.abs() != 2 {
+                        continue;
+                    }
+ 
+                    let end_point = mid + offset;
+                    if end_point.x < 0 || end_point.x >= cols as i32 || 
+                       end_point.y < 0 || end_point.y >= rows as i32 {
+                        continue;
+                    }
+ 
+                    if walls.contains(&end_point) {
+                        continue;
+                    }
+ 
+                    let end_y = end_point.y as usize;
+                    let end_x = end_point.x as usize;
+                    if end_distance[end_y][end_x] == u32::MAX {
+                        continue;
+                    }
+ 
+                    let new_distance = start_distance[y][x] + end_distance[end_y][end_x] + 2;
+                    if new_distance + target_ps as u32 == orig_distance {
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+ 
     Ok(count.to_string())
-}
+ }
 
 #[cfg(test)]
 mod tests {
