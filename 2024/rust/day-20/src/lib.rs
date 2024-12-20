@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
-use ornaments::{AocError, Position, Solution, Something, DIRECTIONS};
+use ornaments::{manhattan_distance, AocError, Position, Solution, DIRECTIONS};
 
 const TARGET_PICOSECONDS:i32 = 100;
-
-pub mod part2;
 
 pub use crate::Day20 as Day;
 
@@ -84,14 +82,30 @@ impl Solution for Day {
 
     fn part1(&mut self) -> miette::Result<Self::Output, AocError> {
         let mut count = 0;
-        for (&pos, &steps) in &self.0 {
+        for (pos, steps) in &self.0 {
             for dir in DIRECTIONS {
                 let wall_pos = pos + dir;
                 let two_away = pos + dir * 2;
                 
                 if !self.contains_key(&wall_pos) && 
                 self.contains_key(&two_away) && 
-                self[&two_away] - steps >= TARGET_PICOSECONDS as i32 + 2 {
+                self[&two_away] - steps >= TARGET_PICOSECONDS + 2 {
+                    count += 1;
+                }
+            }
+        }
+
+        Ok(count)
+    }
+
+    fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
+        let mut count = 0;
+
+        for (&p, &p_dist) in &self.0 {
+            for (&q, &q_dist) in &self.0 {
+                let d = manhattan_distance(p, q);
+                // For part 2: d < 21 instead of d == 2
+                if d < 21 && p_dist - q_dist - d >= TARGET_PICOSECONDS {
                     count += 1;
                 }
             }

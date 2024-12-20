@@ -4,6 +4,11 @@ use tracing::{debug, instrument};
 pub type Position = glam::IVec2;
 pub type Velocity = glam::IVec2;
 
+/// 
+pub fn manhattan_distance(a: Position, b: Position) -> i32 {
+    (a.x - b.x).abs() + (a.y - b.y).abs()
+}
+
 // pub type Dijkstra<T> = BinaryHeap<T>;
 
 // fn dijkstra_search<T>(mut queue: Dijkstra<T>, mut distances: impl std::hash::BuildHasher) {
