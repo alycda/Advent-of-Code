@@ -1,3 +1,5 @@
+//! Day 17: Chronospatial Computer
+
 use ornaments::{AocError, Solution};
 
 pub use crate::MachineState as Day;

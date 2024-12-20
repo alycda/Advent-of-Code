@@ -1,3 +1,5 @@
+//! Day 16: Reindeer Maze
+
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 use ornaments::{AocError, Backtracks, Direction, PhantomGrid, Position, Solution, UniquePositions};

@@ -132,8 +132,14 @@ impl MyString {
 
 /// Up, Right, Down, Left
 pub const DIRECTIONS: [Position; 4] = [Position::NEG_Y, Position::X, Position::Y, Position::NEG_X];
+
+/// NE??, SE??, ???, ???
+// pub const DIAGONALS: [Position; 4] = [Position::ONE, Position::new(1, -1), Position::new(-1, -1), Position::new(-1, 1)];
+/// ???, ???, ???, ???
+pub const DIAGONALS: [Position; 4] = [Position::NEG_ONE, Position::new(-1, 1), Position::new(1, -1), Position::new(1, 1)];
+
 /// Up, NE, Right, SE, Down, SW, Left, NW
-pub const ALL_DIRECTIONS: [Position; 8] = [Position::NEG_Y, Position::ONE, Position::X, Position::new(1, -1), Position::Y,  Position::new(-1, -1), Position::NEG_X, Position::new(-1, 1)];
+pub const ALL_DIRECTIONS: [Position; 8] = [Position::NEG_Y, Position::ONE, Position::X, Position::new(1, -1), Position::Y, Position::NEG_ONE, Position::NEG_X, Position::new(-1, 1)];
 
 /// Breadth-first search
 /// 

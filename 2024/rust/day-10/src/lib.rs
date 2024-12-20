@@ -1,3 +1,5 @@
+//! Day 10: Hoof It
+
 use std::collections::HashMap;
 
 use ornaments::{Position, Solution, UniquePositions, DIRECTIONS};

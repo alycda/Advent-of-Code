@@ -1,3 +1,5 @@
+//! Day 20: Race Condition
+
 use std::collections::HashMap;
 
 use ornaments::{manhattan_distance, AocError, Position, Solution, DIRECTIONS};

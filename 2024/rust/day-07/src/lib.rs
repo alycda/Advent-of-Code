@@ -1,3 +1,5 @@
+//! Day 7: Bridge Repair
+
 // pub struct Day7(usize, Vec<usize>);
 
 // impl Solution for Day7 {

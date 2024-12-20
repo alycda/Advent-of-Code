@@ -1,3 +1,5 @@
+//! Day 19: Linen Layout
+
 use std::collections::HashSet;
 
 use itertools::Itertools;

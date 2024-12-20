@@ -1,3 +1,5 @@
+// Day 6: Guard Gallivant
+
 use ornaments::{AocError, Backtracks, Direction, PhantomGrid, Position, Solution, UniquePositions};
 
 pub use crate::Day6 as Day;

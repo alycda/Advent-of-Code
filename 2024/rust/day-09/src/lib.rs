@@ -1,3 +1,5 @@
+//! Day 9: Disk Fragmenter
+
 use std::collections::HashMap;
 
 use ornaments::Solution;

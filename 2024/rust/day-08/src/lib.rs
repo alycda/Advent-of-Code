@@ -1,3 +1,5 @@
+//! Day 8: Resonant Collinearity
+
 use std::collections::{HashMap, HashSet};
 
 use glam::IVec2;

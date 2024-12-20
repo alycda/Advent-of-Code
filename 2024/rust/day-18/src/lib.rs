@@ -1,3 +1,5 @@
+//! Day 18: RAM Run
+
 use std::marker::PhantomData;
 
 use ornaments::{AocError, PhantomGrid, Position, Solution, UniquePositions};

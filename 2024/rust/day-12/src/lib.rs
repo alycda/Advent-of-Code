@@ -1,3 +1,5 @@
+//! Day 12: Garden Groups
+
 use std::collections::HashSet;
 
 use glam::IVec2;

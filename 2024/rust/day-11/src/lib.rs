@@ -1,3 +1,5 @@
+//! Day 11: Plutonian Pebbles
+
 use std::collections::HashMap;
 
 use ornaments::{AocError, Solution};

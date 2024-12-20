@@ -1,3 +1,5 @@
+//! Day 15: Warehouse Woes
+
 use miette::Diagnostic;
 use thiserror::Error;
 

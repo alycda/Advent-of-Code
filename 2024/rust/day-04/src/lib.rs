@@ -1,4 +1,6 @@
-use ornaments::{AocError, Grid, Position, Solution, UniquePositions, ALL_DIRECTIONS};
+//! Day 4: Ceres Search
+
+use ornaments::{AocError, Grid, Position, Solution, UniquePositions, ALL_DIRECTIONS, DIAGONALS};
 
 pub use crate::Day4 as Day;
 
@@ -40,16 +42,8 @@ impl Pattern for XmasPattern {
 }
 
 impl Pattern for CrossPattern {
-    fn matches(&self, grid: &Grid<char>, pos: Position) -> bool {
-        // Get all diagonal neighbors
-        let diagonals = [
-            Position::new(-1, -1), // top-left
-            Position::new(-1, 1),  // top-right
-            Position::new(1, -1),  // bottom-left
-            Position::new(1, 1),   // bottom-right
-        ];
-        
-        let chars: Vec<char> = diagonals.iter()
+    fn matches(&self, grid: &Grid<char>, pos: Position) -> bool {        
+        let chars: Vec<char> = DIAGONALS.iter()
             .filter_map(|&dir| {
                 let new_pos = pos + dir;
                 grid.get_at(new_pos)

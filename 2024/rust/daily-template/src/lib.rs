@@ -1,3 +1,5 @@
+//! Day X: 
+
 use ornaments::{AocError, Solution};
 
 pub mod part1;
