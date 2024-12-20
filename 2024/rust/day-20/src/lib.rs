@@ -52,8 +52,8 @@ impl Solution for Day {
 
     fn parse(input: &str) -> Self {
         let grid = Day::to_grid(input);
-        let start = grid.to_position(input.find("S").unwrap());
-        let end = grid.to_position(input.find("E").unwrap());
+        let start = grid.to_position(input.find("S").expect("Start position not found"));
+        let end = grid.to_position(input.find("E").expect("End position not found"));
         let _maze = grid.to_maze('#');
         let mut path = grid.to_maze('.');
 
@@ -133,11 +133,18 @@ impl Solution for Day {
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
         let mut count = 0;
 
-        for (&p, &p_dist) in &self.0 {
-            for (&q, &q_dist) in &self.0 {
+        // For each position p and its distance
+        for (p, &p_dist) in &self.0 {
+            // Compare with every other position q
+            for (q, &q_dist) in &self.0 {
+
                 let d = manhattan_distance(p, q);
-                // For part 2: d < 21 instead of d == 2
+
+                // For part 2: d < 21 instead of d == 2; less efficient as it checks all position pairs
+
+                // p and q are within 20 MANHATTAN DISTANCE steps of each other --and-- saves enough time (TOTAL COST/steps)
                 if d < 21 && p_dist - q_dist - d >= TARGET_PICOSECONDS {
+                    // we found a shortcut that saves enough time
                     count += 1;
                 }
             }
@@ -152,6 +159,15 @@ mod tests {
     use super::*;
 
     use ornaments::Part;
+
+    // use rstest::rstest;
+
+    // #[rstest]
+    // #[case(2, "14")]
+    // #[case("", "")]
+    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
+    //     assert_eq!(process(input).unwrap(), expected);
+    // }
 
     #[test]
     fn test_part1() -> miette::Result<()> {
@@ -170,9 +186,17 @@ mod tests {
 #.#.#.#.#.#.###
 #...#...#...###
 ###############";
+        // > 100 ps
         assert_eq!("0", Day::parse(input).solve(Part::One)?);
         Ok(())
     }
+
+    // #[rstest]
+    // #[case(50, "32")]
+    // #[case("", "")]
+    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
+    //     assert_eq!(process(input).unwrap(), expected);
+    // }
 
     #[test]
     fn test_part2() -> miette::Result<()> {
@@ -191,6 +215,7 @@ mod tests {
 #.#.#.#.#.#.###
 #...#...#...###
 ###############";
+        // > 50 ps
         assert_eq!("0", Day::parse(input).solve(Part::Two)?);
         Ok(())
     }
