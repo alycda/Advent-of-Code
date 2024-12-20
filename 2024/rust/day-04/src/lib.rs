@@ -1,4 +1,17 @@
 //! Day 4: Ceres Search
+//! 
+//! Word Search
+//! 
+//! --- Part One ---
+//! 
+//! find XMAS in all 8 directions
+//! 
+//! --- Part Two ---
+//! 
+//! find two MAS in the shape of an X
+//! 
+
+use std::marker::PhantomData;
 
 use ornaments::{AocError, Grid, Position, Solution, UniquePositions, ALL_DIRECTIONS, DIAGONALS};
 
@@ -9,9 +22,13 @@ pub trait Pattern: Default {
     fn find_starting_positions(grid: &Grid<char>) -> UniquePositions;
 }
 
+/// Pattern implementation for finding "XMAS" strings
+/// Starting with 'X' and searching in all directions
 #[derive(Default)]
 pub struct XmasPattern;
 
+/// Pattern implementation for finding crossed "MAS" patterns
+/// Forms an X shape with specific character arrangements
 #[derive(Default)]
 pub struct CrossPattern;
 
@@ -30,6 +47,7 @@ impl Pattern for XmasPattern {
             })
     }
 
+    /// Finds all 'X' characters in the grid
     fn find_starting_positions(grid: &Grid<char>) -> UniquePositions {
         let mut positions = UniquePositions::new();
         grid.walk(|pos| {
@@ -42,6 +60,7 @@ impl Pattern for XmasPattern {
 }
 
 impl Pattern for CrossPattern {
+    /// Checks diagonal positions for valid "MAS" cross patterns
     fn matches(&self, grid: &Grid<char>, pos: Position) -> bool {        
         let chars: Vec<char> = DIAGONALS.iter()
             .filter_map(|&dir| {
@@ -61,6 +80,7 @@ impl Pattern for CrossPattern {
             &['S', 'S', 'M', 'M'])
     }
 
+    /// Finds all 'A' characters in the grid
     fn find_starting_positions(grid: &Grid<char>) -> UniquePositions {
         let mut positions = UniquePositions::new();
         grid.walk(|pos| {
@@ -72,13 +92,15 @@ impl Pattern for CrossPattern {
     }
 }
 
+/// Using generics and PhantomData for parsing flexibility
 pub struct Day4<P: Pattern> {
     grid: Grid<char>,
     set: UniquePositions,
-    pattern: P
+    /// only used for type checking, not actual ownership
+    _pattern: PhantomData<P>
 }
 
-impl<P: Pattern> Solution for Day4<P> {
+impl<P: Pattern> Solution for Day<P> {
     type Output = usize;
     type Item = UniquePositions;
 
@@ -89,10 +111,11 @@ impl<P: Pattern> Solution for Day4<P> {
         Self {
             grid,
             set,
-            pattern: P::default()
+            _pattern: PhantomData
         }
     }
 
+    /// Counts occurrences of "MAS" pattern in all directions
     fn part1(&mut self) -> Result<Self::Output, AocError> {
         // XmasPattern impl maintains original functionality
         let output = self.set.iter()
@@ -109,9 +132,13 @@ impl<P: Pattern> Solution for Day4<P> {
         Ok(output)
     }
 
+    /// Counts occurrences of "MAS" pattern in diagonals
     fn part2(&mut self) -> Result<Self::Output, AocError> {
+        // Create temporary Pattern instance just for matching
+        let pattern = P::default();
+
         Ok(self.set.iter()
-            .filter(|&pos| self.pattern.matches(&self.grid, *pos))
+            .filter(|&pos| pattern.matches(&self.grid, *pos))
             .count())
     }
 }
