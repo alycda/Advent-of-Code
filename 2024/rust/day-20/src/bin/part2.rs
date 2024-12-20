@@ -16,11 +16,6 @@ fn main() -> miette::Result<()> {
     let file = include_str!("../../input.txt");
     let result = process(file, 100).context("process part 2")?;
     println!("{}", result);
+
     Ok(())
 }
-
-// > 5125
-// < 1730645
-// > 43853
-// ! 1725962
-// ? 1012821
