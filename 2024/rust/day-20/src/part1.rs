@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::AocError;
 
@@ -175,7 +175,7 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
     let mut peekable = input.lines().peekable();
     let cols = peekable.peek().unwrap().chars().count();
     let rows = peekable.count();
- 
+
     let grid = Grid::new(cols, rows);
 
     let walls = input.lines()
@@ -190,105 +190,56 @@ pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError
                         None
                     }
                 })
-                .collect::<Vec<IVec2>>()
-        }).fold(HashSet::new(), |mut set, position| {
-            set.insert(position);
-            set
-        });
+        }).collect::<HashSet<_>>();
 
     let start = grid.to_position(input.find("S").unwrap());
     let end = grid.to_position(input.find("E").unwrap());
- 
-    // Create distance matrices initialized to u32::MAX
-    let mut start_distance = vec![vec![u32::MAX; cols]; rows];
-    let mut end_distance = vec![vec![u32::MAX; cols]; rows];
- 
-    // Calculate distances from start
-    let mut queue = VecDeque::new();
-    queue.push_back((start, 0));
-    start_distance[start.y as usize][start.x as usize] = 0;
-    
-    while let Some((pos, cost)) = queue.pop_front() {
-        for dir in DIRECTIONS {
-            let next = pos + dir;
-            if next.x >= 0 && next.x < cols as i32 && 
-               next.y >= 0 && next.y < rows as i32 {
-                let next_cost = cost + 1;
-                if !walls.contains(&next) && 
-                   start_distance[next.y as usize][next.x as usize] == u32::MAX {
-                    start_distance[next.y as usize][next.x as usize] = next_cost;
-                    queue.push_back((next, next_cost));
-                }
+
+    // Track minimum distances to each position
+    let mut track = HashMap::new();
+    let mut current = start;
+    let mut current_step = 0;
+    track.insert(current, current_step);
+
+    // Build the minimal path
+    while current != end {
+        current_step += 1;
+        
+        for dir in DIRECTIONS.iter() {
+            let next = current + *dir;
+            if !track.contains_key(&next) && 
+               next.x >= 0 && next.x < cols as i32 && 
+               next.y >= 0 && next.y < rows as i32 && 
+               !walls.contains(&next) {
+                current = next;
+                track.insert(current, current_step);
+                break;
             }
         }
     }
- 
-    // Calculate distances from end (same process)
-    queue.clear();
-    queue.push_back((end, 0));
-    end_distance[end.y as usize][end.x as usize] = 0;
- 
-    while let Some((pos, cost)) = queue.pop_front() {
-        for dir in DIRECTIONS {
-            let next = pos + dir;
-            if next.x >= 0 && next.x < cols as i32 && 
-               next.y >= 0 && next.y < rows as i32 {
-                let next_cost = cost + 1;
-                if !walls.contains(&next) && 
-                   end_distance[next.y as usize][next.x as usize] == u32::MAX {
-                    end_distance[next.y as usize][next.x as usize] = next_cost;
-                    queue.push_back((next, next_cost));
-                }
-            }
-        }
-    }
- 
-    let orig_distance = start_distance[end.y as usize][end.x as usize];
+
     let mut count = 0;
- 
-    // Check all possible midpoints
-    for y in 0..rows {
-        for x in 0..cols {
-            let mid = IVec2::new(x as i32, y as i32);
-            if walls.contains(&mid) || start_distance[y][x] == u32::MAX {
-                continue;
-            }
- 
-            // Check all points at manhattan distance 2
-            for dy in -2..=2 {
-                for dx in -2..=2 {
-                    let offset = IVec2::new(dx, dy);
-                    if offset.x.abs() + offset.y.abs() != 2 {
-                        continue;
-                    }
- 
-                    let end_point = mid + offset;
-                    if end_point.x < 0 || end_point.x >= cols as i32 || 
-                       end_point.y < 0 || end_point.y >= rows as i32 {
-                        continue;
-                    }
- 
-                    if walls.contains(&end_point) {
-                        continue;
-                    }
- 
-                    let end_y = end_point.y as usize;
-                    let end_x = end_point.x as usize;
-                    if end_distance[end_y][end_x] == u32::MAX {
-                        continue;
-                    }
- 
-                    let new_distance = start_distance[y][x] + end_distance[end_y][end_x] + 2;
-                    if new_distance + target_ps as u32 == orig_distance {
-                        count += 1;
-                    }
+    
+    // Check each position we've found
+    for (&pos, &steps) in &track {
+        for dir in DIRECTIONS.iter() {
+            let wall_pos = pos + *dir;
+            let two_away = pos + *dir * 2;
+            
+            // Must not have been in our path
+            if !track.contains_key(&wall_pos) && 
+               // Must lead to a position we did reach
+               track.contains_key(&two_away) {
+                // Check if this shortcut saves enough time
+                if track[&two_away] - steps >= target_ps as u32 + 2 {
+                    count += 1;
                 }
             }
         }
     }
- 
+
     Ok(count.to_string())
- }
+}
 
 #[cfg(test)]
 mod tests {
