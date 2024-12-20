@@ -172,68 +172,53 @@ pub fn bfs(grid: PhantomGrid, start: Position, end: Position, path_cost: &mut Ve
 
 // #[tracing::instrument]
 pub fn process(input: &str, target_ps: usize) -> miette::Result<String, AocError> {
-    let mut peekable = input.lines().peekable();
-    let cols = peekable.peek().unwrap().chars().count();
-    let rows = peekable.count();
+    let lines: Vec<&str> = input.lines().collect();
+    let rows = lines.len();
+    let cols = lines[0].len();
 
     let grid = Grid::new(cols, rows);
 
-    let walls = input.lines()
-        .enumerate()
-        .flat_map(|(row, line)| {
-            line.chars()
-                .enumerate()
-                .filter_map(move |(col, c)| {
-                    if c == '#' {
-                        Some(IVec2::new(col as i32, row as i32))
-                    } else {
-                        None
-                    }
-                })
-        }).collect::<HashSet<_>>();
+    // Find start and end
+    let mut start = IVec2::ZERO;
+    let mut end = IVec2::ZERO;
+    for (i, line) in lines.iter().enumerate() {
+        if let Some(j) = line.find('S') {
+            start = IVec2::new(j as i32, i as i32);
+        }
+        if let Some(j) = line.find('E') {
+            end = IVec2::new(j as i32, i as i32);
+        }
+    }
 
-    let start = grid.to_position(input.find("S").unwrap());
-    let end = grid.to_position(input.find("E").unwrap());
-
-    // Track minimum distances to each position
+    // Track distances using BFS
     let mut track = HashMap::new();
-    let mut current = start;
-    let mut current_step = 0;
-    track.insert(current, current_step);
+    let mut queue = VecDeque::new();
+    queue.push_back((start, 0));
+    track.insert(start, 0);
 
-    // Build the minimal path
-    while current != end {
-        current_step += 1;
-        
-        for dir in DIRECTIONS.iter() {
-            let next = current + *dir;
-            if !track.contains_key(&next) && 
-               next.x >= 0 && next.x < cols as i32 && 
-               next.y >= 0 && next.y < rows as i32 && 
-               !walls.contains(&next) {
-                current = next;
-                track.insert(current, current_step);
-                break;
+    while let Some((pos, steps)) = queue.pop_front() {
+        for dir in DIRECTIONS {
+            let next = pos + dir;
+            if next.x >= 0 && next.x < cols as i32 && 
+               next.y >= 0 && next.y < rows as i32 &&
+               !track.contains_key(&next) &&
+               lines[next.y as usize].chars().nth(next.x as usize).unwrap() != '#' {
+                track.insert(next, steps + 1);
+                queue.push_back((next, steps + 1));
             }
         }
     }
 
     let mut count = 0;
-    
-    // Check each position we've found
     for (&pos, &steps) in &track {
-        for dir in DIRECTIONS.iter() {
-            let wall_pos = pos + *dir;
-            let two_away = pos + *dir * 2;
+        for dir in DIRECTIONS {
+            let wall_pos = pos + dir;
+            let two_away = pos + dir * 2;
             
-            // Must not have been in our path
             if !track.contains_key(&wall_pos) && 
-               // Must lead to a position we did reach
-               track.contains_key(&two_away) {
-                // Check if this shortcut saves enough time
-                if track[&two_away] - steps >= target_ps as u32 + 2 {
-                    count += 1;
-                }
+               track.contains_key(&two_away) && 
+               track[&two_away] - steps >= target_ps as i32 + 2 {
+                count += 1;
             }
         }
     }
