@@ -80,14 +80,14 @@ where T: Component
     // let y_position = (index as f32) * -50.0 + 200.0;
     let y_position = 95.0 - (index as f32 * 85.0);
 
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.35, 0.75, 0.35),
-            custom_size: Some(Vec2::new(35.0, 35.0)),
-            ..default()
-        },
-        Transform::from_xyz(x_offset, y_position, 0.0)
-    ));
+    // commands.spawn((
+    //     Sprite {
+    //         color: Color::srgb(0.35, 0.75, 0.35),
+    //         custom_size: Some(Vec2::new(35.0, 35.0)),
+    //         ..default()
+    //     },
+    //     Transform::from_xyz(x_offset, y_position, 0.0)
+    // ));
 
     // commands.spawn((
     //     Number::<T>::new(value, index),
@@ -100,6 +100,32 @@ where T: Component
     // ));
 
     println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
+
+    commands.spawn((
+        Number::<T>::new(value, index),
+        Sprite {
+            color: if std::any::TypeId::of::<T>() == std::any::TypeId::of::<LeftList>() {
+                Color::srgb(0.35, 0.75, 0.35)
+            } else {
+                Color::srgb(0.75, 0.35, 0.75)
+            },
+            custom_size: Some(Vec2::new(20.0, 20.0)),
+            ..default()
+        },
+        Transform::from_xyz(x_offset, y_position, 0.0),
+    ))
+        .with_children(|parent| {
+            // Spawn Text2d as child
+            parent.spawn((
+                Text2d::new(value.to_string()),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextLayout::new_with_justify(JustifyText::Center),
+                Transform::from_xyz(0.0, 25.0, 0.0),  // Offset above sprite
+            ));
+        });
 
     // commands.spawn((
     //     Number::<T>::new(value, index),
