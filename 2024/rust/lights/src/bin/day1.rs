@@ -3,10 +3,10 @@ use bevy::prelude::*;
 use std::marker::PhantomData;
 
 // Marker components for our two lists
-#[derive(Component)]
+#[derive(Component, Default)]
 struct LeftList;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct RightList;
 
 // Generic number component that can be specialized
@@ -32,6 +32,12 @@ struct NumberBundle<T: Component> {
     number: Number<T>,
     // Spatial components
     // sprite: Text2dBundle,
+    text: Text,
+    text_transform: Transform,
+    global_transform: GlobalTransform,
+    visibility: Visibility,
+    computed_visibility: InheritedVisibility,
+    text_2d: Text2d,
 }
 
 fn main() {
@@ -69,15 +75,18 @@ fn spawn_number<T>(commands: &mut Commands, value: i32, index: usize)
 where T: Component
 {
     let x_offset = if std::any::TypeId::of::<T>() == std::any::TypeId::of::<LeftList>() {
-        -300.0
+        -30.0
     } else {
-        300.0
+        30.0
     };
-    let y_position = (index as f32) * -50.0 + 200.0;
+    // let y_position = (index as f32) * -50.0 + 200.0;
+    let y_position = 30.0 - (index as f32 * 100.0);
 
-    // commands.spawn((
-    //     NumberBundle {
-    //         number: Number::<T>::new(value, index),
+    println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
+
+    commands.spawn((
+        NumberBundle {
+            number: Number::<T>::new(value, index),
     //         sprite: Text2dBundle {
     //             text: Text::from_section(
     //                 value.to_string(),
@@ -90,7 +99,21 @@ where T: Component
     //             transform: Transform::from_xyz(x_offset, y_position, 0.0),
     //             ..default()
     //         },
-    //     },
-    //     T::default(),
-    // ));
+            // text: Text::from_section(
+            //     value.to_string(),
+            //     TextStyle {
+            //         font_size: 40.0,
+            //         color: Color::WHITE,
+            //         ..default()
+            //     },
+            // ),
+            text: Text::new(value.to_string()),
+            text_transform: Transform::from_xyz(x_offset, y_position, 0.0),
+            global_transform: GlobalTransform::default(),
+            visibility: Visibility::Visible,
+            computed_visibility: InheritedVisibility::default(),
+            text_2d: Text2d::default(),
+        },
+        // T::default(),
+    ));
 }
