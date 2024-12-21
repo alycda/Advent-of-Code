@@ -206,7 +206,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     current = target;
                 }
             }
-            dbg!(number_path)
+            dbg!(&number_path.iter().collect::<String>());
+
+            number_path
         })
         .map(|numeric_path| {
             let mut dir_current = 'A';
@@ -219,7 +221,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     dir_current = command;
                 }
             }
-            dbg!(dir_path_a)
+            dbg!(&dir_path_a.iter().collect::<String>());
+
+            dir_path_a
         })
         .map(|dir_path_a| {
             let mut dir_current = 'A';
@@ -232,13 +236,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                     dir_current = command;
                 }
             }
-            dbg!(dir_path_b)
+            dbg!(&dir_path_b.iter().collect::<String>());
+
+            dir_path_b
         })
         .collect::<Vec<_>>();
 
     // dbg!(&output.len());
 
     let final_output: usize = input.lines().enumerate().map(|(idx, line)| {
+        // dbg!(&line);
+
         let num: usize = line.chars().filter_map(|c| {
             if c.is_ascii_digit() {
                 Some(c)
