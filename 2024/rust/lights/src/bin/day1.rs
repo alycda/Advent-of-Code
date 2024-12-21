@@ -27,16 +27,16 @@ impl<T: Component> Number<T> {
     }
 }
 
-#[derive(Bundle)]
-struct NumberBundle<T: Component> {
-    number: Number<T>,
-    text: Text,
-    text_transform: Transform,
-    global_transform: GlobalTransform,
-    visibility: Visibility,
-    computed_visibility: InheritedVisibility,
-    text_2d: Text2d,
-}
+// #[derive(Bundle)]
+// struct NumberBundle<T: Component> {
+//     number: Number<T>,
+//     text: Text,
+//     text_transform: Transform,
+//     global_transform: GlobalTransform,
+//     visibility: Visibility,
+//     computed_visibility: InheritedVisibility,
+//     text_2d: Text2d,
+// }
 
 fn main() {
     App::new()
@@ -55,8 +55,8 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d::default());
 
     // Example data
-    let left = vec![1, 3, 5, 7];
-    let right = vec![2, 4, 6, 8];
+    let left = vec![1]; //, 3, 5, 7];
+    let right = vec![2]; //, 4, 6, 8];
 
     // Spawn left numbers
     for (idx, &value) in left.iter().enumerate() {
@@ -80,16 +80,6 @@ where T: Component
     // let y_position = (index as f32) * -50.0 + 200.0;
     let y_position = 30.0 - (index as f32 * 25.0);
 
-    // commands.spawn(SpriteBundle {
-    //     sprite: Sprite {
-    //         color: Color::RED,
-    //         custom_size: Some(Vec2::new(5.0, 5.0)),
-    //         ..default()
-    //     },
-    //     transform: Transform::from_xyz(x_offset, y_position, 0.0),
-    //     ..default()
-    // });
-
     commands.spawn((
         Sprite {
             color: Color::srgb(0.35, 0.75, 0.35),
@@ -99,18 +89,28 @@ where T: Component
         Transform::from_xyz(x_offset, y_position, 0.0)
     ));
 
+    commands.spawn((
+        Number::<T>::new(value, index),
+        Text::new(value.to_string()),
+        Transform::from_xyz(x_offset, y_position, 0.0),
+        GlobalTransform::default(),
+        Visibility::Visible,
+        InheritedVisibility::default(),
+        Text2d::default(),
+    ));
+
     println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
 
-    commands.spawn((
-        NumberBundle {
-            number: Number::<T>::new(value, index),
-            text: Text::new(value.to_string()),
-            text_transform: Transform::from_xyz(x_offset, y_position, 0.0),
-            global_transform: GlobalTransform::default(),
-            visibility: Visibility::Visible,
-            computed_visibility: InheritedVisibility::default(),
-            text_2d: Text2d::default(),
-        },
-        // T::default(),
-    ));
+    // commands.spawn((
+    //     NumberBundle {
+    //         number: Number::<T>::new(value, index),
+    //         text: Text::new(value.to_string()),
+    //         text_transform: Transform::from_xyz(x_offset, y_position, 0.0),
+    //         global_transform: GlobalTransform::default(),
+    //         visibility: Visibility::Visible,
+    //         computed_visibility: InheritedVisibility::default(),
+    //         text_2d: Text2d::default(),
+    //     },
+    //     // T::default(),
+    // ));
 }
