@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::{collections::{HashMap, HashSet, VecDeque}, hash::Hash};
 
 use crate::AocError;
 
@@ -70,6 +70,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 1,2,3
 ,0,A";
 
+    let dir_keypad = ",^,A
+<,v,>";
+
     let num_grid = Grid(numeric_keypad.lines()
         .map(|line| line.split(',')
             // .map(
@@ -79,6 +82,13 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .collect::<Vec<Vec<_>>>());
 
     // dbg!(&num_grid);
+
+    let dir_grid = Grid(dir_keypad.lines()
+        .map(|line| line.split(',')
+        .collect::<Vec<_>>())
+        .collect::<Vec<Vec<_>>>());
+
+    // dbg!(&dir_grid);
 
     let char_positions: HashMap<char, Position> = num_grid.0
         .iter()
@@ -94,9 +104,27 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         })
         .collect();
 
-    dbg!(&char_positions);
+    // dbg!(&char_positions);
 
-    let mut neighbors = HashMap::new();
+    let arrow_positions: HashMap<char, Position> = dir_grid.0
+        .iter()
+        .enumerate()
+        .flat_map(|(y, row)| {
+            row.iter().enumerate().filter_map(move |(x, cell)| {
+                if cell.is_empty() {
+                    None
+                } else {
+                    Some((cell.chars().next().unwrap(), Position::new(x as i32, y as i32)))
+                }
+            })
+        })
+        .collect();
+
+    // dbg!(&arrow_positions);
+
+    let mut char_neighbors = HashMap::new();
+
+    let mut dir_neighbors = HashMap::new();
 
     num_grid.walk(|pos| {
         let char = num_grid.get_at_unbounded(pos);
@@ -126,7 +154,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 })
                 .collect::<Vec<_>>();
 
-            neighbors.insert(char.to_owned(), n);
+            char_neighbors.insert(char.to_owned(), n);
         }
 
         // for neighbor in DIRECTIONS {
@@ -137,33 +165,65 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         // }
     });
 
-    dbg!(&neighbors);
+    // dbg!(&char_neighbors);
 
-    // let output = input
-    //     .lines()
-    //     .inspect(|line| {
-    //         dbg!(line);
-    //     })
-    //     .count();
-    
+    dir_grid.walk(|pos| {
+        let char = dir_grid.get_at_unbounded(pos);
+        // dbg!(pos, &char);
+
+        if !char.is_empty() {
+            let n = DIRECTIONS.iter()
+                .map(|dir| pos + dir)
+                .filter_map(|pos| {
+                    let c = dir_grid.get_at(pos);
+
+                    // dbg!(&c);
+
+                    if c.is_some_and(|c| c.is_empty()) {
+                        None
+                    } else {
+                        c
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            dir_neighbors.insert(char.to_owned(), n);
+        }
+    });
+
+    // dbg!(&dir_neighbors);
+
     let output = input
         .lines()
         .map(|code| {
             let mut current = 'A';
-            let mut full_path = Vec::new();
+            let mut number_path = Vec::new();
             
             for target in code.chars() {
-                if let Some(path) = find_shortest_path(current, target, &char_positions, &neighbors) {
-                    full_path.extend(path);
-                    full_path.push('A'); // Add button press
+                if let Some(path) = find_shortest_path(current, target, &char_positions, &char_neighbors) {
+                    number_path.extend(path);
+                    number_path.push('A'); // Add button press
                     current = target;
                 }
             }
-            full_path
+            dbg!(number_path)
+        })
+        .map(|numeric_path| {
+            let mut dir_current = 'A';
+            let mut dir_path = Vec::new();
+            
+            for command in numeric_path {
+                if let Some(path) = find_shortest_path(dir_current, command, &arrow_positions, &dir_neighbors) {
+                    dir_path.extend(path);
+                    dir_path.push('A');
+                    dir_current = command;
+                }
+            }
+            dbg!(dir_path)
         })
         .collect::<Vec<_>>();
 
-    dbg!(&output);
+    // dbg!(&output);
 
     Ok(output.len().to_string())
 }
