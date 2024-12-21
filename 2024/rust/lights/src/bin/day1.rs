@@ -30,8 +30,6 @@ impl<T: Component> Number<T> {
 #[derive(Bundle)]
 struct NumberBundle<T: Component> {
     number: Number<T>,
-    // Spatial components
-    // sprite: Text2dBundle,
     text: Text,
     text_transform: Transform,
     global_transform: GlobalTransform,
@@ -80,33 +78,32 @@ where T: Component
         30.0
     };
     // let y_position = (index as f32) * -50.0 + 200.0;
-    let y_position = 30.0 - (index as f32 * 100.0);
+    let y_position = 30.0 - (index as f32 * 25.0);
+
+    // commands.spawn(SpriteBundle {
+    //     sprite: Sprite {
+    //         color: Color::RED,
+    //         custom_size: Some(Vec2::new(5.0, 5.0)),
+    //         ..default()
+    //     },
+    //     transform: Transform::from_xyz(x_offset, y_position, 0.0),
+    //     ..default()
+    // });
+
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.35, 0.75, 0.35),
+            custom_size: Some(Vec2::new(5.0, 5.0)),
+            ..default()
+        },
+        Transform::from_xyz(x_offset, y_position, 0.0)
+    ));
 
     println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
 
     commands.spawn((
         NumberBundle {
             number: Number::<T>::new(value, index),
-    //         sprite: Text2dBundle {
-    //             text: Text::from_section(
-    //                 value.to_string(),
-    //                 TextStyle {
-    //                     font_size: 40.0,
-    //                     color: Color::WHITE,
-    //                     ..default()
-    //                 },
-    //             ),
-    //             transform: Transform::from_xyz(x_offset, y_position, 0.0),
-    //             ..default()
-    //         },
-            // text: Text::from_section(
-            //     value.to_string(),
-            //     TextStyle {
-            //         font_size: 40.0,
-            //         color: Color::WHITE,
-            //         ..default()
-            //     },
-            // ),
             text: Text::new(value.to_string()),
             text_transform: Transform::from_xyz(x_offset, y_position, 0.0),
             global_transform: GlobalTransform::default(),
