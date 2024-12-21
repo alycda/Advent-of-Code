@@ -221,19 +221,19 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             }
             dbg!(dir_path_a)
         })
-        // .map(|dir_path_a| {
-        //     let mut dir_current = 'A';
-        //     let mut dir_path_b = Vec::new();
+        .map(|dir_path_a| {
+            let mut dir_current = 'A';
+            let mut dir_path_b = Vec::new();
             
-        //     for command in dir_path_a {
-        //         if let Some(path) = find_shortest_path(dir_current, command, &arrow_positions, &dir_neighbors) {
-        //             dir_path_b.extend(path);
-        //             dir_path_b.push('A');
-        //             dir_current = command;
-        //         }
-        //     }
-        //     dbg!(dir_path_b)
-        // })
+            for command in dir_path_a {
+                if let Some(path) = find_shortest_path(dir_current, command, &arrow_positions, &dir_neighbors) {
+                    dir_path_b.extend(path);
+                    dir_path_b.push('A');
+                    dir_current = command;
+                }
+            }
+            dbg!(dir_path_b)
+        })
         .collect::<Vec<_>>();
 
     // dbg!(&output.len());
@@ -247,7 +247,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             }
         }).collect::<String>().parse().unwrap();
 
-        dbg!(num * output[idx].len())
+        dbg!(num, output[idx].len());
+
+        num * (output[idx].len() - 2)
     }).sum();
 
     Ok(final_output.to_string())
