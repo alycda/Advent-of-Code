@@ -102,20 +102,32 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         let char = num_grid.get_at_unbounded(pos);
         // dbg!(pos, &char);
 
-        let n = DIRECTIONS.iter()
-            .map(|dir| pos + dir)
-            .filter_map(|pos| {
-                num_grid.get_at(pos)
+        if !char.is_empty() {
+            let n = DIRECTIONS.iter()
+                .map(|dir| pos + dir)
+                .filter_map(|pos| {
+                    let c = num_grid.get_at(pos);
 
-                // if let Some(num) = num_grid.get_at(pos) {
-                //     Some((num, pos))
-                // } else {
-                //     None
-                // }
-            })
-            .collect::<Vec<_>>();
+                    // dbg!(&c);
 
-        neighbors.insert(char, neighbors);
+                    if c.is_some_and(|c| c.is_empty()) {
+                        None
+                    } else {
+                        c
+                    }
+
+                    // num_grid.get_at(pos)
+
+                    // if let Some(num) = num_grid.get_at(pos) {
+                    //     Some((num, pos))
+                    // } else {
+                    //     None
+                    // }
+                })
+                .collect::<Vec<_>>();
+
+            neighbors.insert(char.to_owned(), n);
+        }
 
         // for neighbor in DIRECTIONS {
         //     let peek = pos + neighbor;
@@ -151,6 +163,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         })
         .collect::<Vec<_>>();
 
+    dbg!(&output);
+
     Ok(output.len().to_string())
 }
 
@@ -159,7 +173,7 @@ fn find_shortest_path(
     from: char,
     to: char,
     char_positions: &HashMap<char, Position>,
-    neighbors: &HashMap<&str, Vec<String>>
+    neighbors: &HashMap<String, Vec<&str>>
 ) -> Option<Vec<char>> {
     let mut queue = VecDeque::new();
     let mut visited = HashSet::new();
@@ -175,9 +189,9 @@ fn find_shortest_path(
         }
 
         // Get neighbors of current position
-        if let Some(next_positions) = neighbors.get(current) {
+        if let Some(next_positions) = neighbors.get(&current.to_string()) {
             for next in next_positions {
-                let next_char = next.chars().next().unwrap();
+                let next_char = next.chars().next().expect("Empty string");
                 if !visited.insert(next_char) {
                     continue;
                 }
