@@ -210,22 +210,47 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         })
         .map(|numeric_path| {
             let mut dir_current = 'A';
-            let mut dir_path = Vec::new();
+            let mut dir_path_a = Vec::new();
             
             for command in numeric_path {
                 if let Some(path) = find_shortest_path(dir_current, command, &arrow_positions, &dir_neighbors) {
-                    dir_path.extend(path);
-                    dir_path.push('A');
+                    dir_path_a.extend(path);
+                    dir_path_a.push('A');
                     dir_current = command;
                 }
             }
-            dbg!(dir_path)
+            dbg!(dir_path_a)
         })
+        // .map(|dir_path_a| {
+        //     let mut dir_current = 'A';
+        //     let mut dir_path_b = Vec::new();
+            
+        //     for command in dir_path_a {
+        //         if let Some(path) = find_shortest_path(dir_current, command, &arrow_positions, &dir_neighbors) {
+        //             dir_path_b.extend(path);
+        //             dir_path_b.push('A');
+        //             dir_current = command;
+        //         }
+        //     }
+        //     dbg!(dir_path_b)
+        // })
         .collect::<Vec<_>>();
 
-    // dbg!(&output);
+    // dbg!(&output.len());
 
-    Ok(output.len().to_string())
+    let final_output: usize = input.lines().enumerate().map(|(idx, line)| {
+        let num: usize = line.chars().filter_map(|c| {
+            if c.is_ascii_digit() {
+                Some(c)
+            } else {
+                None
+            }
+        }).collect::<String>().parse().unwrap();
+
+        dbg!(num * output[idx].len())
+    }).sum();
+
+    Ok(final_output.to_string())
 }
 
 
