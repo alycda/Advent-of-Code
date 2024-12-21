@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::AocError;
 
@@ -96,13 +96,13 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     dbg!(&char_positions);
 
-    let mut a = HashMap::new();
+    let mut neighbors = HashMap::new();
 
     num_grid.walk(|pos| {
         let char = num_grid.get_at_unbounded(pos);
         // dbg!(pos, &char);
 
-        let neighbors = DIRECTIONS.iter()
+        let n = DIRECTIONS.iter()
             .map(|dir| pos + dir)
             .filter_map(|pos| {
                 num_grid.get_at(pos)
@@ -115,7 +115,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             })
             .collect::<Vec<_>>();
 
-        a.insert(char, neighbors);
+        neighbors.insert(char, neighbors);
 
         // for neighbor in DIRECTIONS {
         //     let peek = pos + neighbor;
@@ -125,11 +125,87 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         // }
     });
 
-    dbg!(&a);
+    dbg!(&neighbors);
 
-    let output = input.lines().count();
+    // let output = input
+    //     .lines()
+    //     .inspect(|line| {
+    //         dbg!(line);
+    //     })
+    //     .count();
+    
+    let output = input
+        .lines()
+        .map(|code| {
+            let mut current = 'A';
+            let mut full_path = Vec::new();
+            
+            for target in code.chars() {
+                if let Some(path) = find_shortest_path(current, target, &char_positions, &neighbors) {
+                    full_path.extend(path);
+                    full_path.push('A'); // Add button press
+                    current = target;
+                }
+            }
+            full_path
+        })
+        .collect::<Vec<_>>();
 
-    Ok(output.to_string())
+    Ok(output.len().to_string())
+}
+
+
+fn find_shortest_path(
+    from: char,
+    to: char,
+    char_positions: &HashMap<char, Position>,
+    neighbors: &HashMap<&str, Vec<String>>
+) -> Option<Vec<char>> {
+    let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
+    
+    // (current_char, path_so_far)
+    queue.push_back((from, Vec::new()));
+    visited.insert(from);
+
+    while let Some((current, path)) = queue.pop_front() {
+        // Found target
+        if current == to {
+            return Some(path);
+        }
+
+        // Get neighbors of current position
+        if let Some(next_positions) = neighbors.get(current) {
+            for next in next_positions {
+                let next_char = next.chars().next().unwrap();
+                if !visited.insert(next_char) {
+                    continue;
+                }
+
+                // Calculate direction to add to path
+                let curr_pos = char_positions.get(&current).unwrap();
+                let next_pos = char_positions.get(&next_char).unwrap();
+                let direction = get_direction(*curr_pos, *next_pos);
+
+                let mut new_path = path.clone();
+                new_path.push(direction);
+                
+                queue.push_back((next_char, new_path));
+            }
+        }
+    }
+    None
+}
+
+fn get_direction(from: Position, to: Position) -> char {
+    let diff = to - from;
+    match (diff.x, diff.y) {
+        (0, -1) => '^',
+        (0, 1) => 'v',
+        (-1, 0) => '<',
+        (1, 0) => '>',
+        _ => panic!("Invalid move")
+    }
 }
 
 #[cfg(test)]
