@@ -55,8 +55,8 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d::default());
 
     // Example data
-    let left = vec![1]; //, 3, 5, 7];
-    let right = vec![2]; //, 4, 6, 8];
+    let left = vec![1, 3, 5, 7];
+    let right = vec![2, 4, 6, 8];
 
     // Spawn left numbers
     for (idx, &value) in left.iter().enumerate() {
@@ -73,33 +73,44 @@ fn spawn_number<T>(commands: &mut Commands, value: i32, index: usize)
 where T: Component
 {
     let x_offset = if std::any::TypeId::of::<T>() == std::any::TypeId::of::<LeftList>() {
-        -30.0
+        -40.0
     } else {
-        30.0
+        40.0
     };
     // let y_position = (index as f32) * -50.0 + 200.0;
-    let y_position = 30.0 - (index as f32 * 25.0);
+    let y_position = 95.0 - (index as f32 * 85.0);
 
     commands.spawn((
         Sprite {
             color: Color::srgb(0.35, 0.75, 0.35),
-            custom_size: Some(Vec2::new(5.0, 5.0)),
+            custom_size: Some(Vec2::new(35.0, 35.0)),
             ..default()
         },
         Transform::from_xyz(x_offset, y_position, 0.0)
     ));
 
-    commands.spawn((
-        Number::<T>::new(value, index),
-        Text::new(value.to_string()),
-        Transform::from_xyz(x_offset, y_position, 0.0),
-        GlobalTransform::default(),
-        Visibility::Visible,
-        InheritedVisibility::default(),
-        Text2d::default(),
-    ));
+    // commands.spawn((
+    //     Number::<T>::new(value, index),
+    //     Text::new(value.to_string()),
+    //     Transform::from_xyz(x_offset, y_position, 0.0),
+    //     GlobalTransform::default(),
+    //     Visibility::Visible,
+    //     InheritedVisibility::default(),
+    //     Text2d::default(),
+    // ));
 
     println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
+
+    // commands.spawn((
+    //     Number::<T>::new(value, index),
+    //     Sprite {
+    //         color: Color::BLACK,
+    //         custom_size: Some(Vec2::new(20.0, 20.0)),
+    //         ..default()
+    //     },
+    //     Text::new(value.to_string()),
+    //     Transform::from_xyz(x_offset, y_position, 0.0),
+    // ));
 
     // commands.spawn((
     //     NumberBundle {
