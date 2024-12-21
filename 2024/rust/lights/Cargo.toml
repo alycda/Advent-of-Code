@@ -6,3 +6,4 @@ rust-version = "1.85"
 
 [dependencies]
 bevy = { version = "0.15.0" }
+# day_01.workspace = true

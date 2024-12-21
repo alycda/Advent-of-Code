@@ -27,17 +27,6 @@ impl<T: Component> Number<T> {
     }
 }
 
-// #[derive(Bundle)]
-// struct NumberBundle<T: Component> {
-//     number: Number<T>,
-//     text: Text,
-//     text_transform: Transform,
-//     global_transform: GlobalTransform,
-//     visibility: Visibility,
-//     computed_visibility: InheritedVisibility,
-//     text_2d: Text2d,
-// }
-
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -55,8 +44,8 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d::default());
 
     // Example data
-    let left = vec![1, 3, 5, 7];
-    let right = vec![2, 4, 6, 8];
+    let left = vec![3, 4, 2, 1, 3, 3];
+    let right = vec![4, 3, 5, 3, 9, 3];
 
     // Spawn left numbers
     for (idx, &value) in left.iter().enumerate() {
@@ -77,29 +66,9 @@ where T: Component
     } else {
         40.0
     };
-    // let y_position = (index as f32) * -50.0 + 200.0;
-    let y_position = 95.0 - (index as f32 * 85.0);
+    let y_position = 195.0 - (index as f32 * 85.0);
 
-    // commands.spawn((
-    //     Sprite {
-    //         color: Color::srgb(0.35, 0.75, 0.35),
-    //         custom_size: Some(Vec2::new(35.0, 35.0)),
-    //         ..default()
-    //     },
-    //     Transform::from_xyz(x_offset, y_position, 0.0)
-    // ));
-
-    // commands.spawn((
-    //     Number::<T>::new(value, index),
-    //     Text::new(value.to_string()),
-    //     Transform::from_xyz(x_offset, y_position, 0.0),
-    //     GlobalTransform::default(),
-    //     Visibility::Visible,
-    //     InheritedVisibility::default(),
-    //     Text2d::default(),
-    // ));
-
-    println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
+    // println!("Spawning number {} at position ({}, {})", value, x_offset, y_position);
 
     commands.spawn((
         Number::<T>::new(value, index),
@@ -120,34 +89,14 @@ where T: Component
                 Text2d::new(value.to_string()),
                 TextFont {
                     font_size: 20.0,
+                    // color: Color::BLACK,
                     ..default()
                 },
+                // Color::BLACK,
+                // Center both horizontally and vertically
                 TextLayout::new_with_justify(JustifyText::Center),
-                Transform::from_xyz(0.0, 25.0, 0.0),  // Offset above sprite
+                // Text will appear centered above the sprite
+                Transform::from_xyz(0.0, 5.0, 0.5), // keeping Z at 0 causes rendering issues where they're on the same layer and results in a flicker
             ));
         });
-
-    // commands.spawn((
-    //     Number::<T>::new(value, index),
-    //     Sprite {
-    //         color: Color::BLACK,
-    //         custom_size: Some(Vec2::new(20.0, 20.0)),
-    //         ..default()
-    //     },
-    //     Text::new(value.to_string()),
-    //     Transform::from_xyz(x_offset, y_position, 0.0),
-    // ));
-
-    // commands.spawn((
-    //     NumberBundle {
-    //         number: Number::<T>::new(value, index),
-    //         text: Text::new(value.to_string()),
-    //         text_transform: Transform::from_xyz(x_offset, y_position, 0.0),
-    //         global_transform: GlobalTransform::default(),
-    //         visibility: Visibility::Visible,
-    //         computed_visibility: InheritedVisibility::default(),
-    //         text_2d: Text2d::default(),
-    //     },
-    //     // T::default(),
-    // ));
 }
