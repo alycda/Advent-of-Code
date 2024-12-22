@@ -1,4 +1,4 @@
-//! Day 21: 
+//! Day 21: Keypad Conundrum
 
 use std::{collections::{HashMap, HashSet}, marker::PhantomData};
 
@@ -7,11 +7,48 @@ use ornaments::{AocError, Position, Solution};
 pub use crate::Day21 as Day;
 
 /// Positions
+/// 
+/// +---+---+---+
+/// | 7 | 8 | 9 |
+/// +---+---+---+
+/// | 4 | 5 | 6 |
+/// +---+---+---+
+/// | 1 | 2 | 3 |
+/// +---+---+---+
+///     | 0 | A |
+///     +---+---+
+/// 
+/// 
+///     +---+---+
+///     | ^ | A |
+/// +---+---+---+
+/// | < | v | > |
+/// +---+---+---+
+/// 
+/// 
+#[derive(Debug)]
 struct NumberPad;
 
 /// Directions
+/// 
+/// 
+///       +-----+-----+
+///       | 0,1 | 0,2 |
+/// +-----+-----+-----+
+/// | 1,0 | 1,1 | 1,2 |
+/// +-----+-----+-----+
+/// 
+/// 
+///        +------+-----+
+///        | -1,0 | ?,? |
+/// +------+------+-----+
+/// | 0,-1 |  1,0 | 0,1 |
+/// +------+------+-----+
+/// 
+#[derive(Debug)]
 struct DirectionPad;
 
+#[derive(Debug)]
 struct ButtonPad<T> {
     map: HashMap<char, Position>,
     _kind: PhantomData<T>,
@@ -28,11 +65,11 @@ impl<T> std::ops::Deref for ButtonPad<T> {
 impl Default for ButtonPad<NumberPad> {
     fn default() -> Self {
         let mut map = HashMap::new();
-        map.insert('7', Position::new(0, 0));
-        map.insert('8', Position::new(0, 1));
+        map.insert('7', Position::ZERO);
+        map.insert('8', Position::Y);
         map.insert('9', Position::new(0, 2));
-        map.insert('4', Position::new(1, 0));
-        map.insert('5', Position::new(1, 1));
+        map.insert('4', Position::X);
+        map.insert('5', Position::ONE);
         map.insert('6', Position::new(1, 2));
         map.insert('1', Position::new(2, 0));
         map.insert('2', Position::new(2, 1));
@@ -40,10 +77,10 @@ impl Default for ButtonPad<NumberPad> {
         map.insert('0', Position::new(3, 1));
         map.insert('A', Position::new(3, 2));
         //
-        map.insert('^', Position::new(0, 1));
+        map.insert('^', Position::Y);
         map.insert('a', Position::new(0, 2));
-        map.insert('<', Position::new(1, 0));
-        map.insert('v', Position::new(1, 1));
+        map.insert('<', Position::X);
+        map.insert('v', Position::ONE);
         map.insert('>', Position::new(1, 2));
         
         Self {
@@ -92,21 +129,23 @@ struct MoveKey {
 fn process(code: &str, cache: &mut HashMap<MoveKey, usize>, repeat: usize, depth: usize) -> usize {
     let buttons = ButtonPad::<NumberPad>::default();
 
+    // dbg!(&buttons);
+    // panic!("halt");
+
     let null_button = if depth == 0 { Position::new(3, 0) } else { Position::ZERO };
     
-    let start = if depth == 0 {
+    let mut start = if depth == 0 {
         buttons.get(&'A').unwrap()
     } else {
         buttons.get(&'a').unwrap()
     };
 
     let mut length = 0;
-    let mut pos = start;
 
     for c in code.chars() {
         let next = buttons.get(&c).unwrap();
         let key = MoveKey {
-            start: *pos,
+            start: *start,
             end: *next,
             depth,
             repeat,
@@ -115,7 +154,7 @@ fn process(code: &str, cache: &mut HashMap<MoveKey, usize>, repeat: usize, depth
         if let Some(&cached) = cache.get(&key) {
             length += cached;
         } else {
-            let moves = get_moves(*pos, *next, null_button);
+            let moves = get_moves(*start, *next, null_button);
             let min_len = if depth == repeat {
                 moves[0].len()
             } else {
@@ -127,7 +166,7 @@ fn process(code: &str, cache: &mut HashMap<MoveKey, usize>, repeat: usize, depth
             cache.insert(key, min_len);
             length += min_len;
         }
-        pos = next;
+        start = next;
 
     }
 
@@ -137,12 +176,13 @@ fn process(code: &str, cache: &mut HashMap<MoveKey, usize>, repeat: usize, depth
 fn get_moves(from: Position, to: Position, skip: Position) -> Vec<String> {
     let directions = ButtonPad::<DirectionPad>::default();
 
+    // signed manhattan distance
     let delta = to - from;
     let mut moves = Vec::new();
 
 
 
-    // Generate basic moves 
+    // Generate basic moves based on the signed distance
     let mut basic_moves = String::new();
     if delta.x < 0 {
         basic_moves.push_str(&"^".repeat((-delta.x) as usize));
@@ -175,8 +215,6 @@ fn get_moves(from: Position, to: Position, skip: Position) -> Vec<String> {
     } else {
         moves = moves.into_iter().map(|s| s + "a").collect();
     }
-
-
 
     moves
 }
