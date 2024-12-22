@@ -55,6 +55,7 @@ fn repeat(input: usize, count: usize) -> Vec<(usize, usize)> {
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
+    // let mut sequences = Vec::with_capacity(2000);
     let sequences = input.lines()
         // .flat_map(|line| {
         //     let number: usize = line.parse().unwrap();
@@ -64,7 +65,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .map(|line| {
             let number: usize = line.parse().unwrap();
 
-            repeat(number, 10).iter()
+            repeat(number, 2000).iter()
                 .map(|v| v.1)
                 .collect::<Vec<usize>>()
                 // differences
@@ -86,9 +87,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 })
                 .collect::<Vec<_>>()
         })
-        .inspect(|v| {
-            dbg!(v);
-        })
+        // .inspect(|v| {
+        //     dbg!(v);
+        // })
         .collect::<Vec<_>>();
 
     let max_bananas = sequences.iter()
