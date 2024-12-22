@@ -31,7 +31,7 @@ pub fn get_all_paths(from: Position, to: Position, skip: Position) -> Vec<String
     let mut seen = HashSet::new();
     recurse(&basic_moves.chars().collect::<Vec<_>>(), 0, &mut moves, &mut seen);
 
-    dbg!(&moves);
+    // dbg!(&moves);
 
     // Filter invalid paths
     moves.retain(|path| {
@@ -47,10 +47,10 @@ pub fn get_all_paths(from: Position, to: Position, skip: Position) -> Vec<String
     if moves.is_empty() {
         moves.push("a".to_string());
     } else {
-        moves = moves.into_iter().map(|s| s + "a").collect();
+        moves = moves.into_iter().map(|s| s + "A").collect();
     }
 
-    dbg!(moves)
+    moves
 }
 
 fn recurse(chars: &[char], idx: usize, result: &mut Vec<String>, seen: &mut HashSet<String>) {

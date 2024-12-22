@@ -74,9 +74,6 @@ fn make_numeric_keypad() -> Grid<&'static str> {
 
     Grid(numeric_keypad.lines()
         .map(|line| line.split(',')
-            // .map(
-            //     |num| num.parse::<u8>().unwrap_or_else(|_| u8::MAX)
-            // )
         .collect::<Vec<_>>())
         .collect::<Vec<Vec<_>>>())
 }
@@ -116,7 +113,7 @@ fn to_positions(grid: &Grid<&str>) -> HashMap<char, Position> {
         .collect()
 }
 
-fn get_neighbors(grid: Grid<&str>) -> HashMap<String, Vec<&str>> {
+fn _get_neighbors(grid: Grid<&str>) -> HashMap<String, Vec<&str>> {
     let mut neighbors = HashMap::new();
 
     grid.walk(|pos| {
@@ -142,14 +139,14 @@ fn get_neighbors(grid: Grid<&str>) -> HashMap<String, Vec<&str>> {
     neighbors
 }
 
-fn number_pad(code: &str, positions: &HashMap<char, Position>, neighbors: &HashMap<String, Vec<&str>>) -> Vec<char> {
+fn number_pad(code: &str, positions: &HashMap<char, Position>) -> Vec<char> {
     dbg!(&code);
 
     let mut current = 'A';
     let mut number_path = Vec::new();
     
     for target in code.chars() {
-        if let Some(path) = find_shortest_path(current, target, positions, &neighbors) {
+        if let Some(path) = find_shortest_path(current, target, positions) {
             number_path.extend(path);
             number_path.push('A'); // Add button press
             current = target;
@@ -161,14 +158,14 @@ fn number_pad(code: &str, positions: &HashMap<char, Position>, neighbors: &HashM
     number_path
 }
 
-fn dir_pad(commands: Vec<char>, positions: &HashMap<char, Position>, neighbors: &HashMap<String, Vec<&str>>) -> Vec<char> {
+fn dir_pad(commands: Vec<char>, positions: &HashMap<char, Position>) -> Vec<char> {
 //     dbg!(&code);
 
     let mut current = 'A';
     let mut dir_path: Vec<char> = Vec::new();
     
     for command in commands {
-        if let Some(path) = find_shortest_path(current, command, positions, &neighbors) {
+        if let Some(path) = find_shortest_path(current, command, positions) {
             dir_path.extend(path);
             dir_path.push('A');
             current = command;
@@ -180,8 +177,7 @@ fn dir_pad(commands: Vec<char>, positions: &HashMap<char, Position>, neighbors: 
     dir_path
 }
 
-#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+fn new_shortest_length(code: &str, cache: &mut HashMap<Combo, usize>, robots: usize, depth: usize) -> usize {
     let num_grid = make_numeric_keypad();
     // dbg!(&num_grid);
     
@@ -194,37 +190,109 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let arrow_positions = to_positions(&dir_grid);
     // dbg!(&arrow_positions);
 
-    let char_neighbors = get_neighbors(num_grid);
-    let dir_neighbors = get_neighbors(dir_grid);
-    // dbg!(&char_neighbors);
-    // dbg!(&dir_neighbors);
+    let skip_button = if depth == 0 { Position::new(3, 0) } else { Position::ZERO };
 
-    let output = input
-        .lines()
-        .map(|code| number_pad(code, &char_positions, &char_neighbors) )
-        .map(|commands| dir_pad(commands, &arrow_positions, &dir_neighbors) )
-        .map(|commands| dir_pad(commands, &arrow_positions, &dir_neighbors) )
-        .collect::<Vec<_>>();
+    // let mut pos = start;
+    let mut start = if depth == 0 {
+        char_positions.get(&'A').unwrap()
+    } else {
+        arrow_positions.get(&'A').unwrap()
+    };
 
-    // dbg!(&output.len());
+    // dbg!(&code);
 
-    let final_output: usize = input.lines().enumerate().map(|(idx, line)| {
-        // dbg!(&line);
+    code.chars().fold(0, |length, c| {
+        let mut count = length;
 
-        let num: usize = line.chars().filter_map(|c| {
-            if c.is_ascii_digit() {
-                Some(c)
+        // dbg!(c);
+
+        let next = if depth == 0 {
+            char_positions.get(&c).unwrap()
+        } else {
+            arrow_positions.get(&c).unwrap()
+        };
+
+        let saved = Combo {
+            from: *start,
+            to: *next,
+            depth,
+            robots,
+        };
+
+        if let Some(&cached) = cache.get(&saved) {
+            count += cached;
+        } else {
+            let combos = get_all_paths(*start, *next, skip_button);
+            let min_len = if depth == robots {
+                combos[0].len()
             } else {
-                None
-            }
-        }).collect::<String>().parse().unwrap();
+                combos.iter()
+                    .map(|m| new_shortest_length(m, cache, robots, depth + 1))
+                    .min()
+                    .unwrap_or(0)
+            };
+            cache.insert(saved, min_len);
+            count += min_len;
+        }
+        start = next;
 
-        // dbg!(num, output[idx].len());
+        count
+    })
+}
 
-        num * (output[idx].len())
-    }).sum();
+#[derive(Hash, Eq, PartialEq, Clone)]
+struct Combo {
+    from: Position,
+    to: Position,
+    depth: usize,
+    robots: usize,
+}
 
-    Ok(final_output.to_string())
+#[tracing::instrument]
+pub fn process(input: &str) -> miette::Result<String, AocError> {
+    let mut cache = HashMap::new();
+    // let mut output = 0;
+
+
+    // let char_neighbors = get_neighbors(num_grid);
+    // let dir_neighbors = get_neighbors(dir_grid);
+    // // dbg!(&char_neighbors);
+    // // dbg!(&dir_neighbors);
+
+    let output: usize = input
+        .lines()
+            .map(|line| {
+                let numeric: usize = line[..3].parse().unwrap();
+                let length = new_shortest_length(line, &mut cache, 2, 0);
+
+                length * numeric
+            }).sum();
+    //     .map(|code| number_pad(code, &char_positions) )
+    //     .map(|commands| dir_pad(commands, &arrow_positions) )
+    //     .map(|commands| dir_pad(commands, &arrow_positions) )
+    //     .collect::<Vec<_>>();
+
+    // // dbg!(&output.len());
+
+    // let final_output: usize = input.lines().enumerate().map(|(idx, line)| {
+    //     // dbg!(&line);
+
+    //     let num: usize = line.chars().filter_map(|c| {
+    //         if c.is_ascii_digit() {
+    //             Some(c)
+    //         } else {
+    //             None
+    //         }
+    //     }).collect::<String>().parse().unwrap();
+
+    //     // dbg!(num, output[idx].len());
+
+    //     num * (output[idx].len())
+    // }).sum();
+
+    // Ok(final_output.to_string())
+
+    Ok(output.to_string())
 }
 
 
@@ -232,7 +300,6 @@ fn find_shortest_path(
     from: char,
     to: char,
     char_positions: &HashMap<char, Position>,
-    neighbors: &HashMap<String, Vec<&str>>
 ) -> Option<Vec<char>> {
     // Get positions
     let start_pos = char_positions.get(&from)?;
@@ -246,80 +313,10 @@ fn find_shortest_path(
     paths.into_iter()
         .min_by_key(|path| path.len())?  // Get shortest path
         .chars()
-        .filter(|&c| c != 'a')  // Remove the 'a' since number_pad/dir_pad add it later
+        .filter(|&c| c != 'A')  // Remove the 'a' since number_pad/dir_pad add it later
         .collect::<Vec<_>>()
         .into()
 }
-
-
-// fn find_shortest_path(
-//     from: char,
-//     to: char,
-//     char_positions: &HashMap<char, Position>,
-//     neighbors: &HashMap<String, Vec<&str>>
-//     // skip: Position
-// ) -> Option<Vec<char>> {
-//     let mut queue = VecDeque::new();
-//     let mut visited = HashSet::new();
-    
-//     // (current_char, path_so_far)
-//     queue.push_back((from, Vec::new()));
-//     visited.insert(from);
-
-//     while let Some((current, path)) = queue.pop_front() {
-//         // Found A POSSIBLE target, need all of them??
-//         if current == to {
-//             // dbg!(&path.iter().collect::<String>());
-//             // panic!("Found A target");
-
-//             return Some(path);
-//         }
-
-//         // Get neighbors of current position
-//         if let Some(next_positions) = neighbors.get(&current.to_string()) {
-//             for next in next_positions {
-//                 let next_char = next.chars().next().expect("Empty string");
-//                 if !visited.insert(next_char) {
-//                     continue;
-//                 }
-
-//                 // Calculate direction to add to path
-//                 let curr_pos = char_positions.get(&current).unwrap();
-//                 let next_pos = char_positions.get(&next_char).unwrap();
-//                 let direction = get_direction(*curr_pos, *next_pos);
-
-//                 let mut new_path = path.clone();
-//                 new_path.push(direction);
-                
-//                 queue.push_back((next_char, new_path));
-//             }
-//         }
-//     }
-//     None
-// }
-
-// fn get_direction(from: Position, to: Position) -> char {
-//     let diff = to - from;
-//     match (diff.x, diff.y) {
-//         (-1, 0) => '^', // (0, -1) => '^',
-//         (1, 0) => 'v', // (0, 1) => 'v'
-//         (0, -1) => '<', // (-1, 0)
-//         (0, 1) => '>', // (1, 0)
-//         _ => panic!("Invalid move")
-//     }
-// }
-
-// #[deprecated(note = "Use get_all_paths instead")]
-// fn get_direction(from: Position, to: Position) -> char {
-//     let diff = to - from;
-//     match (diff.x, diff.y) {
-//         (0, -1) => '^',
-//         (0, 1) => 'v',
-//         (-1, 0) => '<',
-//         (1, 0) => '>',
-//         _ => panic!("Invalid move")
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
@@ -371,10 +368,10 @@ mod tests {
         // let dir_grid = make_dir_pad();
         let char_positions = to_positions(&num_grid);
         // let arrow_positions = to_positions(&dir_grid);
-        let char_neighbors = get_neighbors(num_grid);
+        // let char_neighbors = get_neighbors(num_grid);
         // let dir_neighbors = get_neighbors(dir_grid);
 
-        assert_eq!(number_pad(input, &char_positions, &char_neighbors).len(), expected);
+        assert_eq!(number_pad(input, &char_positions).len(), expected);
     }
 
     // #[rstest]
@@ -395,11 +392,11 @@ mod tests {
     // }
 
     // #[rstest]
-    // #[case("029A", 2030)] // 2030??, 1856??
-    // #[case("980A", 60760)] // 60760??, 58800??
-    // #[case("179A", 12530)] // 12530??, 12888??
-    // #[case("456A", 30096)] // 30096??, 31008??
-    // #[case("379A", 26530)] // 26530??, 27288??
+    // #[case("029A", 1856)] // 2030??, 1856??
+    // #[case("980A", 58800)] // 60760??, 58800??
+    // #[case("179A", 12888)] // 12530??, 12888??
+    // #[case("456A", 31008)] // 30096??, 31008??
+    // #[case("379A", 27288)] // 26530??, 27288??
     // fn test_lines(#[case] input: &str, #[case] expected: usize) {
     //     assert_eq!(process(input).unwrap().parse::<usize>().unwrap(), expected);
     // }
