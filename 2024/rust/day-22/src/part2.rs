@@ -48,7 +48,7 @@ fn process_sequence(input: usize) -> (Vec<usize>, Vec<i32>) {
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
-    let pattern_sums = input.lines()
+    let pattern_sums: HashMap<[i32; 4], usize> = input.lines()
         .map(|line| line.parse::<usize>().unwrap())
         .fold(HashMap::new(), |mut acc, num| {
             let (sequence, differences) = process_sequence(num);
@@ -67,7 +67,7 @@ pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
             acc
         });
     
-    Ok(pattern_sums.values().max().unwrap_or(&0).to_string())
+    Ok(pattern_sums.values().max().unwrap().to_string())
 }
 
 #[cfg(test)]
