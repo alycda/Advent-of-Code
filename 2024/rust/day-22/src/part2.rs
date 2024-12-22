@@ -1,18 +1,9 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use crate::AocError;
-
-/// To mix a value into the secret number, calculate the bitwise XOR of 
-/// the given value and the secret number. Then, the secret number becomes 
-/// the result of that operation.
-/// 
-/// luckily, XOR is commutative, so the order of the operands doesn't matter.
 fn mix(secret: usize, result: usize) -> usize {
     result ^ secret
 }
 
-/// To prune the secret number, calculate the value of the secret number modulo 16777216. 
-/// Then, the secret number becomes the result of that operation.
 fn prune(secret: usize) -> usize {
     secret % 16777216
 }
@@ -33,99 +24,58 @@ fn calculate_next_secret(mut secret: usize) -> (usize, usize) {
     secret = mix(secret, result);
     secret = prune(secret);
 
-    // dbg!(secret, secret % 10);
-
     (secret, secret % 10)
 }
 
-
-fn repeat(input: usize, count: usize) -> Vec<(usize, usize)> {
-    fn inner(input: usize, count: usize, mut acc: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
-        if count == 0 {
-            return acc;
+fn process_sequence(input: usize) -> (Vec<usize>, Vec<i32>) {
+    let mut x = input;
+    let mut sequence = Vec::with_capacity(2000);
+    let mut differences = Vec::with_capacity(1999);
+    
+    let mut prev = x % 10;
+    for _ in 0..2000 {
+        let (next_x, digit) = calculate_next_secret(x);
+        x = next_x;
+        sequence.push(digit);
+        if sequence.len() > 1 {
+            differences.push(digit as i32 - prev as i32);
         }
-        
-        let next = calculate_next_secret(input);
-        acc.push(next);
-        inner(next.0, count - 1, acc)
+        prev = digit;
     }
-
-    inner(input, count, Vec::with_capacity(count))
+    
+    (sequence, differences)
 }
 
 #[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
-    // let mut sequences = Vec::with_capacity(2000);
-    let sequences = input.lines()
-        // .flat_map(|line| {
-        //     let number: usize = line.parse().unwrap();
-
-        //     repeat(number, 10).iter().unzip().1
-        // })
-        .map(|line| {
-            let number: usize = line.parse().unwrap();
-
-            repeat(number, 2000).iter()
-                .map(|v| v.1)
-                .collect::<Vec<usize>>()
-                // differences
-                .windows(2)
-                .map(|window| {
-                    // window[1] is current, window[0] is previous
-                    (window[1], window[1] as i32 - window[0] as i32)
-                }).collect::<Vec<_>>()
-        })
-        // .inspect(|v| {
-        //     dbg!(v);
-        // })
-        .map(|differences| {
-            differences.windows(4)
-                .map(|w| {
-                    let pattern = (w[0].1, w[1].1, w[2].1, w[3].1);
-                    let price = w[3].0;  // The price after the pattern
-                    (pattern, price)
-                })
-                .collect::<Vec<_>>()
-        })
-        // .inspect(|v| {
-        //     dbg!(v);
-        // })
-        .collect::<Vec<_>>();
-
-    let max_bananas = sequences.iter()
-        .flat_map(|buyer_sequences| {
-            // Get all patterns from this buyer
-            buyer_sequences.iter().map(|(pattern, _)| *pattern)
-        })
-        .collect::<HashSet<_>>() // Get unique patterns
-        .into_iter()
-        .map(|pattern| {
-            sequences.iter()
-                .map(|buyer_sequences| {
-                    buyer_sequences.iter()
-                        .find(|(p, _)| *p == pattern)
-                        .map_or(0, |(_, price)| *price)
-                })
-                .sum::<usize>()
-        })
-        .max()
-        .unwrap_or(0);
-
-// panic!("at the disco");
-    Ok(max_bananas.to_string())
+pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
+    let mut pattern_sums: HashMap<[i32; 4], usize> = HashMap::new();
+    
+    for line in input.lines() {
+        let num: usize = line.parse().unwrap();
+        let (sequence, differences) = process_sequence(num);
+        
+        let mut seen_patterns = HashSet::new();
+        
+        for i in 0..differences.len()-3 {
+            let pattern = [
+                differences[i], 
+                differences[i+1], 
+                differences[i+2], 
+                differences[i+3]
+            ];
+            
+            if seen_patterns.insert(pattern) {
+                *pattern_sums.entry(pattern).or_default() += sequence[i+4]; // i+4 because differences is offset by 1
+            }
+        }
+    }
+    
+    Ok(pattern_sums.values().max().unwrap_or(&0).to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // use rstest::rstest;
-
-    // #[rstest]
-    // #[case("", "")]
-    // fn test_cases(#[case] input: &str, #[case] expected: &str) {
-    //     assert_eq!(process(input).unwrap(), expected);
-    // }
 
     #[test]
     fn test_process() -> miette::Result<()> {
