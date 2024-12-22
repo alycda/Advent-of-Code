@@ -48,24 +48,24 @@ fn process_sequence(input: usize) -> (Vec<usize>, Vec<i32>) {
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
-    let mut pattern_sums: HashMap<[i32; 4], usize> = HashMap::new();
-    
-    for line in input.lines() {
-        let num: usize = line.parse().unwrap();
-        let (sequence, differences) = process_sequence(num);
-        
-        let mut seen_patterns = HashSet::new();
-        
-        differences.windows(4)
-            .zip(&sequence[4..]) // Zip with corresponding prices
-            .filter_map(|(window, &price)| {
-                let pattern = [window[0], window[1], window[2], window[3]];
-                seen_patterns.insert(pattern).then_some((pattern, price))
-            })
-            .for_each(|(pattern, price)| {
-                *pattern_sums.entry(pattern).or_default() += price;
-            });
-    }
+    let pattern_sums = input.lines()
+        .map(|line| line.parse::<usize>().unwrap())
+        .fold(HashMap::new(), |mut acc, num| {
+            let (sequence, differences) = process_sequence(num);
+            let mut seen_patterns = HashSet::new();
+            
+            differences.windows(4)
+                .zip(&sequence[4..])
+                .filter_map(|(window, &price)| {
+                    let pattern = [window[0], window[1], window[2], window[3]];
+                    seen_patterns.insert(pattern).then_some((pattern, price))
+                })
+                .for_each(|(pattern, price)| {
+                    *acc.entry(pattern).or_default() += price;
+                });
+            
+            acc
+        });
     
     Ok(pattern_sums.values().max().unwrap_or(&0).to_string())
 }
