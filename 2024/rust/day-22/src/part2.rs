@@ -107,8 +107,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 .windows(2)
                 .map(|window| {
                     // window[1] is current, window[0] is previous
-                    window[1] as i32 - window[0] as i32
-                }).collect::<Vec<i32>>()
+                    (window[1], window[1] as i32 - window[0] as i32)
+                }).collect::<Vec<_>>()
         })
         // .inspect(|v| {
         //     dbg!(v);
@@ -137,10 +137,10 @@ mod tests {
     #[test]
     fn test_process() -> miette::Result<()> {
         let input = "1
-10
-100
+2
+3
 2024";
-        assert_eq!("37327623", process(input)?);
+        assert_eq!("23", process(input)?);
         Ok(())
     }
 }
