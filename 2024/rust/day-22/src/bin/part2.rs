@@ -1,4 +1,4 @@
-use day_21::part1::process;
+use day_22::part2::process;
 use miette::Context;
 
 #[cfg(feature = "dhat-heap")]
@@ -14,10 +14,7 @@ fn main() -> miette::Result<()> {
     tracing_subscriber::fmt::init();
 
     let file = include_str!("../../input.txt");
-    let result = process(file).context("process part 1")?;
+    let result = process(file).context("process part 2")?;
     println!("{}", result);
-
-    assert_eq!("125742", result);
-
     Ok(())
 }
