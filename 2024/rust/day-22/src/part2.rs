@@ -56,18 +56,15 @@ pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
         
         let mut seen_patterns = HashSet::new();
         
-        for i in 0..differences.len()-3 {
-            let pattern = [
-                differences[i], 
-                differences[i+1], 
-                differences[i+2], 
-                differences[i+3]
-            ];
-            
-            if seen_patterns.insert(pattern) {
-                *pattern_sums.entry(pattern).or_default() += sequence[i+4]; // i+4 because differences is offset by 1
-            }
-        }
+        differences.windows(4)
+            .zip(&sequence[4..]) // Zip with corresponding prices
+            .filter_map(|(window, &price)| {
+                let pattern = [window[0], window[1], window[2], window[3]];
+                seen_patterns.insert(pattern).then_some((pattern, price))
+            })
+            .for_each(|(pattern, price)| {
+                *pattern_sums.entry(pattern).or_default() += price;
+            });
     }
     
     Ok(pattern_sums.values().max().unwrap_or(&0).to_string())
