@@ -48,9 +48,9 @@ fn process_sequence(input: usize) -> (Vec<usize>, Vec<i32>) {
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
-    let pattern_sums: HashMap<[i32; 4], usize> = input.lines()
+    let output: usize = input.lines()
         .map(|line| line.parse::<usize>().unwrap())
-        .fold(HashMap::new(), |mut acc, num| {
+        .fold(HashMap::new(), |mut acc: HashMap<[i32; 4], usize>, num| {
             let (sequence, differences) = process_sequence(num);
             let mut seen_patterns = HashSet::new();
             
@@ -65,9 +65,9 @@ pub fn process(input: &str) -> miette::Result<String, crate::AocError> {
                 });
             
             acc
-        });
+        }).values().max().unwrap().to_owned(); // temporary value dropped while borrowed because .values returns a reference and it doesn't make sense to .clone() a Copy type (usize), so we take ownership of it instead
     
-    Ok(pattern_sums.values().max().unwrap().to_string())
+    Ok(output.to_string())
 }
 
 #[cfg(test)]
