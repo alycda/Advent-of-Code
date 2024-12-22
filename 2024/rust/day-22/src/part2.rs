@@ -1,9 +1,6 @@
+use std::collections::HashSet;
+
 use crate::AocError;
-
-
-fn mult(a: usize) -> usize {
-    a * 64
-}
 
 /// To mix a value into the secret number, calculate the bitwise XOR of 
 /// the given value and the secret number. Then, the secret number becomes 
@@ -19,23 +16,6 @@ fn mix(secret: usize, result: usize) -> usize {
 fn prune(secret: usize) -> usize {
     secret % 16777216
 }
-
-
-// // secret * 64
-// // secret / 32
-// // secret * 2048
-// fn secret(input: usize) -> usize {
-//     // let a = input * 64;
-//     let a = mult(input);
-//     // let b = input ^ a;
-//     let b = mix(input, a);
-//     // let c = b / 
-//     let c = prune(b);
-
-//     dbg!(a, b, c);
-
-//     c
-// }
 
 fn calculate_next_secret(mut secret: usize) -> (usize, usize) {
     // First operation
@@ -71,27 +51,11 @@ fn repeat(input: usize, count: usize) -> Vec<(usize, usize)> {
     }
 
     inner(input, count, Vec::with_capacity(count))
-
-    // if count == 0 {
-    //     return input;
-    // }
-
-    // repeat(calculate_next_secret(input), count - 1)
-
-    // // for _ in 0..count {
-    // //     // let a = mult(secret);
-    // //     // let b = mix(secret, a);
-    // //     // let c = prune(b);
-
-    // //     // secret = c;
-
-    // //     secret(secret)
-    // // }
 }
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let output: usize = input.lines()
+    let sequences = input.lines()
         // .flat_map(|line| {
         //     let number: usize = line.parse().unwrap();
 
@@ -113,13 +77,41 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         // .inspect(|v| {
         //     dbg!(v);
         // })
-        // .map(|v| v.0)
+        .map(|differences| {
+            differences.windows(4)
+                .map(|w| {
+                    let pattern = (w[0].1, w[1].1, w[2].1, w[3].1);
+                    let price = w[3].0;  // The price after the pattern
+                    (pattern, price)
+                })
+                .collect::<Vec<_>>()
+        })
         .inspect(|v| {
             dbg!(v);
         })
-        .count();
+        .collect::<Vec<_>>();
+
+    let max_bananas = sequences.iter()
+        .flat_map(|buyer_sequences| {
+            // Get all patterns from this buyer
+            buyer_sequences.iter().map(|(pattern, _)| *pattern)
+        })
+        .collect::<HashSet<_>>() // Get unique patterns
+        .into_iter()
+        .map(|pattern| {
+            sequences.iter()
+                .map(|buyer_sequences| {
+                    buyer_sequences.iter()
+                        .find(|(p, _)| *p == pattern)
+                        .map_or(0, |(_, price)| *price)
+                })
+                .sum::<usize>()
+        })
+        .max()
+        .unwrap_or(0);
+
 // panic!("at the disco");
-    Ok(output.to_string())
+    Ok(max_bananas.to_string())
 }
 
 #[cfg(test)]
