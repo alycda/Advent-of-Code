@@ -1,61 +1,4 @@
-use crate::AocError;
-
-
-fn mult(a: usize) -> usize {
-    a * 64
-}
-
-/// To mix a value into the secret number, calculate the bitwise XOR of 
-/// the given value and the secret number. Then, the secret number becomes 
-/// the result of that operation.
-/// 
-/// luckily, XOR is commutative, so the order of the operands doesn't matter.
-fn mix(secret: usize, result: usize) -> usize {
-    result ^ secret
-}
-
-/// To prune the secret number, calculate the value of the secret number modulo 16777216. 
-/// Then, the secret number becomes the result of that operation.
-fn prune(secret: usize) -> usize {
-    secret % 16777216
-}
-
-
-// // secret * 64
-// // secret / 32
-// // secret * 2048
-// fn secret(input: usize) -> usize {
-//     // let a = input * 64;
-//     let a = mult(input);
-//     // let b = input ^ a;
-//     let b = mix(input, a);
-//     // let c = b / 
-//     let c = prune(b);
-
-//     dbg!(a, b, c);
-
-//     c
-// }
-
-fn calculate_next_secret(mut secret: usize) -> usize {
-    // First operation
-    let result = secret * 64;
-    secret = mix(secret, result);
-    secret = prune(secret);
-
-    // Second operation
-    let result = secret / 32;
-    secret = mix(secret, result);
-    secret = prune(secret);
-
-    // Third operation
-    let result = secret * 2048;
-    secret = mix(secret, result);
-    secret = prune(secret);
-
-    secret
-}
-
+use crate::{calculate_next_secret, AocError};
 
 fn repeat(input: usize, count: usize) -> usize {
     if count == 0 {
@@ -63,16 +6,6 @@ fn repeat(input: usize, count: usize) -> usize {
     }
 
     repeat(calculate_next_secret(input), count - 1)
-
-    // for _ in 0..count {
-    //     // let a = mult(secret);
-    //     // let b = mix(secret, a);
-    //     // let c = prune(b);
-
-    //     // secret = c;
-
-    //     secret(secret)
-    // }
 }
 
 #[tracing::instrument]
@@ -81,7 +14,6 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .map(|line| {
             let number: usize = line.parse().unwrap();
 
-            // calculate_next_secret(number)
             repeat(number, 2000)
         })
         .sum();

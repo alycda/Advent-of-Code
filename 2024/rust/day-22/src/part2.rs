@@ -1,18 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
-fn mix(secret: usize, result: usize) -> usize {
-    result ^ secret
-}
+use crate::{mix, prune};
 
-fn prune(secret: usize) -> usize {
-    secret % 16777216
-}
-
+/// Part 2
 fn calculate_next_secret(mut secret: usize) -> (usize, usize) {
     // First operation
     let result = secret * 64;
     secret = mix(secret, result);
-    secret = prune(secret);
+    secret = crate::prune(secret);
 
     // Second operation
     let result = secret / 32;
