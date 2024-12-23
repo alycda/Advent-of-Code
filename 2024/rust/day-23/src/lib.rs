@@ -9,9 +9,8 @@ pub struct Part2;
 
 pub use crate::Day23 as Day;
 
-pub struct Day23<T, V>{
-    // HashSet<String>
-    data: HashMap<String, V>,
+pub struct Day23<T>{
+    data: HashMap<String, HashSet<String>>,
     part: PhantomData<T>,
 }
 
@@ -19,7 +18,30 @@ pub struct Day23<T, V>{
 
 // }
 
-impl Solution for Day<Part1, Vec<String>> {
+// impl<T> Solution for Day<T> {
+//     type Output = usize;
+//     type Item = ();
+
+//     fn parse(input: &str) -> Self {
+//         // connections
+//         let mut data: HashMap<String, HashSet<String>> = HashMap::new();
+
+//         // Build the graph
+//         for line in input.lines() {
+//             let (a, b) = line.split_once("-").unwrap();
+//             data.entry(a.to_string())
+//                 .or_insert_with(HashSet::new)
+//                 .insert(b.to_string());
+//             data.entry(b.to_string())
+//                 .or_insert_with(HashSet::new)
+//                 .insert(a.to_string());
+//         }
+
+//         Self { data, part: PhantomData }
+//     }
+// }
+
+impl Solution for Day<Part1> {
     type Output = usize;
     type Item = ();
 
@@ -29,13 +51,11 @@ impl Solution for Day<Part1, Vec<String>> {
                 let (a, b) = line.split_once("-").unwrap();
 
                 map.entry(a.to_string())
-                .or_insert_with(Vec::new)
-                .push(b.to_string());
-
-                // since it's undirected, also add the reverse
+                    .or_insert_with(HashSet::new)
+                    .insert(b.to_string());
                 map.entry(b.to_string())
-                    .or_insert_with(Vec::new)
-                    .push(a.to_string());
+                    .or_insert_with(HashSet::new)
+                    .insert(a.to_string());
 
                 map
             });
@@ -77,40 +97,38 @@ impl Solution for Day<Part1, Vec<String>> {
             })
             .count();
 
-        // todo!("refactoring");
-
         Ok(count)
     }
 
     fn part2(&mut self) -> Result<Self::Output, AocError> {
-        unimplemented!("Part 2 is not implemented for Day<Part1, V>")
+        unimplemented!("Part 2 is not implemented for Day<Part1>")
     }
 }
 
-impl Solution for Day<Part2, HashSet<String>> {
+impl Solution for Day<Part2> {
     type Output = String;
     type Item = ();
 
     fn parse(input: &str) -> Self {
-        // connections
-        let mut data: HashMap<String, HashSet<String>> = HashMap::new();
+        let data = input.lines()
+            .fold(HashMap::new(), |mut map, line| {
+                let (a, b) = line.split_once("-").unwrap();
 
-        // Build the graph
-        for line in input.lines() {
-            let (a, b) = line.split_once("-").unwrap();
-            data.entry(a.to_string())
-                .or_insert_with(HashSet::new)
-                .insert(b.to_string());
-            data.entry(b.to_string())
-                .or_insert_with(HashSet::new)
-                .insert(a.to_string());
-        }
+                map.entry(a.to_string())
+                    .or_insert_with(HashSet::new)
+                    .insert(b.to_string());
+                map.entry(b.to_string())
+                    .or_insert_with(HashSet::new)
+                    .insert(a.to_string());
+
+                map
+            });
 
         Self { data, part: PhantomData }
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {
-        unimplemented!("Part 1 is not implemented for Day<Part2, V>")
+        unimplemented!("Part 1 is not implemented for Day<Part2>")
     }
 
     fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
@@ -193,7 +211,7 @@ co-tc
 wh-qp
 tb-vc
 td-yn";
-        assert_eq!("7", Day::<Part1, Vec<String>>::parse(input).solve(Part::One)?);
+        assert_eq!("7", Day::<Part1>::parse(input).solve(Part::One)?);
         Ok(())
     }
 
@@ -231,7 +249,7 @@ co-tc
 wh-qp
 tb-vc
 td-yn";
-        assert_eq!("co,de,ka,ta", Day::parse(input).solve(Part::Two)?);
+        assert_eq!("co,de,ka,ta", Day::<Part2>::parse(input).solve(Part::Two)?);
         Ok(())
     }
 }
