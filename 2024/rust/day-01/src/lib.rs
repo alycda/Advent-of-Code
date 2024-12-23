@@ -1,17 +1,26 @@
 //! Day 1: Historian Hysteria
 //! 
 //! --- Part One ---
-//! Pair up the smallest number in the left list with the smallest number in the right list, then the second-smallest left number with the second-smallest right number, and so on.
+//! Pair up the smallest number in the left list with the smallest number in the 
+//! right list, then the second-smallest left number with the second-smallest 
+//! right number, and so on.
 //! 
-//! Within each pair, figure out how far apart the two numbers are; you'll need to add up all of those distances.
+//! Within each pair, figure out how far apart the two numbers are; you'll need 
+//! to add up all of those distances.
 //! 
-//! To find the total distance between the left list and the right list, add up the distances between all of the pairs you found.
+//! To find the total distance between the left list and the right list, add up 
+//! the distances between all of the pairs you found.
 //! 
 //! -- Part Two ---
 //! 
-//! figure out exactly how often each number from the left list appears in the right list. Calculate a total similarity score by adding up each number in the left list after multiplying it by the number of times that number appears in the right list
+//! figure out exactly how often each number from the left list appears in the 
+//! right list. Calculate a total similarity score by adding up each number in 
+//! the left list after multiplying it by the number of times that number 
+//! appears in the right list
 
 // use std::collections::HashMap;
+
+use std::collections::HashMap;
 
 use itertools::Itertools;
 use nom::{
@@ -118,72 +127,66 @@ impl Solution for Day1 {
     }
 }
 
-// #[derive(Debug, Clone)]
-// struct Day1Hashmap(Vec<usize>, HashMap<usize, usize>);
+#[derive(Debug, Clone)]
+pub struct Day1Hashmap(Vec<usize>, HashMap<usize, usize>);
 
-// impl Solution for Day1Hashmap {
-//     type Output = i32;
+impl Solution for Day1Hashmap {
+    type Output = usize;
+    type Item = ();
 
-//     fn parse(input: &str) -> Self {
-//         let mut left = vec![];
-//         let mut right: HashMap<usize, usize> = HashMap::new();
+    fn parse(input: &str) -> Self {
+        let mut left = vec![];
+        let mut right: HashMap<usize, usize> = HashMap::new();
 
-//         for line in input.lines() {
-//             let mut items = line.split_whitespace();
-//             left.push(
-//                 items.next().unwrap().parse::<usize>().unwrap(),
-//             );
-//             right
-//                 .entry(
-//                     items
-//                         .next()
-//                         .unwrap()
-//                         .parse::<usize>()
-//                         .unwrap(),
-//                 )
-//                 .and_modify(|v| {
-//                     *v += 1;
-//                 })
-//                 .or_insert(1);
-//         };
+        for line in input.lines() {
+            let mut items = line.split_whitespace();
+            left.push(
+                items.next().unwrap().parse::<usize>().unwrap(),
+            );
+            right
+                .entry(
+                    items
+                        .next()
+                        .unwrap()
+                        .parse::<usize>()
+                        .unwrap(),
+                )
+                .and_modify(|v| {
+                    *v += 1;
+                })
+                .or_insert(1);
+        };
 
-//         Self(left, right)
-//     }
+        Self(left, right)
+    }
 
-//     // O(n) with constant time lookups using HashMap
-//     // pub fn part2(input: &str) -> miette::Result<String> {
-//     //     let mut left = vec![];
-//     //     let mut right: HashMap<usize, usize> = HashMap::new();
+    fn part1(&mut self) -> Result<Self::Output, AocError> {
+        unimplemented!("Part 1 not implemented for Day1Hashmap")
+        // let Day1Hashmap(left, right) = self.get_mut();
 
-//     //     for line in input.lines() {
-//     //         let mut items = line.split_whitespace();
-//     //         left.push(
-//     //             items.next().unwrap().parse::<usize>().unwrap(),
-//     //         );
-//     //         right
-//     //             .entry(
-//     //                 items
-//     //                     .next()
-//     //                     .unwrap()
-//     //                     .parse::<usize>()
-//     //                     .unwrap(),
-//     //             )
-//     //             .and_modify(|v| {
-//     //                 *v += 1;
-//     //             })
-//     //             .or_insert(1);
-//     //     }
+        // let output = left
+        //     .iter()
+        //     .zip(right.iter())
+        //     .map(|(l, r)| (l - r).abs())
+        //     .sum::<Self::Output>();
 
-//     //     let result: usize = left
-//     //         .iter()
-//     //         .map(|number| {
-//     //             number * right.get(number).unwrap_or(&0)
-//     //         })
-//     //         .sum();
+        // Ok(output)
+    }
 
-//     //     Ok(result)
-//     // }
-// }
+    // O(n) with constant time lookups using HashMap
+    fn part2(&mut self) -> miette::Result<Self::Output, AocError> {
+        let Day1Hashmap(left, right) = self.get_mut();
+
+        let result: usize = left
+            .iter()
+            .map(|number| {
+                number * right.get(number).unwrap_or(&0)
+            })
+            .sum();
+
+        Ok(result)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -256,14 +259,27 @@ mod tests {
         Ok(())
     }
     
-//     #[test]
-//     fn test_day1_part2_hashmap() -> miette::Result<()> {
-//         let input = "3   4
-//     4   3
-//     2   5
-//     1   3
-//     3   9
-//     3   3";
-//         assert_eq!("31", Day1Hashmap::parse(input).solve(Part::One).unwrap());
-//     }
+    // #[test]
+    // fn test_day1_part1_hashmap() -> miette::Result<()> {
+    //     let input = "3   4
+    // 4   3
+    // 2   5
+    // 1   3
+    // 3   9
+    // 3   3";
+    //     assert_eq!("11", Day1Hashmap::parse(input).solve(Part::One)?);
+    //     Ok(())
+    // }
+    
+    #[test]
+    fn test_day1_part2_hashmap() -> miette::Result<()> {
+        let input = "3   4
+    4   3
+    2   5
+    1   3
+    3   9
+    3   3";
+        assert_eq!("31", Day1Hashmap::parse(input).solve(Part::Two)?);
+        Ok(())
+    }
 }
