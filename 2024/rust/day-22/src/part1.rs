@@ -31,13 +31,13 @@ mod tests {
     #[case((42, 15), 37)]
     #[case((15, 42), 37)]
     fn test_mix(#[case] input: (usize, usize), #[case] expected: usize) {
-        assert_eq!(mix(input.0, input.1), expected);
+        assert_eq!(crate::mix(input.0, input.1), expected);
     }
 
     #[rstest]
     #[case(100000000, 16113920)]
     fn test_prune(#[case] input: usize, #[case] expected: usize) {
-        assert_eq!(prune(input), expected);
+        assert_eq!(crate::prune(input), expected);
     }
 
     #[rstest]
