@@ -24,7 +24,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 use nom::{
-    character::complete::{self, line_ending, space1}, multi::separated_list1, sequence::separated_pair
+    character::complete::{self, digit1, line_ending, space1}, multi::separated_list1, sequence::separated_pair
 };
 
 use ornaments::{Solution, AocError};
@@ -61,7 +61,7 @@ impl Solution for Day1 {
         let (mut left, mut right): (Vec<i32>, Vec<i32>) = input.lines()
             .map(|line| {
                 line.split_whitespace()
-                    .map(|x| x.parse::<i32>().expect("valid number"))
+                    .map(|x| x.parse::<i32>().expect("a valid number"))
                     .collect_tuple()
                     .expect("Each line must have exactly two numbers")
             })
@@ -132,7 +132,7 @@ pub struct Day1Hashmap(Vec<usize>, HashMap<usize, usize>);
 
 impl Solution for Day1Hashmap {
     type Output = usize;
-    type Item = ();
+    type Item = HashMap<usize, usize>;
 
     fn parse(input: &str) -> Self {
         let mut left = vec![];
@@ -158,6 +158,32 @@ impl Solution for Day1Hashmap {
         };
 
         Self(left, right)
+    }
+
+    fn nom_parser(input: &str) -> nom::IResult<&str, Self::Item, nom::error::Error<&str>> {
+        let mut map = HashMap::new();
+
+        let (input, pairs) = separated_list1(
+            line_ending::<&str, nom::error::Error<&str>>,
+            separated_pair(
+                digit1,
+                space1,
+                digit1,
+            ),
+        )(input)?;
+
+        for (left, right) in pairs {
+            map
+                .entry(left)
+                .and_modify(|v| {
+                    *v += 1;
+                })
+                .or_insert(1);
+        }
+
+        todo!();
+
+        // Ok((input, map))
     }
 
     fn part1(&mut self) -> Result<Self::Output, AocError> {

@@ -580,9 +580,18 @@ impl std::ops::DerefMut for PhantomGrid {
     }
 }
 
-pub trait Solution {
+pub trait Parser {
+    type Parsed;
+    fn parse(input: &str) -> Self::Parsed;
+}
+
+pub trait Solution/* : Parser<Parsed = Self> */ {
     /// Ensures the output can be converted to a string
     type Output: std::fmt::Display;  
+
+    // This represents the fully parsed solution data
+    // type Parsed: Sized = Self;
+
     /// used for the nom parser function
     type Item;
     // type Item = (); associated type defaults are unstable
