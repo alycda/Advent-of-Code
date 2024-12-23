@@ -1,63 +1,22 @@
-use std::collections::HashMap;
-use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
 
 use crate::AocError;
 
 #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let mut map = HashMap::new();
-
-    let output = input.lines()
-        .map(|line| {
+    let map = input.lines()
+        .fold(HashMap::new(), |mut map, line| {
             let (a, b) = line.split_once("-").unwrap();
 
             map.entry(a.to_string())
-                .or_insert_with(Vec::new)
-                .push(b.to_string());
-
-            // since it's undirected, also add the reverse
+                .or_insert_with(HashSet::new)
+                .insert(b.to_string());
             map.entry(b.to_string())
-                .or_insert_with(Vec::new)
-                .push(a.to_string());
+                .or_insert_with(HashSet::new)
+                .insert(a.to_string());
 
-        })
-        .count();
-
-    // dbg!(&map);
-
-    // Ok("".to_string())
-
-    // // find the connected trios
-    // let mut connected_trios = Vec::new();
-
-    // for (computer, connections) in &map {
-    //     if connections.len() >= 2 {
-    //         for combo in connections.iter().combinations(2) {
-    //             if map.get(combo[0]).unwrap().contains(combo[1]) {
-    //                 let mut trio = vec![
-    //                     computer.clone(),
-    //                     combo[0].clone(),
-    //                     combo[1].clone()
-    //                 ];
-    //                 trio.sort();  // Sort to help with deduplication
-    //                 connected_trios.push(trio);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // // Deduplicate trios (since A-B-C is same as B-C-A)
-    // connected_trios.sort();
-    // connected_trios.dedup();
-
-    // // Filter for trios containing 't' or 'T'
-    // let t_trios: Vec<_> = connected_trios.into_iter()
-    //     .filter(|trio| {
-    //         trio.iter().any(|computer| computer.to_lowercase().contains('t'))
-    //     })
-    //     .collect();
-
-    // Ok(t_trios.len().to_string())
+            map
+        });
 
     let mut trios = Vec::new();
     
