@@ -70,29 +70,51 @@ pub struct LogicGate {
 }
 
 fn find_gate<'a>(gates: &'a [LogicGate], a: &str, b: &str, op: &Operation) -> Option<&'a String> {
-    gates.iter()
+    let result = gates.iter()
         .find(|gate| {
-            (gate.left == a && gate.right == b && gate.op == *op) ||
-            (gate.left == b && gate.right == a && gate.op == *op)
+            let match_found = (gate.left == a && gate.right == b && gate.op == *op) ||
+                (gate.left == b && gate.right == a && gate.op == *op);
+            if match_found {
+                println!("Found gate: {} {} {:?} {} -> {}", 
+                    gate.left, gate.right, gate.op, a, gate.output);
+            }
+            match_found
         })
-        .map(|gate| &gate.output)
+        .map(|gate| &gate.output);
+    
+    if result.is_none() {
+        println!("No gate found for {} {:?} {}", a, op, b);
+    }
+    
+    result
 }
 
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
     let gates = parse_logic_gates(gate_defs).unwrap().1;
     
+    // Count how many x inputs we have (could also check y)
+    let num_bits = initial_values.lines()
+        .filter(|line| line.starts_with("x"))
+        .count();
+
+    println!("Found {} bits to process", num_bits);
+
     let mut swapped = Vec::new();
     let mut c0: Option<String> = None;
     
-    for i in 0..45 {
+    for i in 0..num_bits {
         let n = format!("{:02}", i);
-        
+
+        println!("Processing bit {}", n);
+
         let mut m1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::Xor)
             .map(|s| s.to_string());
         let mut n1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::And)
             .map(|s| s.to_string());
         
+        println!("Half adder gates found: m1={:?}, n1={:?}", m1, n1);
+
         if let Some(c0_val) = &c0 {
             if let (Some(m1_val), Some(n1_val)) = (&m1, &n1) {
                 let mut r1 = find_gate(&gates, c0_val, m1_val, &Operation::And)
