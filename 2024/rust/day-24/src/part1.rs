@@ -86,34 +86,30 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     dbg!(&bits);
 
-    // // collect the bits into a Vec to inspect
-    // let bits: Vec<u32> = wires.iter()
-    //     .filter(|(k, _)| k.starts_with("z"))
-    //     .map(|(k, v)| {
-    //         dbg!(k, v); // See what order we're getting them in
-    //         if *v { 1 } else { 0 }
-    //     })
-    //     .rev()
-    //     .collect();
-
-    // dbg!(&bits);
-
     // dbg!(&bits.clone().iter().collect::<String>()); // complete binary number
 
-    let binary_string: String = bits.iter()
-        .map(|&bit| char::from_digit(bit as u32, 10).unwrap())
-        .collect();
-    dbg!(&binary_string);
+    // let binary_string: String = bits.iter()
+    //     .map(|&bit| char::from_digit(bit as u32, 10).unwrap())
+    //     .collect();
+    // dbg!(&binary_string);
 
-    // convert to decimal
-    let output = bits.into_iter()
-        .fold(0u32, |acc, bit| {
-            (acc << 1) | bit
-        });
+    // // convert to decimal
+    // let output = bits.into_iter()
+    //     .fold(0u32, |acc, bit| {
+    //         (acc << 1) | bit
+    //     });
 
     // dbg!(&wires);
 
     // dbg!(output);
+
+    // Use u128 for the conversion
+    let output = wire_nums.iter()
+        .rev()
+        .map(|(_, v)| if *v { 1u128 } else { 0u128 })
+        .fold(0u128, |acc, bit| {
+            (acc << 1) | bit
+        });
 
     Ok(output.to_string())
 }
