@@ -1,57 +1,8 @@
-use std::collections::BTreeMap;
-
 use crate::AocError;
 
 use nom::{
     branch::alt, bytes::complete::{tag, take_while1}, character::complete::{space0, space1}, combinator::map, multi::separated_list1, sequence::tuple, IResult
 };
-
-use petgraph::{
-    graph::{DiGraph, NodeIndex},
-    dot::{Dot, Config},
-};
-use std::collections::HashMap;
-
-fn visualize_circuit(gates: &[LogicGate], wires: &BTreeMap<String, bool>) -> std::io::Result<()> {
-    let mut graph = DiGraph::new();
-    let mut node_map = HashMap::new();
-
-    // Add wire nodes
-    for (wire, &value) in wires.iter() {
-        let node = graph.add_node(format!("{}={}", wire, value));
-        node_map.insert(wire.clone(), node);
-    }
-
-    // Add gate nodes and edges
-    for (i, gate) in gates.iter().enumerate() {
-        let gate_node = graph.add_node(format!("Gate{} {:?}", i, gate.op));
-        
-        // Add edges from inputs to gate
-        if let Some(&left) = node_map.get(&gate.left) {
-            graph.add_edge(left, gate_node, "");
-        }
-        if let Some(&right) = node_map.get(&gate.right) {
-            graph.add_edge(right, gate_node, "");
-        }
-
-        // Add edge from gate to output
-        let output_node = if let Some(&node) = node_map.get(&gate.output) {
-            node
-        } else {
-            let node = graph.add_node(format!("{}", gate.output));
-            node_map.insert(gate.output.clone(), node);
-            node
-        };
-        graph.add_edge(gate_node, output_node, "");
-    }
-
-    // Export to dot format
-    let dot = Dot::with_config(&graph, &[Config::EdgeNoLabel]);
-    std::fs::write("circuit.dot", format!("{:?}", dot))?;
-    
-    println!("Generated circuit.dot - view with 'dot -Tpng circuit.dot -o circuit.png'");
-    Ok(())
-}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operation {
@@ -89,188 +40,114 @@ fn find_gate<'a>(gates: &'a [LogicGate], a: &str, b: &str, op: &Operation) -> Op
     result
 }
 
+#[derive(Debug, Clone)]
+struct FullAdder {
+    sum: String,    // z wire output
+    carry: String,  // carry output
+    temps: Vec<String>, // intermediate wires
+}
+
+fn analyze_adder(gates: &[LogicGate]) -> Vec<String> {
+    let mut incorrect_wires = Vec::new();
+    let mut prev_carry = None;
+    
+    for i in 0..45 {
+        let n = format!("{:02}", i);
+        let stage = identify_adder_stage(gates, &n, prev_carry.as_deref());
+        
+        // For first stage (half adder)
+        if i == 0 {
+            if stage.sum != "z00" {
+                incorrect_wires.push(stage.sum);
+            }
+            prev_carry = Some(stage.carry);
+            continue;
+        }
+        
+        // Check XOR gates in full adder stages
+        if let Some(current_z) = find_z_wire(gates, &n) {
+            if !is_valid_z_output(gates, &current_z) {
+                incorrect_wires.push(current_z);
+            }
+        }
+
+        prev_carry = Some(stage.carry);
+    }
+    
+    incorrect_wires.sort();
+    incorrect_wires.dedup();
+    incorrect_wires
+}
+
+fn identify_adder_stage(gates: &[LogicGate], n: &str, prev_carry: Option<&str>) -> FullAdder {
+    let x = format!("x{}", n);
+    let y = format!("y{}", n);
+    
+    // Find initial XOR and AND between x and y
+    let xor_out = find_gate(gates, &x, &y, &Operation::Xor)
+        .map(|s| s.to_string())
+        .unwrap_or_default();
+        
+    let and_out = find_gate(gates, &x, &y, &Operation::And)
+        .map(|s| s.to_string())
+        .unwrap_or_default();
+
+    // For full adder, find carry chain
+    let (sum, carry) = if let Some(c) = prev_carry {
+        let carry_and = find_gate(gates, &xor_out, c, &Operation::And)
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+            
+        let sum = find_gate(gates, &xor_out, c, &Operation::Xor)
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+            
+        let carry = find_gate(gates, &carry_and, &and_out, &Operation::Or)
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+            
+        (sum, carry)
+    } else {
+        (xor_out.clone(), and_out.clone())
+    };
+
+    FullAdder {
+        sum,
+        carry,
+        temps: vec![xor_out, and_out],
+    }
+}
+
+fn is_valid_z_output(gates: &[LogicGate], wire: &str) -> bool {
+    if !wire.starts_with('z') {
+        return true; // Not a z-wire, so no validation needed
+    }
+    
+    // Find the gate that produces this z-wire
+    if let Some(gate) = gates.iter().find(|g| g.output == wire) {
+        // All z-wires except z45 should come from XOR gates
+        if wire == "z45" {
+            gate.op == Operation::Or
+        } else {
+            gate.op == Operation::Xor
+        }
+    } else {
+        false
+    }
+}
+
+fn find_z_wire(gates: &[LogicGate], n: &str) -> Option<String> {
+    gates.iter()
+        .find(|g| g.output == format!("z{}", n))
+        .map(|g| g.output.clone())
+}
+
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (_, gate_defs) = input.split_once("\n\n").unwrap();
+    let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
     let gates = parse_logic_gates(gate_defs).unwrap().1;
     
-    let mut swaps = Vec::new();
-    
-    // Look at each gate's output and see if it's been swapped with another
-    for (i, gate1) in gates.iter().enumerate() {
-        for gate2 in gates.iter().skip(i + 1) {
-            // If we found two AND gates with interchanged outputs
-            if gate1.op == Operation::And && gate2.op == Operation::And {
-                let inputs1 = format!("x{} y{}", 
-                    gate1.left.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9'),
-                    gate1.right.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9')
-                );
-                let inputs2 = format!("x{} y{}", 
-                    gate2.left.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9'),
-                    gate2.right.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9')
-                );
-                
-                println!("Gate1: {} -> {}", inputs1, gate1.output);
-                println!("Gate2: {} -> {}", inputs2, gate2.output);
-                
-                // If we find gates where inputs and outputs are swapped
-                if (inputs1 == inputs2) && (gate1.output != gate2.output) {
-                    swaps.push(gate1.output.clone());
-                    swaps.push(gate2.output.clone());
-                }
-            }
-        }
-    }
-    
-    swaps.sort();
-    swaps.dedup();
-    
-    // Only take the first 8 wires (4 pairs)
-    swaps.truncate(8);
-    Ok(swaps.join(","))
-}
-
-#[derive(Debug, Clone)]
-struct CircuitState {
-    x_bits: u128,
-    y_bits: u128,
-    z_bits: u128,
-}
-
-impl CircuitState {
-    fn from_wires(wires: &BTreeMap<String, bool>) -> Self {
-        let x_bits = wires.iter()
-            .filter(|(k, _)| k.starts_with("x"))
-            .map(|(k, &v)| {
-                let pos = k.trim_start_matches('x').parse::<u32>().unwrap();
-                if v { 1u128 << pos } else { 0 }
-            })
-            .sum();
-
-        let y_bits = wires.iter()
-            .filter(|(k, _)| k.starts_with("y"))
-            .map(|(k, &v)| {
-                let pos = k.trim_start_matches('y').parse::<u32>().unwrap();
-                if v { 1u128 << pos } else { 0 }
-            })
-            .sum();
-
-        CircuitState {
-            x_bits,
-            y_bits,
-            z_bits: 0,
-        }
-    }
-
-    fn evaluate_gate(&mut self, gate: &LogicGate) -> bool {
-        // Get bit positions
-        let left_pos = match gate.left.chars().next().unwrap() {
-            'x' => {
-                let pos = gate.left.trim_start_matches('x').parse::<u32>().unwrap();
-                (self.x_bits >> pos) & 1
-            },
-            'y' => {
-                let pos = gate.left.trim_start_matches('y').parse::<u32>().unwrap();
-                (self.y_bits >> pos) & 1
-            },
-            _ => return false,
-        };
-
-        let right_pos = match gate.right.chars().next().unwrap() {
-            'x' => {
-                let pos = gate.right.trim_start_matches('x').parse::<u32>().unwrap();
-                (self.x_bits >> pos) & 1
-            },
-            'y' => {
-                let pos = gate.right.trim_start_matches('y').parse::<u32>().unwrap();
-                (self.y_bits >> pos) & 1
-            },
-            _ => return false,
-        };
-
-        let result = match gate.op {
-            Operation::And => left_pos & right_pos,
-            Operation::Or => left_pos | right_pos,
-            Operation::Xor => left_pos ^ right_pos,
-        };
-
-        let z_pos = gate.output.trim_start_matches('z').parse::<u32>().unwrap();
-        self.z_bits |= result << z_pos;
-        true
-    }
-}
-
-// Represent a swap pair
-#[derive(Debug, Clone)]
-struct SwapPair {
-    wire1: String,
-    wire2: String,
-}
-
-fn test_addition_with_swaps(
-    original_gates: &[LogicGate],
-    initial_values: &BTreeMap<String, bool>,
-    swaps: &[SwapPair],
-) -> bool {
-    // Clone gates and apply swaps
-    let mut modified_gates = original_gates.to_vec();
-    for swap in swaps {
-        // Apply each swap to the gates' outputs
-        for gate in &mut modified_gates {
-            if gate.output == swap.wire1 {
-                gate.output = swap.wire2.clone();
-            } else if gate.output == swap.wire2 {
-                gate.output = swap.wire1.clone();
-            }
-        }
-    }
-
-    // Get x and y input values
-    let x_bits = initial_values.iter()
-        .filter(|(k, _)| k.starts_with("x"))
-        .map(|(k, &v)| (k.trim_start_matches('x').parse::<usize>().unwrap(), v))
-        .collect::<BTreeMap<_, _>>();
-
-    let y_bits = initial_values.iter()
-        .filter(|(k, _)| k.starts_with("y"))
-        .map(|(k, &v)| (k.trim_start_matches('y').parse::<usize>().unwrap(), v))
-        .collect::<BTreeMap<_, _>>();
-
-    // Calculate expected sum
-    let x_val = x_bits.iter()
-        .fold(0u128, |acc, (_, &bit)| (acc << 1) | (bit as u128));
-    let y_val = y_bits.iter()
-        .fold(0u128, |acc, (_, &bit)| (acc << 1) | (bit as u128));
-    let expected_sum = x_val + y_val;
-
-    // Evaluate gates with swaps and compare to expected sum
-    let mut wires = initial_values.clone();
-    let mut made_progress = true;
-    while made_progress {
-        made_progress = false;
-        for gate in &modified_gates {
-            if !wires.contains_key(&gate.output) && 
-               wires.contains_key(&gate.left) && 
-               wires.contains_key(&gate.right) {
-                let result = match gate.op {
-                    Operation::And => wires[&gate.left] & wires[&gate.right],
-                    Operation::Or => wires[&gate.left] | wires[&gate.right],
-                    Operation::Xor => wires[&gate.left] != wires[&gate.right],
-                };
-                wires.insert(gate.output.clone(), result);
-                made_progress = true;
-            }
-        }
-    }
-
-    // Calculate actual sum from z wires
-    let actual_sum = wires.iter()
-        .filter(|(k, _)| k.starts_with("z"))
-        .map(|(k, &v)| (k.trim_start_matches('z').parse::<usize>().unwrap(), v))
-        .collect::<BTreeMap<_, _>>()
-        .iter()
-        .fold(0u128, |acc, (_, &bit)| (acc << 1) | (bit as u128));
-
-    actual_sum == expected_sum
+    let incorrect_wires = analyze_adder(&gates);
+    Ok(incorrect_wires.join(","))
 }
 
 // Parse identifiers like x00, y01, z02
