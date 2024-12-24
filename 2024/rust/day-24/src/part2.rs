@@ -26,6 +26,7 @@ pub struct LogicGate {
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
 
+    // Still need initial wires map for setup
     let wires = initial_values.lines().fold(BTreeMap::new(), |mut map, next| {
         let (key, value) = next.split_once(":").unwrap();
         let v = value.trim().parse::<u8>().unwrap();
@@ -33,13 +34,15 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         map
     });
 
+    // Convert to our optimized circuit state
+    let initial_state = CircuitState::from_wires(&wires);
     let gates = parse_logic_gates(gate_defs).unwrap().1;
     
-    // Get all possible pairs for swapping
+    // Get candidate wires for swapping
     let mut outputs: Vec<String> = gates.iter()
         .map(|gate| gate.output.clone())
         .collect();
-    outputs.sort(); // Ensure consistent ordering
+    outputs.sort();
 
     let mut swap_candidates = Vec::new();
     for i in 0..outputs.len() {
@@ -51,8 +54,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         }
     }
 
-    // Try combinations of 4 pairs
-    // needs optimization
+    // Try combinations of 4 pairs using bit vector operations
     for i in 0..swap_candidates.len() {
         for j in (i + 1)..swap_candidates.len() {
             for k in (j + 1)..swap_candidates.len() {
@@ -78,6 +80,76 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     }
 
     todo!()
+}
+
+#[derive(Debug, Clone)]
+struct CircuitState {
+    x_bits: u128,
+    y_bits: u128,
+    z_bits: u128,
+}
+
+impl CircuitState {
+    fn from_wires(wires: &BTreeMap<String, bool>) -> Self {
+        let x_bits = wires.iter()
+            .filter(|(k, _)| k.starts_with("x"))
+            .map(|(k, &v)| {
+                let pos = k.trim_start_matches('x').parse::<u32>().unwrap();
+                if v { 1u128 << pos } else { 0 }
+            })
+            .sum();
+
+        let y_bits = wires.iter()
+            .filter(|(k, _)| k.starts_with("y"))
+            .map(|(k, &v)| {
+                let pos = k.trim_start_matches('y').parse::<u32>().unwrap();
+                if v { 1u128 << pos } else { 0 }
+            })
+            .sum();
+
+        CircuitState {
+            x_bits,
+            y_bits,
+            z_bits: 0,
+        }
+    }
+
+    fn evaluate_gate(&mut self, gate: &LogicGate) -> bool {
+        // Get bit positions
+        let left_pos = match gate.left.chars().next().unwrap() {
+            'x' => {
+                let pos = gate.left.trim_start_matches('x').parse::<u32>().unwrap();
+                (self.x_bits >> pos) & 1
+            },
+            'y' => {
+                let pos = gate.left.trim_start_matches('y').parse::<u32>().unwrap();
+                (self.y_bits >> pos) & 1
+            },
+            _ => return false,
+        };
+
+        let right_pos = match gate.right.chars().next().unwrap() {
+            'x' => {
+                let pos = gate.right.trim_start_matches('x').parse::<u32>().unwrap();
+                (self.x_bits >> pos) & 1
+            },
+            'y' => {
+                let pos = gate.right.trim_start_matches('y').parse::<u32>().unwrap();
+                (self.y_bits >> pos) & 1
+            },
+            _ => return false,
+        };
+
+        let result = match gate.op {
+            Operation::And => left_pos & right_pos,
+            Operation::Or => left_pos | right_pos,
+            Operation::Xor => left_pos ^ right_pos,
+        };
+
+        let z_pos = gate.output.trim_start_matches('z').parse::<u32>().unwrap();
+        self.z_bits |= result << z_pos;
+        true
+    }
 }
 
 // Represent a swap pair
