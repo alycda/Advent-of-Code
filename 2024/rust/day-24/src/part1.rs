@@ -67,24 +67,47 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         }
     }
 
-    let output = wires.iter()
+    let mut wire_nums: Vec<(usize, bool)> = wires.iter()
         .filter(|(k, _)| k.starts_with("z"))
         .map(|(k, v)| {
-            // println!("{}: {}", k, v);
-            dbg!(k, v);
-
-            if v == &true {
-                1
-            } else {
-                0
-            }
+            let num = k.trim_start_matches('z').parse::<usize>().unwrap();
+            dbg!(k, num, v);
+            (num, *v)
         })
+        .collect();
+
+    wire_nums.sort_by_key(|(num, _)| *num);
+    dbg!(&wire_nums); // See sorted order
+
+    let bits: Vec<u32> = wire_nums.iter()
         .rev()
-        // .collect::<String>();
-        // .fold(0u32, |acc, (_, &bit)| {
-        //     (acc << 1) | (bit as u32)
-        // });
-        .fold(0u32, |acc, bit| {  // Now we just have the bit, not a tuple
+        .map(|(_, v)| if *v { 1 } else { 0 })
+        .collect();
+
+    dbg!(&bits);
+
+    // // collect the bits into a Vec to inspect
+    // let bits: Vec<u32> = wires.iter()
+    //     .filter(|(k, _)| k.starts_with("z"))
+    //     .map(|(k, v)| {
+    //         dbg!(k, v); // See what order we're getting them in
+    //         if *v { 1 } else { 0 }
+    //     })
+    //     .rev()
+    //     .collect();
+
+    // dbg!(&bits);
+
+    // dbg!(&bits.clone().iter().collect::<String>()); // complete binary number
+
+    let binary_string: String = bits.iter()
+        .map(|&bit| char::from_digit(bit as u32, 10).unwrap())
+        .collect();
+    dbg!(&binary_string);
+
+    // convert to decimal
+    let output = bits.into_iter()
+        .fold(0u32, |acc, bit| {
             (acc << 1) | bit
         });
 
