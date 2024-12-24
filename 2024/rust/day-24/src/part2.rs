@@ -49,33 +49,77 @@ struct FullAdder {
 
 fn analyze_adder(gates: &[LogicGate]) -> Vec<String> {
     let mut incorrect_wires = Vec::new();
-    let mut prev_carry = None;
+    let mut c0 = None;
     
     for i in 0..45 {
         let n = format!("{:02}", i);
-        let stage = identify_adder_stage(gates, &n, prev_carry.as_deref());
         
-        // For first stage (half adder)
-        if i == 0 {
-            if stage.sum != "z00" {
-                incorrect_wires.push(stage.sum);
-            }
-            prev_carry = Some(stage.carry);
-            continue;
-        }
-        
-        // Check XOR gates in full adder stages
-        if let Some(current_z) = find_z_wire(gates, &n) {
-            if !is_valid_z_output(gates, &current_z) {
-                incorrect_wires.push(current_z);
-            }
-        }
+        // Find initial XOR and AND between x and y inputs
+        let mut m1 = find_gate(gates, &format!("x{}", n), &format!("y{}", n), &Operation::Xor)
+            .map(|s| s.to_string());
+        let mut n1 = find_gate(gates, &format!("x{}", n), &format!("y{}", n), &Operation::And)
+            .map(|s| s.to_string());
 
-        prev_carry = Some(stage.carry);
+        println!("Stage {}: m1={:?}, n1={:?}, c0={:?}", i, m1, n1, c0);
+
+        if let Some(c0_val) = c0.as_deref() {
+            // Try to find r1 (carry AND)
+            let mut r1 = m1.as_ref().and_then(|m| find_gate(gates, c0_val, m, &Operation::And))
+                .map(|s| s.to_string());
+
+            // If r1 not found, try swapping m1 and n1
+            if r1.is_none() {
+                std::mem::swap(&mut m1, &mut n1);
+                println!("Swapped m1={:?}, n1={:?}", m1, n1);
+                if let (Some(m), Some(n)) = (&m1, &n1) {
+                    incorrect_wires.push(m.clone());
+                    incorrect_wires.push(n.clone());
+                }
+                r1 = m1.as_ref().and_then(|m| find_gate(gates, c0_val, m, &Operation::And))
+                    .map(|s| s.to_string());
+            }
+
+            // Find z1 (XOR with carry)
+            let mut z1 = m1.as_ref().and_then(|m| find_gate(gates, c0_val, m, &Operation::Xor))
+                .map(|s| s.to_string());
+
+            // Check for z-wire swaps
+            for wire in &[m1.as_ref(), n1.as_ref(), r1.as_ref()] {
+                if let Some(w) = wire {
+                    if w.starts_with('z') {
+                        incorrect_wires.push(w.to_string());
+                        if let Some(z) = &z1 {
+                            incorrect_wires.push(z.clone());
+                        }
+                    }
+                }
+            }
+
+            // Find next carry
+            if let (Some(r), Some(n)) = (&r1, &n1) {
+                let c1 = find_gate(gates, r, n, &Operation::Or)
+                    .map(|s| s.to_string());
+                
+                if let Some(c) = &c1 {
+                    if c.starts_with('z') && c != "z45" {
+                        incorrect_wires.push(c.clone());
+                        if let Some(z) = &z1 {
+                            incorrect_wires.push(z.clone());
+                        }
+                    }
+                }
+                c0 = c1;
+            }
+        } else {
+            c0 = n1;
+        }
     }
-    
+
     incorrect_wires.sort();
     incorrect_wires.dedup();
+    incorrect_wires.truncate(8);  // Keep only 4 pairs
+    
+    println!("Final incorrect wires: {:?}", incorrect_wires);
     incorrect_wires
 }
 
