@@ -6,6 +6,53 @@ use nom::{
     branch::alt, bytes::complete::{tag, take_while1}, character::complete::{space0, space1}, combinator::map, multi::separated_list1, sequence::tuple, IResult
 };
 
+use petgraph::{
+    graph::{DiGraph, NodeIndex},
+    dot::{Dot, Config},
+};
+use std::collections::HashMap;
+
+fn visualize_circuit(gates: &[LogicGate], wires: &BTreeMap<String, bool>) -> std::io::Result<()> {
+    let mut graph = DiGraph::new();
+    let mut node_map = HashMap::new();
+
+    // Add wire nodes
+    for (wire, &value) in wires.iter() {
+        let node = graph.add_node(format!("{}={}", wire, value));
+        node_map.insert(wire.clone(), node);
+    }
+
+    // Add gate nodes and edges
+    for (i, gate) in gates.iter().enumerate() {
+        let gate_node = graph.add_node(format!("Gate{} {:?}", i, gate.op));
+        
+        // Add edges from inputs to gate
+        if let Some(&left) = node_map.get(&gate.left) {
+            graph.add_edge(left, gate_node, "");
+        }
+        if let Some(&right) = node_map.get(&gate.right) {
+            graph.add_edge(right, gate_node, "");
+        }
+
+        // Add edge from gate to output
+        let output_node = if let Some(&node) = node_map.get(&gate.output) {
+            node
+        } else {
+            let node = graph.add_node(format!("{}", gate.output));
+            node_map.insert(gate.output.clone(), node);
+            node
+        };
+        graph.add_edge(gate_node, output_node, "");
+    }
+
+    // Export to dot format
+    let dot = Dot::with_config(&graph, &[Config::EdgeNoLabel]);
+    std::fs::write("circuit.dot", format!("{:?}", dot))?;
+    
+    println!("Generated circuit.dot - view with 'dot -Tpng circuit.dot -o circuit.png'");
+    Ok(())
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operation {
     And,
@@ -35,9 +82,13 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     });
 
     // Convert to our optimized circuit state
-    let initial_state = CircuitState::from_wires(&wires);
+    let _initial_state = CircuitState::from_wires(&wires);
     let gates = parse_logic_gates(gate_defs).unwrap().1;
     
+    visualize_circuit(&gates, &wires).unwrap();
+
+    panic!("halt");
+
     // Get candidate wires for swapping
     let mut outputs: Vec<String> = gates.iter()
         .map(|gate| gate.output.clone())
