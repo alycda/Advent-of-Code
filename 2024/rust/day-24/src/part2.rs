@@ -69,8 +69,147 @@ pub struct LogicGate {
     output: String,
 }
 
-// #[tracing::instrument]
+fn find_gate<'a>(gates: &'a [LogicGate], a: &str, b: &str, op: &Operation) -> Option<&'a String> {
+    gates.iter()
+        .find(|gate| {
+            (gate.left == a && gate.right == b && gate.op == *op) ||
+            (gate.left == b && gate.right == a && gate.op == *op)
+        })
+        .map(|gate| &gate.output)
+}
+
 pub fn process(input: &str) -> miette::Result<String, AocError> {
+    let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
+    let gates = parse_logic_gates(gate_defs).unwrap().1;
+    
+    let mut swapped = Vec::new();
+    let mut c0: Option<String> = None;
+    
+    for i in 0..45 {
+        let n = format!("{:02}", i);
+        
+        let mut m1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::Xor)
+            .map(|s| s.to_string());
+        let mut n1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::And)
+            .map(|s| s.to_string());
+        
+        if let Some(c0_val) = &c0 {
+            if let (Some(m1_val), Some(n1_val)) = (&m1, &n1) {
+                let mut r1 = find_gate(&gates, c0_val, m1_val, &Operation::And)
+                    .map(|s| s.to_string());
+                    
+                if r1.is_none() {
+                    // Clone values before swap
+                    let m1_clone = m1.clone();
+                    let n1_clone = n1.clone();
+                    std::mem::swap(&mut m1, &mut n1);
+                    
+                    // Push the swapped values
+                    if let (Some(m), Some(n)) = (m1_clone, n1_clone) {
+                        swapped.push(m);
+                        swapped.push(n);
+                    }
+                    
+                    if let Some(m1_val) = &m1 {
+                        r1 = find_gate(&gates, c0_val, m1_val, &Operation::And)
+                            .map(|s| s.to_string());
+                    }
+                }
+                
+                let mut z1 = find_gate(&gates, c0_val, m1.as_ref().unwrap(), &Operation::Xor)
+                    .map(|s| s.to_string());
+                
+                // Handle m1/z1 swap
+                {
+                    let needs_swap = m1.as_ref()
+                        .map(|m| m.starts_with('z'))
+                        .unwrap_or(false);
+                    
+                    if needs_swap {
+                        let m1_clone = m1.clone();
+                        std::mem::swap(&mut m1, &mut z1);
+                        if let Some(m) = m1_clone {
+                            swapped.push(m);
+                            if let Some(z) = &z1 {
+                                swapped.push(z.clone());
+                            }
+                        }
+                    }
+                }
+                
+                // Handle n1/z1 swap
+                {
+                    let needs_swap = n1.as_ref()
+                        .map(|n| n.starts_with('z'))
+                        .unwrap_or(false);
+                    
+                    if needs_swap {
+                        let n1_clone = n1.clone();
+                        std::mem::swap(&mut n1, &mut z1);
+                        if let Some(n) = n1_clone {
+                            swapped.push(n);
+                            if let Some(z) = &z1 {
+                                swapped.push(z.clone());
+                            }
+                        }
+                    }
+                }
+                
+                // Handle r1/z1 swap
+                {
+                    let needs_swap = r1.as_ref()
+                        .map(|r| r.starts_with('z'))
+                        .unwrap_or(false);
+                    
+                    if needs_swap {
+                        let r1_clone = r1.clone();
+                        std::mem::swap(&mut r1, &mut z1);
+                        if let Some(r) = r1_clone {
+                            swapped.push(r);
+                            if let Some(z) = &z1 {
+                                swapped.push(z.clone());
+                            }
+                        }
+                    }
+                }
+                
+                if let (Some(r1_val), Some(n1_val)) = (&r1, &n1) {
+                    let mut c1 = find_gate(&gates, r1_val, n1_val, &Operation::Or)
+                        .map(|s| s.to_string());
+                    
+                    // Handle carry bit swap
+                    let needs_swap = c1.as_ref()
+                        .map(|c| c.starts_with('z') && c != "z45")
+                        .unwrap_or(false);
+                    
+                    if needs_swap {
+                        let c1_clone = c1.clone();
+                        std::mem::swap(&mut c1, &mut z1);
+                        if let Some(c) = c1_clone {
+                            swapped.push(c);
+                            if let Some(z) = &z1 {
+                                swapped.push(z.clone());
+                            }
+                        }
+                    }
+                    
+                    c0 = c1;
+                }
+            }
+        } else {
+            c0 = n1;
+        }
+    }
+
+    dbg!(&swapped);
+    
+    swapped.sort();
+    swapped.dedup();
+    Ok(swapped.join(","))
+}
+
+// #[tracing::instrument]
+pub fn _process(input: &str) -> miette::Result<String, AocError> {
     let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
 
     // Still need initial wires map for setup
