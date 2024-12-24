@@ -90,241 +90,43 @@ fn find_gate<'a>(gates: &'a [LogicGate], a: &str, b: &str, op: &Operation) -> Op
 }
 
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
+    let (_, gate_defs) = input.split_once("\n\n").unwrap();
     let gates = parse_logic_gates(gate_defs).unwrap().1;
     
-    let num_bits = initial_values.lines()
-        .filter(|line| line.starts_with("x"))
-        .count();
-        
-    println!("Found {} bits to process", num_bits);
+    let mut swaps = Vec::new();
     
-    let mut swapped = Vec::new();
-    
-    // For each bit position, find where it actually outputs vs where it should output
-    for i in 0..num_bits {
-        let n = format!("{:02}", i);
-        let actual_gate = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::And)
-            .expect("Should find gate");
-            
-        let expected_output = format!("z{:02}", i);
-        
-        println!("Bit {}: expected {} but got {}", n, expected_output, actual_gate);
-        
-        if actual_gate != &expected_output {
-            swapped.push(actual_gate.clone());
-            swapped.push(expected_output);
-        }
-    }
-    
-    swapped.sort();
-    swapped.dedup();
-    Ok(swapped.join(","))
-}
-
-// pub fn process(input: &str) -> miette::Result<String, AocError> {
-//     let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
-//     let gates = parse_logic_gates(gate_defs).unwrap().1;
-    
-//     // Count how many x inputs we have (could also check y)
-//     let num_bits = initial_values.lines()
-//         .filter(|line| line.starts_with("x"))
-//         .count();
-
-//     println!("Found {} bits to process", num_bits);
-
-//     let mut swapped = Vec::new();
-//     let mut c0: Option<String> = None;
-    
-//     for i in 0..num_bits {
-//         let n = format!("{:02}", i);
-
-//         println!("Processing bit {}", n);
-
-//         let mut m1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::Xor)
-//             .map(|s| s.to_string());
-//         let mut n1 = find_gate(&gates, &format!("x{}", n), &format!("y{}", n), &Operation::And)
-//             .map(|s| s.to_string());
-        
-//         println!("Half adder gates found: m1={:?}, n1={:?}", m1, n1);
-
-//         if let Some(c0_val) = &c0 {
-//             if let (Some(m1_val), Some(n1_val)) = (&m1, &n1) {
-//                 let mut r1 = find_gate(&gates, c0_val, m1_val, &Operation::And)
-//                     .map(|s| s.to_string());
-                    
-//                 if r1.is_none() {
-//                     // Clone values before swap
-//                     let m1_clone = m1.clone();
-//                     let n1_clone = n1.clone();
-//                     std::mem::swap(&mut m1, &mut n1);
-                    
-//                     // Push the swapped values
-//                     if let (Some(m), Some(n)) = (m1_clone, n1_clone) {
-//                         swapped.push(m);
-//                         swapped.push(n);
-//                     }
-                    
-//                     if let Some(m1_val) = &m1 {
-//                         r1 = find_gate(&gates, c0_val, m1_val, &Operation::And)
-//                             .map(|s| s.to_string());
-//                     }
-//                 }
+    // Look at each gate's output and see if it's been swapped with another
+    for (i, gate1) in gates.iter().enumerate() {
+        for gate2 in gates.iter().skip(i + 1) {
+            // If we found two AND gates with interchanged outputs
+            if gate1.op == Operation::And && gate2.op == Operation::And {
+                let inputs1 = format!("x{} y{}", 
+                    gate1.left.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9'),
+                    gate1.right.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9')
+                );
+                let inputs2 = format!("x{} y{}", 
+                    gate2.left.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9'),
+                    gate2.right.trim_start_matches(|c| c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9')
+                );
                 
-//                 let mut z1 = find_gate(&gates, c0_val, m1.as_ref().unwrap(), &Operation::Xor)
-//                     .map(|s| s.to_string());
+                println!("Gate1: {} -> {}", inputs1, gate1.output);
+                println!("Gate2: {} -> {}", inputs2, gate2.output);
                 
-//                 // Handle m1/z1 swap
-//                 {
-//                     let needs_swap = m1.as_ref()
-//                         .map(|m| m.starts_with('z'))
-//                         .unwrap_or(false);
-                    
-//                     if needs_swap {
-//                         let m1_clone = m1.clone();
-//                         std::mem::swap(&mut m1, &mut z1);
-//                         if let Some(m) = m1_clone {
-//                             swapped.push(m);
-//                             if let Some(z) = &z1 {
-//                                 swapped.push(z.clone());
-//                             }
-//                         }
-//                     }
-//                 }
-                
-//                 // Handle n1/z1 swap
-//                 {
-//                     let needs_swap = n1.as_ref()
-//                         .map(|n| n.starts_with('z'))
-//                         .unwrap_or(false);
-                    
-//                     if needs_swap {
-//                         let n1_clone = n1.clone();
-//                         std::mem::swap(&mut n1, &mut z1);
-//                         if let Some(n) = n1_clone {
-//                             swapped.push(n);
-//                             if let Some(z) = &z1 {
-//                                 swapped.push(z.clone());
-//                             }
-//                         }
-//                     }
-//                 }
-                
-//                 // Handle r1/z1 swap
-//                 {
-//                     let needs_swap = r1.as_ref()
-//                         .map(|r| r.starts_with('z'))
-//                         .unwrap_or(false);
-                    
-//                     if needs_swap {
-//                         let r1_clone = r1.clone();
-//                         std::mem::swap(&mut r1, &mut z1);
-//                         if let Some(r) = r1_clone {
-//                             swapped.push(r);
-//                             if let Some(z) = &z1 {
-//                                 swapped.push(z.clone());
-//                             }
-//                         }
-//                     }
-//                 }
-                
-//                 if let (Some(r1_val), Some(n1_val)) = (&r1, &n1) {
-//                     let mut c1 = find_gate(&gates, r1_val, n1_val, &Operation::Or)
-//                         .map(|s| s.to_string());
-                    
-//                     // Handle carry bit swap
-//                     let needs_swap = c1.as_ref()
-//                         .map(|c| c.starts_with('z') && c != "z45")
-//                         .unwrap_or(false);
-                    
-//                     if needs_swap {
-//                         let c1_clone = c1.clone();
-//                         std::mem::swap(&mut c1, &mut z1);
-//                         if let Some(c) = c1_clone {
-//                             swapped.push(c);
-//                             if let Some(z) = &z1 {
-//                                 swapped.push(z.clone());
-//                             }
-//                         }
-//                     }
-                    
-//                     c0 = c1;
-//                 }
-//             }
-//         } else {
-//             c0 = n1;
-//         }
-//     }
-
-//     dbg!(&swapped);
-    
-//     swapped.sort();
-//     swapped.dedup();
-//     Ok(swapped.join(","))
-// }
-
-// #[tracing::instrument]
-pub fn _process(input: &str) -> miette::Result<String, AocError> {
-    let (initial_values, gate_defs) = input.split_once("\n\n").unwrap();
-
-    // Still need initial wires map for setup
-    let wires = initial_values.lines().fold(BTreeMap::new(), |mut map, next| {
-        let (key, value) = next.split_once(":").unwrap();
-        let v = value.trim().parse::<u8>().unwrap();
-        map.insert(key.to_string(), v == 1);
-        map
-    });
-
-    // Convert to our optimized circuit state
-    let _initial_state = CircuitState::from_wires(&wires);
-    let gates = parse_logic_gates(gate_defs).unwrap().1;
-    
-    visualize_circuit(&gates, &wires).unwrap();
-
-    panic!("halt");
-
-    // Get candidate wires for swapping
-    let mut outputs: Vec<String> = gates.iter()
-        .map(|gate| gate.output.clone())
-        .collect();
-    outputs.sort();
-
-    let mut swap_candidates = Vec::new();
-    for i in 0..outputs.len() {
-        for j in (i + 1)..outputs.len() {
-            swap_candidates.push(SwapPair {
-                wire1: outputs[i].clone(),
-                wire2: outputs[j].clone(),
-            });
-        }
-    }
-
-    // Try combinations of 4 pairs using bit vector operations
-    for i in 0..swap_candidates.len() {
-        for j in (i + 1)..swap_candidates.len() {
-            for k in (j + 1)..swap_candidates.len() {
-                for l in (k + 1)..swap_candidates.len() {
-                    let swaps = vec![
-                        swap_candidates[i].clone(),
-                        swap_candidates[j].clone(),
-                        swap_candidates[k].clone(),
-                        swap_candidates[l].clone(),
-                    ];
-                    
-                    if test_addition_with_swaps(&gates, &wires, &swaps) {
-                        // Found correct swaps - return sorted wire list
-                        let mut wire_list = swaps.iter()
-                            .flat_map(|swap| vec![swap.wire1.clone(), swap.wire2.clone()])
-                            .collect::<Vec<_>>();
-                        wire_list.sort();
-                        return Ok(wire_list.join(","));
-                    }
+                // If we find gates where inputs and outputs are swapped
+                if (inputs1 == inputs2) && (gate1.output != gate2.output) {
+                    swaps.push(gate1.output.clone());
+                    swaps.push(gate2.output.clone());
                 }
             }
         }
     }
-
-    todo!()
+    
+    swaps.sort();
+    swaps.dedup();
+    
+    // Only take the first 8 wires (4 pairs)
+    swaps.truncate(8);
+    Ok(swaps.join(","))
 }
 
 #[derive(Debug, Clone)]
