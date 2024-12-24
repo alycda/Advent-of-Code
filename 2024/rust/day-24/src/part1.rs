@@ -77,14 +77,14 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .collect();
 
     wire_nums.sort_by_key(|(num, _)| *num);
-    dbg!(&wire_nums); // See sorted order
+    // dbg!(&wire_nums); // See sorted order
 
-    let bits: Vec<u32> = wire_nums.iter()
-        .rev()
-        .map(|(_, v)| if *v { 1 } else { 0 })
-        .collect();
+    // let bits: Vec<u32> = wire_nums.iter()
+    //     .rev()
+    //     .map(|(_, v)| if *v { 1 } else { 0 })
+    //     .collect();
 
-    dbg!(&bits);
+    // dbg!(&bits);
 
     // dbg!(&bits.clone().iter().collect::<String>()); // complete binary number
 
