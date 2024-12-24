@@ -1,23 +1,15 @@
 use crate::AocError;
 
-use std::collections::HashMap;
-
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     // Split input into parts
     let parts: Vec<Vec<&str>> = input.trim().split("\n\n")
         .map(|section| section.split('\n').collect())
         .collect();
 
-    // Parse initial wire values
-    let mut wires: HashMap<String, i32> = parts[0].iter()
-        .map(|line| {
-            let parts: Vec<&str> = line.split(": ").collect();
-            (parts[0].to_string(), parts[1].parse().unwrap())
-        })
-        .collect();
+    // dbg!(&parts);
 
     // Parse instructions
-    let mut instructions: Vec<Instruction> = parts[1].iter()
+    let instructions: Vec<Instruction> = parts[1].iter()
         .map(|line| {
             let tokens: Vec<&str> = line.split(' ').collect();
             Instruction {
@@ -25,10 +17,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
                 b: tokens[2].to_string(),
                 c: tokens[4].to_string(),
                 operation: tokens[1].to_string(),
-                executed: false,
             }
         })
         .collect();
+
+    dbg!(&instructions);
 
     const BIT_LENGTH: usize = 45;
 
@@ -119,7 +112,6 @@ struct Instruction {
     b: String,
     c: String,
     operation: String,
-    executed: bool,
 }
 
 

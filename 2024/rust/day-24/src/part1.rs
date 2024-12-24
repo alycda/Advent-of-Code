@@ -71,43 +71,18 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .filter(|(k, _)| k.starts_with("z"))
         .map(|(k, v)| {
             let num = k.trim_start_matches('z').parse::<usize>().unwrap();
-            dbg!(k, num, v);
+            // dbg!(k, num, v);
             (num, *v)
         })
         .collect();
 
     wire_nums.sort_by_key(|(num, _)| *num);
-    // dbg!(&wire_nums); // See sorted order
 
-    // let bits: Vec<u32> = wire_nums.iter()
-    //     .rev()
-    //     .map(|(_, v)| if *v { 1 } else { 0 })
-    //     .collect();
-
-    // dbg!(&bits);
-
-    // dbg!(&bits.clone().iter().collect::<String>()); // complete binary number
-
-    // let binary_string: String = bits.iter()
-    //     .map(|&bit| char::from_digit(bit as u32, 10).unwrap())
-    //     .collect();
-    // dbg!(&binary_string);
-
-    // // convert to decimal
-    // let output = bits.into_iter()
-    //     .fold(0u32, |acc, bit| {
-    //         (acc << 1) | bit
-    //     });
-
-    // dbg!(&wires);
-
-    // dbg!(output);
-
-    // Use u128 for the conversion
+    // Use u64 for the conversion
     let output = wire_nums.iter()
         .rev()
-        .map(|(_, v)| if *v { 1u128 } else { 0u128 })
-        .fold(0u128, |acc, bit| {
+        .map(|(_, v)| if *v { 1u64 } else { 0u64 })
+        .fold(0u64, |acc, bit| {
             (acc << 1) | bit
         });
 
