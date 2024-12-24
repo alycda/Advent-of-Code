@@ -1,9 +1,9 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use crate::AocError;
 
 use nom::{
-    branch::alt, bytes::complete::{tag, take_while1}, character::complete::{space0, space1}, combinator::map, multi::separated_list1, sequence::{separated_pair, tuple}, IResult
+    branch::alt, bytes::complete::{tag, take_while1}, character::complete::{space0, space1}, combinator::map, multi::separated_list1, sequence::tuple, IResult
 };
 
 #[derive(Debug, PartialEq)]
@@ -24,78 +24,50 @@ pub struct LogicGate {
 
 // #[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let (a, b) = input.split_once("\n\n").unwrap();
+    let (initial_values, connections) = input.split_once("\n\n").unwrap();
 
-    let mut wires = a.lines().fold(BTreeMap::new(), |mut map, next| {
+    let mut wires = initial_values.lines().fold(BTreeMap::new(), |mut map, next| {
         let (key, value) = next.split_once(":").unwrap();
         let v = value.trim().parse::<u8>().unwrap();
-        let v = if v == 1 { true } else { false };
 
-        map.insert(key, v);
+        map.insert(key.to_string(), v == 1);
 
         map
     });
 
-    // b.lines()
-    //     .map(|line| {
+    let binding = parse_logic_gates(connections).unwrap();
 
-    //     })
+    let mut pending_gates = binding.1;
+    
+    // Keep evaluating as long as we make progress
+    let mut made_progress = true;
+    while made_progress && !pending_gates.is_empty() {
+        made_progress = false;
+        
+        let (ready, still_pending): (Vec<_>, Vec<_>) = pending_gates.into_iter()
+            .partition(|gate| {
+                wires.contains_key(&gate.left) && 
+                wires.contains_key(&gate.right)
+            });
 
-    //     .filter(|line| {
-    //         true
-    //     })
-    //     .collect::<String>();
+        pending_gates = still_pending;
 
-    // let mut op_map: HashMap<String, Operation> = HashMap::new();
-    // let mut output_map: HashMap<String, String> = HashMap::new();
-
-    // match parse_logic_gates(b) {
-    //     Ok((_, gates)) => {
+        for gate in ready {
+            let left = wires[&gate.left];
+            let right = wires[&gate.right];
             
-    //         for gate in gates {
-    //             op_map.insert(gate.input.clone(), gate.op);
-    //             output_map.insert(gate.input, gate.output);
-    //         }
+            let result = match gate.op {
+                Operation::Or => left | right,
+                Operation::And => left & right,
+                Operation::Xor => left ^ right,
+            };
             
-    //         println!("Operation map: {:?}", op_map);
-    //         println!("Output map: {:?}", output_map);
-    //     }
-    //     Err(e) => println!("Parsing error: {:?}", e),
-    // }
+            wires.insert(gate.output, result);
+            made_progress = true;
+        }
+    }
 
-    let binding = parse_logic_gates(b).unwrap();
-    binding.1.iter()
-        .inspect(|gates| {
-            // dbg!(gates);
-
-            match gates.op {
-                Operation::Or => {
-                    let left = wires.get(gates.left.as_str()).unwrap();
-                    let right = wires.get(gates.right.as_str()).unwrap();
-
-                    wires.insert(&gates.output, left | right);
-                }
-                Operation::And => {
-                    let left = wires.get(gates.left.as_str()).unwrap();
-                    let right = wires.get(gates.right.as_str()).unwrap();
-
-                    wires.insert(&gates.output, left & right);
-                }
-                Operation::Xor => {
-                    let left = wires.get(gates.left.as_str()).unwrap();
-                    let right = wires.get(gates.right.as_str()).unwrap();
-
-                    wires.insert(&gates.output, left ^ right);
-                }
-                
-            }
-
-        })
-        // .rev()
-        .count();
-        // .collect::<String>();
-
-    let binary = wires.iter()
+    let output = wires.iter()
         .filter(|(k, _)| k.starts_with("z"))
         .map(|(k, v)| {
             // println!("{}: {}", k, v);
@@ -116,12 +88,11 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             (acc << 1) | bit
         });
 
-    // dbg!(wires, op_map, output_map);
     // dbg!(&wires);
 
-    dbg!(binary);
+    // dbg!(output);
 
-    Ok(binary.to_string())
+    Ok(output.to_string())
 }
 
 // Parse identifiers like x00, y01, z02
