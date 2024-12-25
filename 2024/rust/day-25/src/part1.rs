@@ -2,22 +2,10 @@ use std::collections::HashSet;
 
 use crate::AocError;
 
-// use nom::{
-//     bytes::complete::take_until, character::complete::{char, line_ending}, multi::separated_list1, sequence::{pair, terminated}, IResult
-// };
-
-// // First, split on double newline
-// fn split_patterns(input: &str) -> IResult<&str, Vec<&str>> {
-//     separated_list1(
-//         pair(line_ending, line_ending),  // matches \n\n
-//         take_until("\n\n")
-//     )(input)
-// }
-
 #[derive(Debug)]
 enum PatternType {
-    Lock, // ([u8; 5])
-    Key, // ([u8; 5])
+    Lock,
+    Key,
 }
 
 #[tracing::instrument]
@@ -25,132 +13,89 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let mut locks: HashSet<[u8; 5]> = HashSet::new();
     let mut keys: HashSet<[u8; 5]> = HashSet::new();
 
-    // let (patterns, _) = split_patterns(input).unwrap();
-    let output = input.split("\n\n")
+    let _ = input.split("\n\n")
         .for_each(|pattern| {
             // dbg!(pattern);
 
             let mut peek = pattern.chars().peekable();
 
-            // pattern.lines()
-            //     .for_each(|line| {
-            //         dbg!(line);
+            if let Some(c) = peek.next() {
+                // dbg!(c);
 
-                    if let Some(c) = peek.next() {
-                        // dbg!(c);
+                let pat = match c {
+                    '#' => {
+                        dbg!("found a lock");
+                        PatternType::Lock
+                    },
+                    '.' => {
+                        dbg!("found a key");
 
-                        let pat = match c {
-                            '#' => {
-                                dbg!("found a lock");
-                                PatternType::Lock
-                            },
-                            '.' => {
-                                dbg!("found a key");
+                        PatternType::Key
+                    },
+                    _ => todo!("{c}"),
+                };
 
-                                PatternType::Key
-                            },
-                            _ => todo!("{c}"),
-                        };
+                // dbg!(pattern);
+                let mut columns = vec![0; 5];
 
-                        // dbg!(pattern);
-                        let mut columns = vec![0; 5];
-
-                        match pat {
-                            PatternType::Lock => {
-                                pattern.lines()
-                                    .skip(1)
-                                    .for_each(|line| {
-                                        // dbg!(line);
-                                        for (idx, c) in line.chars().enumerate() {
-                                            
-                                            if c == '#' {
-                                                columns[idx] += 1;
-                                            }
-
-                                            // match pat {
-                                            //     PatternType::Lock => {
-                                            //         if c == '#' {
-                                            //             columns[idx] += 1;
-                                            //         }
-                                            //     },
-                                            //     PatternType::Key => {
-                                            //         if c == '.' {
-                                            //             columns[idx] += 1;
-                                            //         }
-                                            //     },
-                                            // }
-                                        }
-                                    });
-
-                                locks.insert(columns.try_into().unwrap());
-                            },
-                            PatternType::Key => {
-                                pattern.lines()
-                                    .take(6)
-                                    .for_each(|line| {
-                                        // dbg!(line);
-                                        for (idx, c) in line.chars().enumerate() {
-                                            
-                                            if c == '#' {
-                                                columns[idx] += 1;
-                                            }
-        
-                                            // match pat {
-                                            //     PatternType::Lock => {
-                                            //         if c == '#' {
-                                            //             columns[idx] += 1;
-                                            //         }
-                                            //     },
-                                            //     PatternType::Key => {
-                                            //         if c == '.' {
-                                            //             columns[idx] += 1;
-                                            //         }
-                                            //     },
-                                            // }
-                                        }
-                                    });
-                                
-                                keys.insert(columns.try_into().unwrap());
-                            },
-                        }
-
-                        // pattern.lines()
-                        //     .skip(1)
-                        //     .for_each(|line| {
-                        //         // dbg!(line);
-                        //         for (idx, c) in line.chars().enumerate() {
+                match pat {
+                    PatternType::Lock => {
+                        pattern.lines()
+                            .skip(1)
+                            .for_each(|line| {
+                                // dbg!(line);
+                                for (idx, c) in line.chars().enumerate() {
                                     
-                        //             if c == '#' {
-                        //                 columns[idx] += 1;
-                        //             }
+                                    if c == '#' {
+                                        columns[idx] += 1;
+                                    }
 
-                        //             // match pat {
-                        //             //     PatternType::Lock => {
-                        //             //         if c == '#' {
-                        //             //             columns[idx] += 1;
-                        //             //         }
-                        //             //     },
-                        //             //     PatternType::Key => {
-                        //             //         if c == '.' {
-                        //             //             columns[idx] += 1;
-                        //             //         }
-                        //             //     },
-                        //             // }
-                        //         }
-                        //     });
+                                }
+                            });
 
-                        // dbg!(columns);
+                        locks.insert(columns.try_into().unwrap());
+                    },
+                    PatternType::Key => {
+                        pattern.lines()
+                            .take(6)
+                            .for_each(|line| {
+                                // dbg!(line);
+                                for (idx, c) in line.chars().enumerate() {
+                                    
+                                    if c == '#' {
+                                        columns[idx] += 1;
+                                    }
+                                }
+                            });
+                        
+                        keys.insert(columns.try_into().unwrap());
+                    },
+                }
 
-                    }
 
-            //     });
+            }
         });
-        // .map()
 
+    // dbg!(locks, keys);
 
-    dbg!(locks, keys);
+    // Ok("".to_string())
 
-    Ok("".to_string())
+    fn is_compatible(lock: &[u8; 5], key: &[u8; 5]) -> bool {
+        lock.iter()
+            .zip(key.iter())
+            .all(|(&lock_height, &key_height)| lock_height + key_height <= 5)
+    }
+
+    let mut matches = Vec::new();
+    for lock in &locks {
+        for key in &keys {
+            if is_compatible(lock, key) {
+                matches.push((lock, key));
+            }
+        }
+    }
+
+    Ok(matches.len().to_string())
 }
 
 #[cfg(test)]
