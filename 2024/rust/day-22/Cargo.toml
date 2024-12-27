@@ -23,12 +23,12 @@ divan.workspace = true
 rstest.workspace = true
 
 [[bench]]
-name = "day22-bench"
+name = "day-22-bench"
 path = "benches/benchmarks.rs"
 harness = false
 
 [[bench]]
-name = "day22-bench-criterion"
+name = "day-22-bench-criterion"
 path = "benches/benchmarks-criterion.rs"
 harness = false
 

@@ -2,7 +2,6 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use ornaments::{Part, Solution};
 use day_02::Day2 as Day;
 
-
 fn criterion_benchmark_part1(c: &mut Criterion) {
     let input = include_str!("../input.txt");
 

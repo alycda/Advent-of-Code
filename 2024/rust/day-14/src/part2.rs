@@ -36,14 +36,14 @@ pub fn process(input: &str, dimensions: Position) -> miette::Result<String, orna
         // println!("{}", visualize_robots(&robots, dimensions.x, dimensions.y));
 
         if has_no_overlaps(&robots) {
-            println!("Found no overlaps at step: {}", step + 1);  // +1 because we start at 0
+            // println!("Found no overlaps at step: {}", step + 1);  // +1 because we start at 0
             steps = step + 1;
             break;
         }
     }
 
-    println!("Final state:");
-    println!("{}", Day14::visualize_robots(&robots, dimensions.x, dimensions.y));
+    // println!("Final state:");
+    // println!("{}", Day14::visualize_robots(&robots, dimensions.x, dimensions.y));
 
     Ok(steps.to_string())
 }
