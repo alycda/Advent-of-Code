@@ -27,8 +27,6 @@ AdventOfCode
 
 3. Visit [Advent of Code](https://adventofcode.com/) to begin your coding challenge journey!
 
-You can join the Pluto TV leaderboard with the code `4068626-924c4522` at https://adventofcode.com/2024/leaderboard/private
-
 ## Batteries Included:
 
 We provide ready-to-use templates in various programming languages. Find them in the year/language folders (e.g., `2024/rust`).
