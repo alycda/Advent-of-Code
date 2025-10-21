@@ -4,7 +4,7 @@ Inspired by [Chris Biscardi](https://github.com/ChristopherBiscardi/advent-of-co
 
 ## Setup
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Pluto-tv/AdventOfCode/)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/alycda/Advent-of-Code/)
 
 - Install [Rust](https://www.rust-lang.org/tools/install) (Homebrew not recommended, but may work ok for this repo)
   - if running in Codespaces, rust is already installed for you.
