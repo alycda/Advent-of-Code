@@ -4,7 +4,7 @@
 
 Visit [Advent of Code](https://adventofcode.com/) to begin your coding challenge journey!
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Pluto-tv/AdventOfCode/)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/alycda/Advent-of-Code/)
 
 ### VSCode
 
