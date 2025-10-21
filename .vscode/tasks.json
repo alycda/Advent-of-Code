@@ -7,7 +7,7 @@
             "type": "shell",
             "command": "just --list",
             "options": {
-                "cwd": "${workspaceFolder}/2024/rust"
+                "cwd": "${workspaceFolder}/2025/rust"
             },
             "problemMatcher": [],
             "label": "rust: just"

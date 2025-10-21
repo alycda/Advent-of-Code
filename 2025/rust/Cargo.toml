@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "day-*",
+    "day-01",
+]
+default-members = ["day-*"]
+resolver = "3"
+
+[workspace.dependencies]
+miette = "7.6"
+rstest = "0.26"
+thiserror = "2"
+tracing = "*"
+tracing-subscriber = "*"
+
+[workspace.dependencies.aoc-ornaments]
+git = "https://github.com/alycda/AoC-Ornaments"

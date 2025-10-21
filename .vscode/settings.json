@@ -1,5 +1,5 @@
 {
     "rust-analyzer.linkedProjects": [
-        "${workspaceFolder}/2024/rust/Cargo.toml"
+        "${workspaceFolder}/2025/rust/Cargo.toml"
     ]
 }
