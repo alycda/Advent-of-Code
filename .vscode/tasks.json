@@ -11,6 +11,22 @@
             },
             "problemMatcher": [],
             "label": "rust: just"
-        }
+        },
+        {
+            "label": "My shell",
+            "type": "shell",
+            "command": "nix-shell",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true,
+                "group": "terminals"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
     ]
 }
