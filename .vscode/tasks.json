@@ -11,6 +11,21 @@
             },
             "problemMatcher": [],
             "label": "rust: just"
-        }
+        },
+        {
+            // exec nix-shell on opening VSCode.
+            "label": "my custom shell",
+            "command": "nix-shell",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true,
+            },
+            "runOptions": {
+                "reevaluateOnRerun": false,
+                "runOn": "folderOpen"
+            }
+        },
     ]
 }
